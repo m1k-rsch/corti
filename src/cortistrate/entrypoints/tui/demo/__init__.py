@@ -1,0 +1,1 @@
+"""Cortistrate educational demo TUI."""
