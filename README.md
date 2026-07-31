@@ -169,7 +169,7 @@ The install script (`install.sh`) handles everything automatically:
 | Agent | Target | Source |
 |---|---|---|
 | Hermes Agent | `~/.hermes/plugins/cortistrate/` | `src/integrations/hermes/` |
-| Claude Code | `~/.claude/plugins/cortistrate/` | `src/integrations/claude-code/` |
+| Claude Code | `~/.claude/skills/cortistrate/` | `src/integrations/claude-code/` |
 
 Plugins are **copied** (not symlinked), so they survive repo updates and work independently.
 
@@ -184,10 +184,11 @@ docker cp cortistrate-tmp:/opt/cortistrate/integrations/hermes ~/.hermes/plugins
 mv ~/.hermes/plugins/hermes ~/.hermes/plugins/cortistrate
 docker rm cortistrate-tmp
 
-# Claude Code
+# Claude Code — dropped into ~/.claude/skills/ for auto-discovery
+# (hooks/hooks.json + MCP auto-loaded on next session, zero CLI)
 docker create --name cortistrate-tmp mark1kwok/cortistrate:latest
-docker cp cortistrate-tmp:/opt/cortistrate/integrations/claude-code ~/.claude/plugins/
-mv ~/.claude/plugins/claude-code ~/.claude/plugins/cortistrate
+docker cp cortistrate-tmp:/opt/cortistrate/integrations/claude-code ~/.claude/skills/
+mv ~/.claude/skills/claude-code ~/.claude/skills/cortistrate
 docker rm cortistrate-tmp
 ```
 
