@@ -162,43 +162,64 @@ docker rm "$CID" >/dev/null
 # ── Step 5: Default endpoints ─────────────────────────────────────────────
 section "Step 5: Default Endpoints"
 
-echo "Cortistrate ships with free default endpoints — no API key required:"
+echo -e "  ${CYAN}Cortistrate ships with free default endpoints — no API key required:${NC}"
 echo ""
-echo -e "  ${BOLD}LLM:${NC}       Pollinations.ai (openai-fast, GPT-OSS 20B)"
+echo -e "  ${BOLD}LLM:${NC}       ${GREEN}Pollinations.ai${NC} (openai-fast, GPT-OSS 20B)"
 echo "           https://text.pollinations.ai/openai"
-echo -e "  ${BOLD}Embedding:${NC}  OVHcloud AI Endpoints (bge-m3, 1024-d, MIT)"
+echo -e "  ${BOLD}Embedding:${NC}  ${GREEN}OVHcloud AI Endpoints${NC} (bge-m3, 1024-d, MIT)"
 echo "           https://oai.endpoints.kepler.ai.cloud.ovh.net/v1"
 echo ""
-echo "These are community / anonymous-tier services:"
-echo "  • Pollinations — ~3 yr track record, community-funded, no key needed"
-echo "  • OVHcloud — European public cloud (€20B market cap), 2 RPM per IP"
+echo "  These are community / anonymous-tier services:"
+echo "    • Pollinations — ~3 yr track record, community-funded"
+echo "    • OVHcloud — European public cloud (€20B market cap), 2 RPM per IP"
 echo ""
-echo "For production / higher quality, replace them with your own provider."
-echo -e "Edit:  ${BLUE}\$EDITOR $DATA_DIR/cortistrate.toml${NC}"
-echo ""
-echo "Sections to configure: [llm], [embedding], [rerank]"
+echo -e "  ${YELLOW}╔══════════════════════════════════════════════════════════╗${NC}"
+echo -e "  ${YELLOW}║${NC}  ${BOLD}For production / higher quality, replace the defaults.${NC}  ${YELLOW}║${NC}"
+echo -e "  ${YELLOW}║${NC}                                                          ${YELLOW}║${NC}"
+echo -e "  ${YELLOW}║${NC}  Edit: ${BOLD}${CYAN}\$EDITOR $DATA_DIR/cortistrate.toml${NC}               ${YELLOW}║${NC}"
+echo -e "  ${YELLOW}║${NC}  Sections: [llm]  [embedding]  [rerank]                    ${YELLOW}║${NC}"
+echo -e "  ${YELLOW}║${NC}                                                          ${YELLOW}║${NC}"
+echo -e "  ${YELLOW}║${NC}  ${RED}⚠ After editing, restart the container:${NC}                ${YELLOW}║${NC}"
+echo -e "  ${YELLOW}║${NC}    ${BOLD}docker restart cortistrate${NC}                             ${YELLOW}║${NC}"
+echo -e "  ${YELLOW}╚══════════════════════════════════════════════════════════╝${NC}"
 echo ""
 
-# ── Done ──────────────────────────────────────────────────────────────────
+# ── Step 6: Auto-start ────────────────────────────────────────────────────
+section "Step 6: Start Server"
+
+CONTAINER_NAME="cortistrate"
+
+# Check if a container with this name already exists (running or stopped).
+if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -qx "$CONTAINER_NAME"; then
+    STATE=$(docker inspect -f '{{.State.Status}}' "$CONTAINER_NAME" 2>/dev/null || true)
+    if [ "$STATE" = "running" ]; then
+        info "Container '$CONTAINER_NAME' is already running"
+        echo "  docker restart $CONTAINER_NAME   # if you edit config"
+    else
+        warn "Container '$CONTAINER_NAME' exists but is $STATE"
+        echo "  docker start $CONTAINER_NAME     # to resume"
+    fi
+else
+    info "Starting Cortistrate server..."
+    docker run -d --name "$CONTAINER_NAME" \
+        -p 5473:5473 \
+        -v "$DATA_DIR:/home/app/.cortistrate" \
+        "$IMAGE" >/dev/null
+
+    # Quick health check
+    sleep 2
+    if curl -sf http://localhost:5473/health >/dev/null 2>&1; then
+        info "Server is running — http://localhost:5473"
+    else
+        warn "Server started but health check pending (may still be initializing)"
+        echo "  docker logs $CONTAINER_NAME  # check progress"
+    fi
+fi
+
 echo ""
-echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo -e "${GREEN}  Cortistrate installed!${NC}"
-echo -e "${GREEN}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-echo ""
-echo "Next steps:"
-echo ""
-echo -e "  ${BOLD}1. Start the server:${NC}"
-echo "    docker run -d --name cortistrate \\"
-echo "      -p 5473:5473 \\"
-echo "      -v ~/.cortistrate:/home/app/.cortistrate \\"
-echo "      $IMAGE"
-echo ""
-echo -e "  ${BOLD}2. Check health:${NC}"
-echo "    curl http://localhost:5473/health"
-echo ""
-echo -e "  ${BOLD}Update:${NC}"
-echo "    docker pull $IMAGE"
-echo "    docker rm -f cortistrate && docker run -d ... $IMAGE"
-echo ""
-echo -e "  ${BOLD}Docs:${NC} https://cortistrate.dev/docs"
+echo -e "  ${BOLD}Check:${NC}     curl http://localhost:5473/health"
+echo -e "  ${BOLD}Logs:${NC}      docker logs -f $CONTAINER_NAME"
+echo -e "  ${BOLD}Restart:${NC}   docker restart $CONTAINER_NAME   ${CYAN}# after editing cortistrate.toml${NC}"
+echo -e "  ${BOLD}Update:${NC}    docker pull $IMAGE && docker rm -f $CONTAINER_NAME && docker run -d --name $CONTAINER_NAME -p 5473:5473 -v $DATA_DIR:/home/app/.cortistrate $IMAGE"
+echo -e "  ${BOLD}Docs:${NC}     https://cortistrate.dev/docs"
 echo ""
