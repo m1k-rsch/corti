@@ -141,7 +141,11 @@ if command -v claude &>/dev/null; then
         mv "$CLAUDE_PLUGIN_DIR/claude-code" "$CLAUDE_TARGET"
         info "Claude Code plugin installed: $CLAUDE_TARGET"
     fi
-    # Register MCP server so Claude Code discovers it (plugin dir alone is not enough).
+    # Register MCP server + hooks in ~/.claude/settings.json.
+    # Plugin dir alone is not enough — Claude Code needs explicit registration.
+    SETTINGS_FILE="$HOME/.claude/settings.json"
+
+    # ── MCP registration ──
     if claude mcp list 2>/dev/null | grep -q cortistrate; then
         info "Claude Code MCP already registered"
     else
@@ -149,7 +153,40 @@ if command -v claude &>/dev/null; then
             python3 "$CLAUDE_TARGET/mcp/mcp_server.py" \
             --env CORTISTRATE_BASE_URL=http://127.0.0.1:5473 2>/dev/null && \
             info "Claude Code MCP registered" || \
-            warn "Could not auto-register Claude Code MCP — run: claude mcp add -s user cortistrate -- python3 ~/.claude/plugins/cortistrate/mcp/mcp_server.py"
+            warn "Could not auto-register Claude Code MCP"
+    fi
+
+    # ── Hook registration (SessionStart / UserPromptSubmit / Stop / SessionEnd) ──
+    SETTINGS_FILE="$HOME/.claude/settings.json"
+    HOOKS_DIR="$CLAUDE_TARGET/hooks/scripts"
+
+    if [ -f "$SETTINGS_FILE" ] && command -v python3 &>/dev/null; then
+        REGISTERED=0
+        python3 <<PYEOF 2>/dev/null && REGISTERED=1
+import json
+path = "$SETTINGS_FILE"
+hooks_dir = "$HOOKS_DIR"
+with open(path) as f:
+    s = json.load(f)
+hooks = s.setdefault("hooks", {})
+needed = {
+    "SessionStart":      [{"matcher": "*", "hooks": [{"type": "command", "command": f"node {hooks_dir}/session-context.js",  "timeout": 30}]}],
+    "UserPromptSubmit": [{"matcher": "*", "hooks": [{"type": "command", "command": f"node {hooks_dir}/inject-memories.js",  "timeout": 10}]}],
+    "Stop":             [{"matcher": "*", "hooks": [{"type": "command", "command": f"node {hooks_dir}/store-memories.js",   "timeout": 60}]}],
+    "SessionEnd":       [{"matcher": "*", "hooks": [{"type": "command", "command": f"node {hooks_dir}/session-summary.js", "timeout": 30}]}],
+}
+changed = sum(1 for k, v in needed.items() if hooks.setdefault(k, v) == v)
+if changed:
+    with open(path, "w") as f:
+        json.dump(s, f, indent=2)
+    print("HOOKS_REGISTERED")
+else:
+    print("HOOKS_ALREADY")
+PYEOF
+        case "$REGISTERED" in
+            1) info "Claude Code hooks registered (SessionStart/Submit/Stop/End)" ;;
+            *) warn "Could not auto-register hooks. Add manually to ~/.claude/settings.json:" ;;
+        esac
     fi
 else
     info "Claude Code not detected — skipping plugin install"
