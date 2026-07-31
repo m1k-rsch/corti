@@ -111,11 +111,18 @@ if command -v hermes &>/dev/null; then
         mv "$HERMES_PLUGIN_DIR/hermes" "$HERMES_TARGET"
         info "Hermes plugin installed: $HERMES_TARGET"
     fi
-    # Auto-enable the plugin so it's active immediately.
+    # Auto-enable the plugin + set memory provider so it's active immediately.
     if hermes plugins list 2>/dev/null | grep -q cortistrate; then
-        hermes plugins enable cortistrate 2>/dev/null && \
-            info "Hermes plugin enabled" || \
-            warn "Could not auto-enable Hermes plugin — run: hermes plugins enable cortistrate"
+        hermes plugins enable cortistrate 2>/dev/null || true
+    fi
+    # Also set the memory provider (belt-and-suspenders — some Hermes versions
+    # require this even after plugin enable).
+    if hermes config get memory.provider 2>/dev/null | grep -q cortistrate; then
+        info "Hermes plugin enabled — memory.provider=cortistrate"
+    else
+        hermes config set memory.provider cortistrate 2>/dev/null && \
+            info "Hermes plugin enabled — memory.provider=cortistrate" || \
+            warn "Could not set memory.provider. Run: hermes config set memory.provider cortistrate"
     fi
 else
     info "Hermes not detected — skipping plugin install"
