@@ -1,0 +1,57 @@
+# Version control
+.git
+.gitignore
+
+# CI / GitHub
+.github
+.gitlint
+.pre-commit-config.yaml
+
+# IDE / editor
+.claude
+.claude-plugin
+.idea
+.vscode
+*.code-workspace
+
+# Python caches
+__pycache__
+*.py[cod]
+.pytest_cache
+.ruff_cache
+.mypy_cache
+.uv-cache
+.venv
+venv
+
+# Docs (not needed at runtime)
+docs/
+ACKNOWLEDGMENTS.md
+CLAUDE.md
+CODE_OF_CONDUCT.md
+CONTRIBUTING.md
+NOTICE
+
+# Tests (not needed at runtime)
+tests/
+.scratch
+
+# Distribution artifacts
+dist/
+build/
+*.egg-info
+
+# Runtime data (never bake into image)
+.cortistrate*
+
+# Misc
+CLAUDE.md
+CONTRIBUTING.md
+CODE_OF_CONDUCT.md
+ACKNOWLEDGMENTS.md
+NOTICE
+Makefile
+banner.sh
+install.sh
+config.example.toml
+.env*
