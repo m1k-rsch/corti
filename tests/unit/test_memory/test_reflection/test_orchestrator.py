@@ -16,9 +16,9 @@ from unittest.mock import AsyncMock, MagicMock
 
 import pytest
 
-from cortistrate.infra.ome.testing import FakeStrategyContext
-from cortistrate.memory._partition_locks import _reset_for_tests
-from cortistrate.memory.reflection.orchestrator import (
+from corti.infra.ome.testing import FakeStrategyContext
+from corti.memory._partition_locks import _reset_for_tests
+from corti.memory.reflection.orchestrator import (
     _MAX_CLUSTERS_PER_RUN,
     ReflectionOrchestrator,
     _merged_episode_to_entry_body,

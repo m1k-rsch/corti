@@ -26,7 +26,7 @@ def test_clean_text_is_allowed() -> None:
     checker = _load_checker()
 
     violations = checker.find_violations(
-        [("README.md", "Cortistrate is the public project name.\n")]
+        [("README.md", "Corti is the public project name.\n")]
     )
 
     assert violations == []

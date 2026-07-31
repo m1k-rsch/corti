@@ -5,13 +5,13 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 import structlog.testing
+
+from corti.infra.ome.testing import FakeStrategyContext
+from corti.memory.events import UserPipelineStarted
+from corti.memory.strategies.extract_foresight import extract_foresight
 from everalgo.types import ChatMessage, Foresight, MemCell
 
-from cortistrate.infra.ome.testing import FakeStrategyContext
-from cortistrate.memory.events import UserPipelineStarted
-from cortistrate.memory.strategies.extract_foresight import extract_foresight
-
-mod = importlib.import_module("cortistrate.memory.strategies.extract_foresight")
+mod = importlib.import_module("corti.memory.strategies.extract_foresight")
 
 
 def _two_user_memcell() -> MemCell:
@@ -73,14 +73,14 @@ async def test_extracts_per_sender(
     monkeypatch.setattr(mod, "_writer", None, raising=False)
     with (
         patch(
-            "cortistrate.memory.strategies.extract_foresight.get_llm_client",
+            "corti.memory.strategies.extract_foresight.get_llm_client",
             return_value=object(),
         ),
         patch(
-            "cortistrate.memory.strategies.extract_foresight.ForesightExtractor"
+            "corti.memory.strategies.extract_foresight.ForesightExtractor"
         ) as mock_cls,
         patch(
-            "cortistrate.memory.strategies.extract_foresight.ForesightWriter"
+            "corti.memory.strategies.extract_foresight.ForesightWriter"
         ) as mock_wcls,
         structlog.testing.capture_logs() as captured,
     ):
@@ -141,14 +141,14 @@ async def test_writes_md_for_each_foresight(
     monkeypatch.setattr(mod, "_writer", None, raising=False)
     with (
         patch(
-            "cortistrate.memory.strategies.extract_foresight.get_llm_client",
+            "corti.memory.strategies.extract_foresight.get_llm_client",
             return_value=object(),
         ),
         patch(
-            "cortistrate.memory.strategies.extract_foresight.ForesightExtractor"
+            "corti.memory.strategies.extract_foresight.ForesightExtractor"
         ) as mock_cls,
         patch(
-            "cortistrate.memory.strategies.extract_foresight.ForesightWriter"
+            "corti.memory.strategies.extract_foresight.ForesightWriter"
         ) as mock_wcls,
     ):
         mock_cls.return_value.aextract = AsyncMock(return_value=foresights)
@@ -209,14 +209,14 @@ async def test_skips_when_memcell_has_no_messages(
     monkeypatch.setattr(mod, "_writer", None, raising=False)
     with (
         patch(
-            "cortistrate.memory.strategies.extract_foresight.get_llm_client",
+            "corti.memory.strategies.extract_foresight.get_llm_client",
             return_value=object(),
         ),
         patch(
-            "cortistrate.memory.strategies.extract_foresight.ForesightExtractor"
+            "corti.memory.strategies.extract_foresight.ForesightExtractor"
         ) as mock_cls,
         patch(
-            "cortistrate.memory.strategies.extract_foresight.ForesightWriter"
+            "corti.memory.strategies.extract_foresight.ForesightWriter"
         ) as mock_wcls,
         structlog.testing.capture_logs() as captured,
     ):

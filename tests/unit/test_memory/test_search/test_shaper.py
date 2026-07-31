@@ -7,13 +7,12 @@ from __future__ import annotations
 
 import datetime as _dt
 
-from everalgo.types import Candidate, ScoredItem
-
-from cortistrate.memory.search.shaper import (
+from corti.memory.search.shaper import (
     reshape_hybrid_output,
     shape_atomic_fact_from_candidate,
     shape_episode_from_candidate,
 )
+from everalgo.types import Candidate, ScoredItem
 
 # ── Fixtures ────────────────────────────────────────────────────────────
 

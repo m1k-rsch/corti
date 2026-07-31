@@ -7,7 +7,7 @@ elements share one type.
 
 from __future__ import annotations
 
-import numpy as np  # noqa: TC002 — np.ndarray is a Pydantic field type; Pydantic resolves it at runtime
+import numpy as np
 from pydantic import BaseModel, ConfigDict
 
 

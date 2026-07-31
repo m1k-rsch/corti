@@ -6,10 +6,10 @@ from pathlib import Path
 
 import pytest
 
-from cortistrate.component.utils.datetime import get_now_with_timezone
-from cortistrate.infra.ome._stores.run_record import RunRecordStore
-from cortistrate.infra.ome._stores.storage import OMEStorage
-from cortistrate.infra.ome.records import RunStatus
+from corti.component.utils.datetime import get_now_with_timezone
+from corti.infra.ome._stores.run_record import RunRecordStore
+from corti.infra.ome._stores.storage import OMEStorage
+from corti.infra.ome.records import RunStatus
 
 
 @pytest.fixture

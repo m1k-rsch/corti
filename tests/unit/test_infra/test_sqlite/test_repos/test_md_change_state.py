@@ -25,13 +25,13 @@ from pathlib import Path
 import pytest
 from sqlmodel import SQLModel
 
-from cortistrate.config import SqliteSettings
-from cortistrate.core.persistence import (
+from corti.config import SqliteSettings
+from corti.core.persistence import (
     MemoryRoot,
     create_session_factory,
     create_system_engine,
 )
-from cortistrate.infra.persistence.sqlite.repos.md_change_state import (
+from corti.infra.persistence.sqlite.repos.md_change_state import (
     _MdChangeStateRepo,
 )
 
@@ -412,7 +412,7 @@ async def test_queue_summary_empty_table(repo: _MdChangeStateRepo) -> None:
 
 
 def _empty_summary() -> object:
-    from cortistrate.infra.persistence.sqlite import QueueSummary
+    from corti.infra.persistence.sqlite import QueueSummary
 
     return QueueSummary(
         pending=0,

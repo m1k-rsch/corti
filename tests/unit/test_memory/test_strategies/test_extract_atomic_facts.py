@@ -6,13 +6,13 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 import structlog.testing
+
+from corti.infra.ome.testing import FakeStrategyContext
+from corti.memory.events import EpisodeExtracted
+from corti.memory.strategies.extract_atomic_facts import extract_atomic_facts
 from everalgo.types import AtomicFact
 
-from cortistrate.infra.ome.testing import FakeStrategyContext
-from cortistrate.memory.events import EpisodeExtracted
-from cortistrate.memory.strategies.extract_atomic_facts import extract_atomic_facts
-
-mod = importlib.import_module("cortistrate.memory.strategies.extract_atomic_facts")
+mod = importlib.import_module("corti.memory.strategies.extract_atomic_facts")
 
 
 def _fact(text: str) -> AtomicFact:
@@ -57,14 +57,14 @@ async def test_extracts_from_episode_text_and_writes_under_event_owner(
 
     with (
         patch(
-            "cortistrate.memory.strategies.extract_atomic_facts.get_llm_client",
+            "corti.memory.strategies.extract_atomic_facts.get_llm_client",
             return_value=object(),
         ),
         patch(
-            "cortistrate.memory.strategies.extract_atomic_facts.AtomicFactExtractor"
+            "corti.memory.strategies.extract_atomic_facts.AtomicFactExtractor"
         ) as mock_cls,
         patch(
-            "cortistrate.memory.strategies.extract_atomic_facts.AtomicFactWriter"
+            "corti.memory.strategies.extract_atomic_facts.AtomicFactWriter"
         ) as mock_wcls,
         structlog.testing.capture_logs() as captured,
     ):
@@ -111,14 +111,14 @@ async def test_skips_when_extractor_returns_empty(
     monkeypatch.setattr(mod, "_writer", None, raising=False)
     with (
         patch(
-            "cortistrate.memory.strategies.extract_atomic_facts.get_llm_client",
+            "corti.memory.strategies.extract_atomic_facts.get_llm_client",
             return_value=object(),
         ),
         patch(
-            "cortistrate.memory.strategies.extract_atomic_facts.AtomicFactExtractor"
+            "corti.memory.strategies.extract_atomic_facts.AtomicFactExtractor"
         ) as mock_cls,
         patch(
-            "cortistrate.memory.strategies.extract_atomic_facts.AtomicFactWriter"
+            "corti.memory.strategies.extract_atomic_facts.AtomicFactWriter"
         ) as mock_wcls,
         structlog.testing.capture_logs() as captured,
     ):
@@ -140,14 +140,14 @@ async def test_passes_app_id_and_project_id_to_writer(
 
     with (
         patch(
-            "cortistrate.memory.strategies.extract_atomic_facts.get_llm_client",
+            "corti.memory.strategies.extract_atomic_facts.get_llm_client",
             return_value=object(),
         ),
         patch(
-            "cortistrate.memory.strategies.extract_atomic_facts.AtomicFactExtractor"
+            "corti.memory.strategies.extract_atomic_facts.AtomicFactExtractor"
         ) as mock_cls,
         patch(
-            "cortistrate.memory.strategies.extract_atomic_facts.AtomicFactWriter"
+            "corti.memory.strategies.extract_atomic_facts.AtomicFactWriter"
         ) as mock_wcls,
     ):
         mock_cls.return_value.aextract_from_text = AsyncMock(return_value=facts)

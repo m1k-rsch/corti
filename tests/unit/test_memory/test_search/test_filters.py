@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from cortistrate.memory.search import (
+from corti.memory.search import (
     FilterError,
     FilterNode,
     compile_filters,

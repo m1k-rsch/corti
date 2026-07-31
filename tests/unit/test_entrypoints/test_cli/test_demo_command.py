@@ -1,4 +1,4 @@
-"""Cortistrate demo command contracts."""
+"""Corti demo command contracts."""
 
 from __future__ import annotations
 
@@ -9,8 +9,8 @@ import typer
 from rich.panel import Panel
 from typer.testing import CliRunner
 
-from cortistrate.entrypoints.cli.commands import demo as demo_command
-from cortistrate.entrypoints.tui.demo.data import build_demo_story
+from corti.entrypoints.cli.commands import demo as demo_command
+from corti.entrypoints.tui.demo.data import build_demo_story
 
 
 def test_demo_help_exposes_cinematic_mode() -> None:
@@ -53,8 +53,8 @@ def test_collect_playable_story_prompts_for_memory_then_query(monkeypatch) -> No
     story = demo_command._collect_playable_story()
 
     assert [label for label, _ in prompts] == [
-        "Give Cortistrate one thing to remember",
-        "Ask Cortistrate to recall it",
+        "Give Corti one thing to remember",
+        "Ask Corti to recall it",
     ]
     assert story.memory == "I keep my Monday design review notes in Notion."
     assert story.query == "Where are my Monday review notes?"
@@ -109,7 +109,7 @@ def test_plain_demo_prints_custom_story(monkeypatch) -> None:
     )
 
     printed_text = "\n".join(str(item) for item in printed)
-    assert "Cortistrate remembered" in printed_text
+    assert "Corti remembered" in printed_text
     assert "I keep my Monday design review notes in Notion." in printed_text
     assert "episode-demo.md" in printed_text
 
@@ -178,7 +178,7 @@ def test_live_demo_flow_calls_server_and_builds_story() -> None:
     ]
     add_body = calls[1][2]
     assert add_body is not None
-    assert add_body["session_id"] == "cortistrate-demo-live"
+    assert add_body["session_id"] == "corti-demo-live"
     assert live_story.answer == "Alice loves climbing in Yosemite every spring."
     assert live_story.source_filename == "episode:alice_ep_20260623_0001"
     assert live_story.fact_filename == "fact:alice_af_20260623_0001"

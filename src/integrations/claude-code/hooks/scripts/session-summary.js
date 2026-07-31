@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Cortistrate SessionEnd Hook
+ * Corti SessionEnd Hook
  * Saves session summary (first user prompt + stats) to local storage
  * No AI summarization - just extracts key info from transcript
  */
@@ -130,7 +130,7 @@ async function main() {
 
   // Set cwd for config
   if (cwd) {
-    process.env.CORTISTRATE_CWD = cwd;
+    process.env.CORTI_CWD = cwd;
   }
 
   const config = getConfig();

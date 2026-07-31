@@ -1,12 +1,12 @@
 {
-  "name": "cortistrate",
-  "description": "Persistent cross-session memory for Claude Code — automatic capture, semantic recall, and context injection powered by a local Cortistrate server.",
+  "name": "corti",
+  "description": "Persistent cross-session memory for Claude Code — automatic capture, semantic recall, and context injection powered by a local Corti server.",
   "version": "0.1.0",
   "author": {
     "name": "mark1kwok"
   },
-  "homepage": "https://github.com/mark1kwok/cortistrate",
-  "repository": "https://github.com/mark1kwok/cortistrate",
+  "homepage": "https://github.com/mark1kwok/corti",
+  "repository": "https://github.com/mark1kwok/corti",
   "license": "Apache-2.0",
-  "keywords": ["memory", "agent-memory", "persistent-context", "cortistrate", "long-term-memory"]
+  "keywords": ["memory", "agent-memory", "persistent-context", "corti", "long-term-memory"]
 }

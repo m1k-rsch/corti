@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from cortistrate.infra.persistence.sqlite import (
+from corti.infra.persistence.sqlite import (
     KnowledgeDocumentRow,
     KnowledgeTopicRow,
 )

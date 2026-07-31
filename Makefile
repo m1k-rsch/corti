@@ -60,7 +60,7 @@ check-pr-title:
 check-assets:
 	uv run python src/scripts/check_repo_assets.py
 
-# Product naming gate. Public repo text should use Cortistrate or Cortistrate Cloud.
+# Product naming gate. Public repo text should use Corti or Corti Cloud.
 check-deprecated-names:
 	uv run python src/scripts/check_deprecated_names.py
 
@@ -109,7 +109,7 @@ package:
 	uv build --sdist --wheel
 	uv venv --python 3.12 --seed .package-smoke
 	uv pip install --python .package-smoke/bin/python --no-deps dist/*.whl
-	.package-smoke/bin/python -c "import cortistrate; print(cortistrate.__version__)"
+	.package-smoke/bin/python -c "import corti; print(corti.__version__)"
 	rm -rf .package-smoke
 
 # Coverage runs unit + integration so the number matches what CI's `test` and
@@ -117,7 +117,7 @@ package:
 # currently 87%, unit+integration 91% — 80% leaves ~10pp headroom for normal
 # churn). Bump as the suite stabilises.
 cov:
-	uv run pytest tests/unit tests/integration --cov=src/cortistrate --cov-report=term-missing --cov-branch --cov-fail-under=80
+	uv run pytest tests/unit tests/integration --cov=src/corti --cov-report=term-missing --cov-branch --cov-fail-under=80
 
 ci: lint test integration package
 

@@ -22,10 +22,8 @@ tests after migrating to the PostgreSQL-based cascade pipeline.
 from __future__ import annotations
 
 import asyncio
-from collections.abc import AsyncIterator
 
-from cortistrate.component.embedding import EmbeddingProvider
-from cortistrate.core.persistence import MemoryRoot
+from corti.component.embedding import EmbeddingProvider
 
 
 class _StubEmbedder(EmbeddingProvider):

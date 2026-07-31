@@ -9,7 +9,7 @@ from pathlib import Path
 
 MONITORED_FILES = (
     Path("CLAUDE.md"),
-    Path("CONTRIBUTING.md"),
+    Path("legal/CONTRIBUTING.md"),
     Path("docs/engineering.md"),
     Path(".github/PULL_REQUEST_TEMPLATE.md"),
     Path(".claude/skills/commit/SKILL.md"),

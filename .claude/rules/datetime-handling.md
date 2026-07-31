@@ -7,7 +7,7 @@ paths:
 # Datetime handling rule (two-zone discipline)
 
 **Never** construct or read "now" directly. All datetime flows through
-`cortistrate.component.utils.datetime`. This is a **hard CI gate**
+`corti.component.utils.datetime`. This is a **hard CI gate**
 (`make check-datetime`, wired into `make lint`).
 
 ## Banned (the checker fails the build on these)

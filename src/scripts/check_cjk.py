@@ -33,7 +33,7 @@ def _is_allowlisted(path: str) -> bool:
     if path.startswith("tests/"):
         return True
     # 2. Tokenizer NLP resources (stopword lists, segmentation examples).
-    if path.startswith("src/cortistrate/component/tokenizer/"):
+    if path.startswith("src/corti/component/tokenizer/"):
         return True
     # 3. Locale-suffixed sample data, e.g. data/solo_chat_zh.json.
     if re.match(r"data/.*_(zh|ja|ko)\.", path):

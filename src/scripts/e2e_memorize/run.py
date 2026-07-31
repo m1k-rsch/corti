@@ -1,24 +1,24 @@
 """End-to-end memorize runner — in-process call into ``service.memorize``.
 
 Calls ``service.memorize.memorize()`` directly (not via HTTP) so this works
-without ``cortistrate server start``. Drives a fixture through ``/add`` in
+without ``corti server start``. Drives a fixture through ``/add`` in
 N-sized batches, then triggers ``/flush`` to drain the tail.
 
 Reads ``settings.memorize.mode`` from current env / toml — set the mode via
-``CORTISTRATE_MEMORIZE__MODE=chat|agent`` *before* invoking this script (the
+``CORTI_MEMORIZE__MODE=chat|agent`` *before* invoking this script (the
 config is cached after the first ``load_settings()`` call).
 
 Usage:
-    CORTISTRATE_MEMORIZE__MODE=chat  uv run python scripts/e2e_memorize/run.py \\
+    CORTI_MEMORIZE__MODE=chat  uv run python scripts/e2e_memorize/run.py \\
         --fixture scripts/e2e_memorize/fixtures/chat_session.json
 
-    CORTISTRATE_MEMORIZE__MODE=agent uv run python scripts/e2e_memorize/run.py \\
+    CORTI_MEMORIZE__MODE=agent uv run python scripts/e2e_memorize/run.py \\
         --fixture scripts/e2e_memorize/fixtures/agent_session.json --batch-size 5
 
 After it finishes, check:
-    ~/.cortistrate/users/<owner>/episodes/<date>.md      (written sync by 4A)
-    ~/.cortistrate/.index/sqlite/system.db memcell rows  (written by boundary)
-    ~/.cortistrate/agents/<agent>/agent_cases/<date>.md  (written async by OME
+    ~/.corti/users/<owner>/episodes/<date>.md      (written sync by 4A)
+    ~/.corti/.index/sqlite/system.db memcell rows  (written by boundary)
+    ~/.corti/agents/<agent>/agent_cases/<date>.md  (written async by OME
         - only if a consumer of AgentMemCellWritten is registered)
 """
 
@@ -34,12 +34,12 @@ from pathlib import Path
 
 from sqlmodel import SQLModel
 
-from cortistrate.component.llm import get_llm_client
-from cortistrate.config import load_settings
-from cortistrate.core.persistence import MemoryRoot
-from cortistrate.infra.persistence.sqlite import dispose_engine, get_engine
-from cortistrate.service.memorize import _get_engine as _get_ome_engine
-from cortistrate.service.memorize import memorize
+from corti.component.llm import get_llm_client
+from corti.config import load_settings
+from corti.core.persistence import MemoryRoot
+from corti.infra.persistence.sqlite import dispose_engine, get_engine
+from corti.service.memorize import _get_engine as _get_ome_engine
+from corti.service.memorize import memorize
 
 
 def _chunks(items: list[dict], n: int) -> list[list[dict]]:
@@ -48,7 +48,7 @@ def _chunks(items: list[dict], n: int) -> list[list[dict]]:
 
 def _print_header(mode: str, fixture_path: Path, session_id: str) -> None:
     print("=" * 72)
-    print(f"  cortistrate e2e memorize  ·  mode={mode}")
+    print(f"  corti e2e memorize  ·  mode={mode}")
     print(f"  fixture     : {fixture_path.name}")
     print(f"  session_id  : {session_id}")
     print(f"  memory root : {MemoryRoot.default().root}")
@@ -102,12 +102,12 @@ async def _run(args: argparse.Namespace) -> None:
         print(
             f"!! expected mode={args.expected_mode!r} but "
             f"settings.memorize.mode={mode!r}. "
-            "Set CORTISTRATE_MEMORIZE__MODE before launching."
+            "Set CORTI_MEMORIZE__MODE before launching."
         )
         sys.exit(2)
 
     fixture_path = Path(args.fixture).resolve()  # noqa: ASYNC240
-    fixture = json.loads(fixture_path.read_text())  # noqa: ASYNC230
+    fixture = json.loads(fixture_path.read_text())
     messages: list[dict] = fixture["messages"]
     session_id = f"{fixture.get('session_id_hint', 'e2e')}_{uuid.uuid4().hex[:8]}"
 

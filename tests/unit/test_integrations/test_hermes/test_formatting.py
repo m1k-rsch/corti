@@ -2,7 +2,7 @@
 
 Pins the Hermes-agnostic formatting helpers:
 
-- ``format_prefetch`` emits the ``## Cortistrate Memory`` header, sorts episodes
+- ``format_prefetch`` emits the ``## Corti Memory`` header, sorts episodes
   by ``score`` descending, nests atomic facts under their parent episode,
   truncates at a word boundary appending ``" …"`` when it overflows, and
   returns ``""`` when there are no episodes and no profiles. A profile
@@ -83,7 +83,7 @@ def test_format_prefetch_header_and_episode_block() -> None:
         ]
     )
     out = format_prefetch("q", data)
-    assert out.startswith("## Cortistrate Memory")
+    assert out.startswith("## Corti Memory")
     assert "**Episode**: alpha" in out
     assert "alpha body" in out
     assert "- fact-a" in out
@@ -127,7 +127,7 @@ def test_format_prefetch_profile_one_liner_when_present() -> None:
         profiles=[_profile("Alice", 0.8)],
     )
     out = format_prefetch("q", data)
-    assert out.startswith("## Cortistrate Memory")
+    assert out.startswith("## Corti Memory")
     assert "**Profile**: Alice" in out
 
 
@@ -145,7 +145,7 @@ def test_format_prefetch_truncation_keeps_header_when_budget_small() -> None:
     data = _search_data(episodes=[_episode("ep", 0.5, episode="x" * 5000)])
     out = format_prefetch("q", data, max_chars=40)
     # Even truncated, the header is the first section; budget > header len.
-    assert "## Cortistrate Memory" in out
+    assert "## Corti Memory" in out
     assert out.endswith(" …")
 
 

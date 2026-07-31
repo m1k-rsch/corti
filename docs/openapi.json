@@ -1,7 +1,7 @@
 {
   "openapi": "3.1.0",
   "info": {
-    "title": "cortistrate",
+    "title": "corti",
     "description": "md-first memory extraction framework",
     "version": "1.1.2"
   },
@@ -1408,7 +1408,7 @@
         "additionalProperties": true,
         "type": "object",
         "title": "FilterNode",
-        "description": "One Filters DSL node.\n\nRecursive ``AND`` / ``OR`` arrays mix with arbitrary scalar fields at\nthe same level. Pydantic only checks the combinators; field-level\nsafety is enforced when compiling the node to a Postgres ``WHERE``\nstring in :mod:`cortistrate.memory.search.filters`."
+        "description": "One Filters DSL node.\n\nRecursive ``AND`` / ``OR`` arrays mix with arbitrary scalar fields at\nthe same level. Pydantic only checks the combinators; field-level\nsafety is enforced when compiling the node to a Postgres ``WHERE``\nstring in :mod:`corti.memory.search.filters`."
       },
       "FlushResponseData": {
         "properties": {

@@ -17,7 +17,7 @@ import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
-from cortistrate.core.middleware import prometheus as prom_mod
+from corti.core.middleware import prometheus as prom_mod
 
 
 def _sample_value(metric: object, **labels: str) -> float:
@@ -123,7 +123,7 @@ def test_normalize_path_uses_path_params_fallback() -> None:
     """When scope has no ``route`` but ``path_params`` is set, substitute names."""
     from types import SimpleNamespace
 
-    from cortistrate.core.middleware.prometheus import _normalize_path
+    from corti.core.middleware.prometheus import _normalize_path
 
     fake_req = SimpleNamespace(
         scope={},
@@ -138,7 +138,7 @@ def test_normalize_path_unmatched_fallback() -> None:
     """No route, no path_params → ``{unmatched}`` sentinel."""
     from types import SimpleNamespace
 
-    from cortistrate.core.middleware.prometheus import _normalize_path
+    from corti.core.middleware.prometheus import _normalize_path
 
     fake_req = SimpleNamespace(
         scope={},
@@ -152,7 +152,7 @@ def test_normalize_path_non_dict_scope_falls_through() -> None:
     """Defensive: a non-dict ``scope`` skips the route lookup entirely."""
     from types import SimpleNamespace
 
-    from cortistrate.core.middleware.prometheus import _normalize_path
+    from corti.core.middleware.prometheus import _normalize_path
 
     fake_req = SimpleNamespace(
         scope="not-a-dict",

@@ -19,7 +19,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from cortistrate.core.persistence import (
+from corti.core.persistence import (
     MarkdownReader,
     MarkdownWriter,
     MemoryRoot,

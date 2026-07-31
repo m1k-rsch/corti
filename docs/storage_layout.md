@@ -1,6 +1,6 @@
 # Storage Layout
 
-How `cortistrate` lays out a memory-root on disk: directory tree, file
+How `corti` lays out a memory-root on disk: directory tree, file
 naming, frontmatter chassis, and entry-id encoding.
 
 The contents are the **source of truth**; SQLite and Postgres are
@@ -9,7 +9,7 @@ derived indexes that can be rebuilt from markdown alone.
 ## 1. Memory-root tree
 
 A memory-root is a single directory holding all persisted memory. The
-default location is `~/.cortistrate/`; override via the `CORTISTRATE_ROOT`
+default location is `~/.corti/`; override via the `CORTI_ROOT`
 env var or `--root` on the CLI.
 
 Memory is partitioned by **`<app_id>/<project_id>`** *before* the
@@ -19,7 +19,7 @@ a directory. The reserved id `"default"` materialises as `default_app` /
 the frontmatter (see [§3](#3-frontmatter-chassis-yaml)).
 
 ```
-<memory-root>/                              default ~/.cortistrate
+<memory-root>/                              default ~/.corti
 │
 ├── <app_id>/                               user-visible; "default" → default_app
 │   └── <project_id>/                       "default" → default_project
@@ -61,11 +61,11 @@ the frontmatter (see [§3](#3-frontmatter-chassis-yaml)).
 > `.lock` anchor for the `memory_root_lock` primitive; there is no
 > `.cascade.log` / `.manifest.json`.)
 
-The path manager is [`MemoryRoot`](../src/cortistrate/core/persistence/memory_root.py),
+The path manager is [`MemoryRoot`](../src/corti/core/persistence/memory_root.py),
 exposing every path as a property. `MemoryRoot.ensure()` creates the
 runtime-required dirs (`.index/sqlite/`, `.tmp/`); the
 user-visible dirs are *not* pre-created — they appear on first write.
-Config files (`cortistrate.toml`, `ome.toml`) are created by `cortistrate init`.
+Config files (`corti.toml`, `ome.toml`) are created by `corti init`.
 
 > The single-file writer also supports `agent.md` / `soul.md` / `tools.md`
 > / `behaviors.md`, but no shipped strategy produces those today — only
@@ -83,9 +83,9 @@ Each business memory kind picks one of three on-disk patterns:
 | **Single-file rewrite** | `user.md` (writer also supports `agent.md` / `soul.md` / `tools.md` / `behaviors.md`, not yet produced) | overwrite the file | user profile |
 
 Markdown IO primitives live in
-[`core/persistence/markdown/`](../src/cortistrate/core/persistence/markdown/);
+[`core/persistence/markdown/`](../src/corti/core/persistence/markdown/);
 business-aware writers live in
-[`infra/persistence/markdown/writers/`](../src/cortistrate/infra/persistence/markdown/writers/)
+[`infra/persistence/markdown/writers/`](../src/corti/infra/persistence/markdown/writers/)
 and pick the right strategy via a base class.
 
 For a step-by-step recipe to add a new memory kind, see the
@@ -117,7 +117,7 @@ carried by the `<app>/<project>` path segments and recovered by the
 cascade path parser. The frontmatter only holds the file-level owner
 (`user_id` / `agent_id`) and `track`.
 
-The chassis lives in [`core/persistence/markdown/frontmatter.py`](../src/cortistrate/core/persistence/markdown/frontmatter.py)
+The chassis lives in [`core/persistence/markdown/frontmatter.py`](../src/corti/core/persistence/markdown/frontmatter.py)
 (Pydantic v2):
 
 ```
@@ -161,7 +161,7 @@ e.g. `ep_20260601_00000001`:
 | `<YYYYMMDD>` | The daily-log file's date bucket |
 | `NNNNNNNN` | Per-file sequence, 8-digit zero-padded, restarts at `00000001` each day per scope |
 
-Implementation: [`core/persistence/markdown/entries.py`](../src/cortistrate/core/persistence/markdown/entries.py)
+Implementation: [`core/persistence/markdown/entries.py`](../src/corti/core/persistence/markdown/entries.py)
 (`EntryId.parse / format / next_for`).
 
 > **File-level seq, not global**: the same `ep_20260601_00000001` may
@@ -182,14 +182,14 @@ Implementation: [`core/persistence/markdown/entries.py`](../src/cortistrate/core
                              rows (text / vector / tokens / metadata) live here
 ```
 
-- **SQLite** ([`infra/persistence/sqlite/tables/`](../src/cortistrate/infra/persistence/sqlite/tables/))
+- **SQLite** ([`infra/persistence/sqlite/tables/`](../src/corti/infra/persistence/sqlite/tables/))
   holds only system / coordination tables — `md_change_state` (cascade
   queue), `memcell` (boundary ledger), `unprocessed_buffer`,
   `conversation_status`, `cluster`, `knowledge`, `reflection_report` — **not**
   per-kind business rows. `reflection_report` is the audit trail for
   Reflection merges (cluster_id, mode, source_members, merged_entry_id,
   status).
-- **Postgres** ([`infra/persistence/pg/tables/`](../src/cortistrate/infra/persistence/pg/tables/))
+- **Postgres** ([`infra/persistence/pg/tables/`](../src/corti/infra/persistence/pg/tables/))
   holds the per-kind business rows, keyed `<owner_id>_<entry_id>` (so
   cross-table joins use `(owner_id, entry_id)`); each table's `vector(N)`
   dimension matches the embedding model output.
@@ -217,13 +217,13 @@ appends an entry block → atomic write back. The caller passes a full
 this primitive is **schema-agnostic** — field-level semantics
 (`entry_count` / `last_appended_at`) are a business writer's job
 (see `BaseDailyWriter._frontmatter_updates` in
-[`infra/persistence/markdown/writers/base.py`](../src/cortistrate/infra/persistence/markdown/writers/base.py)).
+[`infra/persistence/markdown/writers/base.py`](../src/corti/infra/persistence/markdown/writers/base.py)).
 
 ## 7. References
 
 - Skill: [`/add-memory-kind`](../.claude/skills/add-memory-kind/SKILL.md)
 - Code:
-  - [`core/persistence/memory_root.py`](../src/cortistrate/core/persistence/memory_root.py)
-  - [`core/persistence/markdown/`](../src/cortistrate/core/persistence/markdown/)
-  - [`infra/persistence/{markdown,sqlite,pg}/`](../src/cortistrate/infra/persistence/)
-  - [`memory/cascade/`](../src/cortistrate/memory/cascade/) (md → Postgres sync)
+  - [`core/persistence/memory_root.py`](../src/corti/core/persistence/memory_root.py)
+  - [`core/persistence/markdown/`](../src/corti/core/persistence/markdown/)
+  - [`infra/persistence/{markdown,sqlite,pg}/`](../src/corti/infra/persistence/)
+  - [`memory/cascade/`](../src/corti/memory/cascade/) (md → Postgres sync)

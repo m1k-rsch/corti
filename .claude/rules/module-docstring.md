@@ -1,10 +1,10 @@
 ---
 paths:
-  - "src/cortistrate/infra/**/*.py"
-  - "src/cortistrate/memory/**/*.py"
-  - "src/cortistrate/service/**/*.py"
-  - "src/cortistrate/component/**/*.py"
-  - "src/cortistrate/core/**/*.py"
+  - "src/corti/infra/**/*.py"
+  - "src/corti/memory/**/*.py"
+  - "src/corti/service/**/*.py"
+  - "src/corti/component/**/*.py"
+  - "src/corti/core/**/*.py"
 ---
 
 # Module docstring rule

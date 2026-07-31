@@ -7,11 +7,11 @@ import importlib
 import pytest
 from pydantic import SecretStr
 
-from cortistrate.component.llm import LLMNotConfiguredError
-from cortistrate.config import Settings
-from cortistrate.config.settings import LLMSettings
+from corti.component.llm import LLMNotConfiguredError
+from corti.config import Settings
+from corti.config.settings import LLMSettings
 
-_client_mod = importlib.import_module("cortistrate.component.llm.client")
+_client_mod = importlib.import_module("corti.component.llm.client")
 
 
 def _reset_singleton(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -39,7 +39,7 @@ def test_raises_when_api_key_missing(monkeypatch: pytest.MonkeyPatch) -> None:
     _reset_singleton(monkeypatch)
     _patch_settings(monkeypatch, api_key=None, base_url="https://example.test")
 
-    with pytest.raises(LLMNotConfiguredError, match="CORTISTRATE_LLM__API_KEY"):
+    with pytest.raises(LLMNotConfiguredError, match="CORTI_LLM__API_KEY"):
         _client_mod.get_llm_client()
 
 
@@ -47,7 +47,7 @@ def test_raises_when_base_url_missing(monkeypatch: pytest.MonkeyPatch) -> None:
     _reset_singleton(monkeypatch)
     _patch_settings(monkeypatch, api_key="sk-test", base_url=None)
 
-    with pytest.raises(LLMNotConfiguredError, match="CORTISTRATE_LLM__BASE_URL"):
+    with pytest.raises(LLMNotConfiguredError, match="CORTI_LLM__BASE_URL"):
         _client_mod.get_llm_client()
 
 

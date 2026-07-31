@@ -1,5 +1,5 @@
-name: cortistrate
+name: corti
 version: 0.1.0
-description: "Cortistrate memory provider for Hermes Agent. Supports both vendor-hosted Cortistrate servers and local self-hosted instances with user-supplied LLM / embedding / rerank endpoints."
+description: "Corti memory provider for Hermes Agent. Supports both vendor-hosted Corti servers and local self-hosted instances with user-supplied LLM / embedding / rerank endpoints."
 pip_dependencies:
   - httpx

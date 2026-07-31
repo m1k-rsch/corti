@@ -8,7 +8,7 @@ paths:
 Tests mirror the source layout: `tests/unit/test_<layer>/...`,
 `tests/integration/...`, `tests/e2e/...`.
 
-- **Structure**: `tests/unit/` mirrors `src/cortistrate/` package-for-package. Put a test
+- **Structure**: `tests/unit/` mirrors `src/corti/` package-for-package. Put a test
   next to where its subject lives in the mirror.
 - **Async**: `pytest-asyncio` is in `auto` mode — write `async def test_*` directly,
   no marker needed.

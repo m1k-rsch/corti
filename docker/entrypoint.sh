@@ -1,19 +1,19 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# ── Cortistrate container entrypoint ──────────────────────────────
+# ── Corti container entrypoint ──────────────────────────────
 # Runs as root (the initial container process).  Performs:
 #   1. chown the data volume for postgres and app users.
 #   2. First-run PG initialization (initdb + user + database + extension).
 #   3. Copy default config files if missing.
 #   4. exec supervisord as PID 1.
 
-DATA_DIR="${CORTISTRATE_ROOT:-/home/app/.cortistrate}"
+DATA_DIR="${CORTI_ROOT:-/home/app/.corti}"
 PGDATA="${PGDATA:-${DATA_DIR}/.index/pg}"
 PG_PORT="${DB_PORT:-5432}"
-PG_USER="${DB_USER:-cortistrate}"
-PG_DB="${DB_NAME:-cortistrate}"
-PG_PASS="${DB_PASSWORD:-cortistrate_local_2026}"
+PG_USER="${DB_USER:-corti}"
+PG_DB="${DB_NAME:-corti}"
+PG_PASS="${DB_PASSWORD:-corti_local_2026}"
 
 # ── Step 1: Ensure required directories exist ────────────────────
 mkdir -p "${DATA_DIR}/.index/sqlite"
@@ -90,31 +90,31 @@ host    all       all       ::1/128       md5
 HBAEOF
     chown postgres:postgres "${PGDATA}/pg_hba.conf"
 
-    cat > "${PGDATA}/cortistrate.conf" << 'PGEOF'
+    cat > "${PGDATA}/corti.conf" << 'PGEOF'
 listen_addresses = '127.0.0.1'
 port = 5432
 log_destination = 'stderr'
 logging_collector = 'off'
 unix_socket_directories = ''
 PGEOF
-    chown postgres:postgres "${PGDATA}/cortistrate.conf"
+    chown postgres:postgres "${PGDATA}/corti.conf"
 
-    echo "include = 'cortistrate.conf'" >> "${PGDATA}/postgresql.auto.conf"
+    echo "include = 'corti.conf'" >> "${PGDATA}/postgresql.auto.conf"
     chown postgres:postgres "${PGDATA}/postgresql.auto.conf"
 else
     echo "[entrypoint] Existing PG data found, skipping initialization."
 fi
 
 # ── Step 4: Copy default config files if missing ─────────────────
-if [ ! -f "${DATA_DIR}/cortistrate.toml" ]; then
-    echo "[entrypoint] Creating cortistrate.toml from defaults..."
-    cp /opt/cortistrate/config/default.toml "${DATA_DIR}/cortistrate.toml"
-    chown app:app "${DATA_DIR}/cortistrate.toml"
+if [ ! -f "${DATA_DIR}/corti.toml" ]; then
+    echo "[entrypoint] Creating corti.toml from defaults..."
+    cp /opt/corti/config/default.toml "${DATA_DIR}/corti.toml"
+    chown app:app "${DATA_DIR}/corti.toml"
 fi
 
 if [ ! -f "${DATA_DIR}/ome.toml" ]; then
     echo "[entrypoint] Creating ome.toml from defaults..."
-    cp /opt/cortistrate/config/default_ome.toml "${DATA_DIR}/ome.toml"
+    cp /opt/corti/config/default_ome.toml "${DATA_DIR}/ome.toml"
     chown app:app "${DATA_DIR}/ome.toml"
 fi
 
@@ -125,5 +125,5 @@ if [ "$(id -u)" = "0" ]; then
 fi
 
 # ── Step 6: Launch supervisord ────────────────────────────────────
-echo "[entrypoint] Starting supervisord (PG + cortistrate)..."
+echo "[entrypoint] Starting supervisord (PG + corti)..."
 exec /usr/bin/supervisord -c /etc/supervisor/conf.d/supervisord.conf

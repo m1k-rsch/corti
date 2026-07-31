@@ -1,4 +1,4 @@
-"""Validate commit subjects against the Cortistrate Conventional Commits policy."""
+"""Validate commit subjects against the Corti Conventional Commits policy."""
 
 from __future__ import annotations
 

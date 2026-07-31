@@ -1,6 +1,6 @@
-# Cortistrate HTTP API (v1)
+# Corti HTTP API (v1)
 
-Human-readable reference for the Cortistrate HTTP API. Schema names, types
+Human-readable reference for the Corti HTTP API. Schema names, types
 and validation constraints mirror the OpenAPI spec served at
 `GET /openapi.json` (when the server runs with `ENV=DEV`; see
 [OpenAPI spec source](#openapi-spec-source)). This document adds the
@@ -40,8 +40,8 @@ business semantics the raw spec does not carry.
 
 | Setting | Default | Override |
 |---|---|---|
-| Host | `127.0.0.1` (loopback only) | `CORTISTRATE_API__HOST` env var or `--host` flag |
-| Port | `8000` | `CORTISTRATE_API__PORT` env var or `--port` flag |
+| Host | `127.0.0.1` (loopback only) | `CORTI_API__HOST` env var or `--host` flag |
+| Port | `8000` | `CORTI_API__PORT` env var or `--port` flag |
 | Version prefix | `/api/v1` | — |
 
 Business endpoints live under `/api/v1/memory/`, `/api/v1/ome/`, and
@@ -58,7 +58,7 @@ and response bodies are UTF-8 JSON.
 
 ### Authentication
 
-Cortistrate ships **no built-in authentication**. The server binds to
+Corti ships **no built-in authentication**. The server binds to
 `127.0.0.1` by default; place your own gateway or auth layer in front
 before exposing the API on any other interface. See
 [../SECURITY.md](../SECURITY.md) for the threat model.
@@ -97,9 +97,9 @@ regardless; index lag never loses data.
 
 #### Timestamps
 
-Cortistrate runs a **two-zone discipline**: every stored byte is UTC; every
+Corti runs a **two-zone discipline**: every stored byte is UTC; every
 rendered value carries the configured **display timezone**. The
-display timezone is set by `CORTISTRATE_MEMORY__TIMEZONE` (env var) or
+display timezone is set by `CORTI_MEMORY__TIMEZONE` (env var) or
 `[memory] timezone` (TOML); default `"UTC"`.
 
 | Direction | Format | Notes |
@@ -108,10 +108,10 @@ display timezone is set by `CORTISTRATE_MEMORY__TIMEZONE` (env var) or
 | **Request** — `filters.timestamp.{gte,lt,…}` (`/search` / `/get`) | Integer, **Unix epoch ms** *or* ISO-8601 string | Same auto-detect; pick whichever you have |
 | **Response** — every `timestamp` field | ISO-8601 string with **explicit timezone offset** (`+HH:MM` or `Z`) | Always rendered in the configured display tz; never naive |
 
-With the default `CORTISTRATE_MEMORY__TIMEZONE=UTC` an episode produced
+With the default `CORTI_MEMORY__TIMEZONE=UTC` an episode produced
 at 11:30 UTC renders as `"2026-05-28T11:30:36Z"` (Pydantic
 canonicalises `timezone.utc` to `Z`). Switch to
-`CORTISTRATE_MEMORY__TIMEZONE=Asia/Shanghai` and the same UTC instant
+`CORTI_MEMORY__TIMEZONE=Asia/Shanghai` and the same UTC instant
 renders as `"2026-05-28T19:30:36+08:00"` — bytes on disk are
 unchanged.
 
@@ -122,7 +122,7 @@ storage. This is the same rule users see when reading rendered output:
 "if you didn't say a zone, we assume your zone."
 
 **For internal architecture.** The storage / display split lives in
-`cortistrate.component.utils.datetime`
+`corti.component.utils.datetime`
 (`get_utc_now` / `ensure_utc` / `UtcDatetime` for storage;
 `get_now_with_timezone` / `to_display_tz` for display). See
 [datetime.md](datetime.md) for the design rationale.
@@ -141,7 +141,7 @@ storage. This is the same rule users see when reading rendered output:
 
 `app_id` and `project_id` partition memory at the disk layer. Every
 write lands under
-`~/.cortistrate/<app>/<project>/users/<user_id>/...` (or `.../agents/...`
+`~/.corti/<app>/<project>/users/<user_id>/...` (or `.../agents/...`
 for the agent track). The default scope materialises on disk as
 `default_app` / `default_project` (the `_app` / `_project` suffix is
 added only for the literal id `"default"` so the default space stays
@@ -193,7 +193,7 @@ parsing the human-readable `message` field.
 | `BAD_REQUEST` | `400` | No | Path traversal attempt or other malformed input |
 | `UNSUPPORTED_FORMAT` | `415` | No | File format or modality not supported (e.g. unsupported `ContentItem` type, missing `ext` for `base64`) |
 | `EXTERNAL_SERVICE_UNAVAILABLE` | `503` | **Yes** | An external service (LLM, embedding, rerank) returned an error or timed out |
-| `CAPABILITY_UNAVAILABLE` | `503` | No | A required server-side capability is missing (e.g. `cortistrate[multimodal]` extra not installed, LibreOffice absent) — requires admin action, not retry |
+| `CAPABILITY_UNAVAILABLE` | `503` | No | A required server-side capability is missing (e.g. `corti[multimodal]` extra not installed, LibreOffice absent) — requires admin action, not retry |
 | `CONFIGURATION_ERROR` | `500` | No | A required configuration is missing or invalid (e.g. embedding model not set) |
 | `INTERNAL_ERROR` | `500` | No | Unhandled exception (internal details are logged, never leaked) |
 
@@ -258,7 +258,7 @@ file (`episode-<YYYY-MM-DD>.md` etc.).
 - A bare **string** is shorthand for a single text content item.
 - An **array of `ContentItem`** is for mixed-modality input (text +
   image / pdf / audio / ...); non-text items are parsed by the
-  multimodal LLM configured via `CORTISTRATE_MULTIMODAL__*` env vars. See
+  multimodal LLM configured via `CORTI_MULTIMODAL__*` env vars. See
   [ContentItem](#contentitem).
 
 **`tool_calls`** — When `role: "assistant"`, the tool calls the
@@ -284,7 +284,7 @@ payload — a non-text item carrying only `text` returns `415`.
 | `base64` | `string \| null` | no | `null` | Inline payload, plain base64 (no `data:` prefix) |
 | `ext` | `string \| null` | no | `null` | File-extension hint when `uri` lacks one |
 | `name` | `string \| null` | no | `null` | Display filename, used in logs |
-| `extras` | `object \| null` | no | `null` | Provider-specific metadata, opaque to Cortistrate |
+| `extras` | `object \| null` | no | `null` | Provider-specific metadata, opaque to Corti |
 
 **`type`** — The content kind. Each non-text type is dispatched to the
 multimodal LLM. If the multimodal endpoint cannot handle the supplied
@@ -304,8 +304,8 @@ filesystem (the path must be reachable by the server process), subject
 to these guardrails:
 
 - the resolved path (symlinks followed) must be an existing regular file;
-- its size must be ≤ `CORTISTRATE_MULTIMODAL__FILE_URI_MAX_BYTES` (default 50 MiB);
-- when `CORTISTRATE_MULTIMODAL__FILE_URI_ALLOW_DIRS` is set, the path must lie
+- its size must be ≤ `CORTI_MULTIMODAL__FILE_URI_MAX_BYTES` (default 50 MiB);
+- when `CORTI_MULTIMODAL__FILE_URI_ALLOW_DIRS` is set, the path must lie
   within one of the listed roots (unset = any readable file, the
   permissive default).
 
@@ -336,7 +336,7 @@ Content-Type usually suffices.
 Does not affect parsing.
 
 **`extras`** — Free-form bag of provider-specific metadata (e.g.
-caption, page hints). Opaque to Cortistrate; passed through to the
+caption, page hints). Opaque to Corti; passed through to the
 multimodal LLM context.
 
 ### ToolCall
@@ -1108,7 +1108,7 @@ from the Pydantic DTOs. **The spec is not exposed by default** — the
 mount when the server starts with `ENV=DEV` set.
 
 ```bash
-ENV=DEV cortistrate server start
+ENV=DEV corti server start
 # In another terminal:
 curl http://127.0.0.1:8000/openapi.json | python -m json.tool
 # Or interactively in a browser:

@@ -1,9 +1,9 @@
-"""Integration smoke: ``cortistrate integrations install`` + plugin load.
+"""Integration smoke: ``corti integrations install`` + plugin load.
 
 Runs the real ``install`` command (Typer CliRunner) against the actual
 ``integrations/hermes/`` bundle and a throwaway ``HERMES_HOME``, then
 imports the symlinked bundle with Hermes stubs injected and asserts the
-``CortistrateMemoryProvider`` is loadable as a ``MemoryProvider`` subclass.
+``CortiMemoryProvider`` is loadable as a ``MemoryProvider`` subclass.
 
 Deviation from the written spec: the bundle's ``__init__.py`` does not
 define a ``register(ctx)`` function — Hermes' plugin loader
@@ -24,7 +24,7 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from cortistrate.entrypoints.cli.commands import integrations as integrations_mod
+from corti.entrypoints.cli.commands import integrations as integrations_mod
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
 _REAL_BUNDLE = _REPO_ROOT / "integrations" / "hermes"
@@ -35,7 +35,7 @@ def hermes_home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     home = tmp_path / "hermes-home"
     home.mkdir()
     monkeypatch.setenv("HERMES_HOME", str(home))
-    monkeypatch.delenv("CORTISTRATE_HERMES_PLUGIN_SOURCE", raising=False)
+    monkeypatch.delenv("CORTI_HERMES_PLUGIN_SOURCE", raising=False)
     return home
 
 
@@ -46,7 +46,7 @@ def _install_symlink(hermes_home: Path) -> Path:
         ["install", "hermes", "--source", str(_REAL_BUNDLE)],
     )
     assert result.exit_code == 0, result.output
-    target = hermes_home / "plugins" / "cortistrate"
+    target = hermes_home / "plugins" / "corti"
     assert target.is_symlink(), f"expected symlink at {target}"
     assert target.resolve() == _REAL_BUNDLE.resolve()
     return target
@@ -101,13 +101,13 @@ def test_installed_plugin_loads_as_memory_provider(hermes_home: Path):
     )
     from tests.helpers.hermes_stub import MemoryProvider
 
-    assert hasattr(plugin, "CortistrateMemoryProvider")
-    provider_cls = plugin.CortistrateMemoryProvider
+    assert hasattr(plugin, "CortiMemoryProvider")
+    provider_cls = plugin.CortiMemoryProvider
     assert isinstance(provider_cls, type)
     assert issubclass(provider_cls, MemoryProvider)
     # The provider is instantiable (the loader's fallback does this).
     provider = provider_cls()
-    assert provider.name == "cortistrate"
+    assert provider.name == "corti"
 
 
 def test_installed_plugin_handles_tool_call_end_to_end(hermes_home: Path):
@@ -117,15 +117,15 @@ def test_installed_plugin_handles_tool_call_end_to_end(hermes_home: Path):
     plugin = importlib.import_module("integrations.hermes")
     from tests.helpers.hermes_stub import MemoryProvider
 
-    provider = plugin.CortistrateMemoryProvider()
+    provider = plugin.CortiMemoryProvider()
     assert isinstance(provider, MemoryProvider)
     # The four tool schemas are exposed regardless of backend availability.
     schemas = {s["name"] for s in provider.get_tool_schemas()}
-    assert schemas == {"cortistrate_search", "cortistrate_list", "cortistrate_add", "cortistrate_flush"}
+    assert schemas == {"corti_search", "corti_list", "corti_add", "corti_flush"}
     # Without a configured client, tool calls surface a clean error.
     provider._client = None
     provider._init_error = "not configured"
-    out = provider.handle_tool_call("cortistrate_search", {"query": "x"})
+    out = provider.handle_tool_call("corti_search", {"query": "x"})
     assert "error" in json.loads(out)
 
 

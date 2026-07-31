@@ -7,8 +7,8 @@ from pathlib import Path
 import pytest
 import yaml
 
-from cortistrate.infra.persistence.markdown.writers import KnowledgeWriter
-from cortistrate.infra.persistence.markdown.writers.knowledge_writer import (
+from corti.infra.persistence.markdown.writers import KnowledgeWriter
+from corti.infra.persistence.markdown.writers.knowledge_writer import (
     KnowledgeMemory,
 )
 

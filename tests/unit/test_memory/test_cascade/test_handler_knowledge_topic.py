@@ -19,11 +19,11 @@ from pathlib import Path
 
 import pytest
 
-from cortistrate.component.embedding import EmbeddingProvider
-from cortistrate.component.tokenizer import Tokenizer
-from cortistrate.core.persistence import MemoryRoot
-from cortistrate.infra.persistence.sqlite import TopicUpsertPayload
-from cortistrate.memory.cascade.handlers import HandlerDeps, KnowledgeTopicHandler
+from corti.component.embedding import EmbeddingProvider
+from corti.component.tokenizer import Tokenizer
+from corti.core.persistence import MemoryRoot
+from corti.infra.persistence.sqlite import TopicUpsertPayload
+from corti.memory.cascade.handlers import HandlerDeps, KnowledgeTopicHandler
 
 # ── Stubs ──────────────────────────────────────────────────────────────
 
@@ -104,7 +104,7 @@ def memory_root(tmp_path: Path) -> MemoryRoot:
 
 @pytest.fixture
 def fake_lance(monkeypatch: pytest.MonkeyPatch) -> _FakeLanceRepo:
-    from cortistrate.memory.cascade.handlers import knowledge_topic as mod
+    from corti.memory.cascade.handlers import knowledge_topic as mod
 
     repo = _FakeLanceRepo()
     monkeypatch.setattr(mod, "knowledge_topic_repo", repo)
@@ -113,7 +113,7 @@ def fake_lance(monkeypatch: pytest.MonkeyPatch) -> _FakeLanceRepo:
 
 @pytest.fixture
 def fake_sqlite(monkeypatch: pytest.MonkeyPatch) -> _FakeSqliteRepo:
-    from cortistrate.memory.cascade.handlers import knowledge_topic as mod
+    from corti.memory.cascade.handlers import knowledge_topic as mod
 
     repo = _FakeSqliteRepo()
     monkeypatch.setattr(mod, "knowledge_topic_sqlite_repo", repo)

@@ -1,7 +1,7 @@
 """ORM CRUD demo: full INSERT / SELECT / UPDATE / DELETE on a BaseTable.
 
 Doubles as living documentation for how to author a SQLModel-backed
-business table inside the cortistrate persistence stack:
+business table inside the corti persistence stack:
 
     1. Subclass ``BaseTable`` (gets ``created_at`` / ``updated_at`` for free).
     2. Build a session factory from a real engine.
@@ -20,8 +20,8 @@ from pathlib import Path
 import pytest
 from sqlmodel import SQLModel, select
 
-from cortistrate.config import SqliteSettings
-from cortistrate.core.persistence import (
+from corti.config import SqliteSettings
+from corti.core.persistence import (
     BaseTable,
     Field,
     MemoryRoot,

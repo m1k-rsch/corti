@@ -21,12 +21,12 @@ from typing import Any
 
 import pytest
 
-from cortistrate.memory.get import (
+from corti.memory.get import (
     GetManager,
     GetMemoryType,
     GetRequest,
 )
-from cortistrate.memory.search import FilterNode
+from corti.memory.search import FilterNode
 
 # ── Stub repos ──────────────────────────────────────────────────────────
 

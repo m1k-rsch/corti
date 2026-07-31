@@ -7,7 +7,7 @@ from collections.abc import Callable
 import httpx
 import pytest
 
-from cortistrate.component.rerank import RerankServiceError, VllmRerankProvider
+from corti.component.rerank import RerankServiceError, VllmRerankProvider
 
 
 def _patch_httpx(
@@ -15,7 +15,7 @@ def _patch_httpx(
     handler: Callable[[httpx.Request], httpx.Response],
 ) -> None:
     transport = httpx.MockTransport(handler)
-    import cortistrate.component.rerank.vllm_provider as mod
+    import corti.component.rerank.vllm_provider as mod
 
     real_cls = httpx.AsyncClient
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import pytest
 
-from cortistrate.core.persistence.markdown import (
+from corti.core.persistence.markdown import (
     StructuredEntry,
     parse_structured_entry,
     render_structured_entry,
@@ -144,7 +144,7 @@ def test_dataclass_immutable() -> None:
 def test_structured_entry_inherits_entry() -> None:
     """``StructuredEntry`` is an :class:`Entry` subclass and carries
     the marker context plus the parsed audit-form fields together."""
-    from cortistrate.core.persistence.markdown import Entry
+    from corti.core.persistence.markdown import Entry
 
     entry = StructuredEntry(
         id="ep_001",
@@ -162,7 +162,7 @@ def test_structured_entry_inherits_entry() -> None:
 
 def test_entry_as_structured_preserves_marker_context() -> None:
     """``Entry.as_structured`` copies id/start/end and adds parsed fields."""
-    from cortistrate.core.persistence.markdown import Entry
+    from corti.core.persistence.markdown import Entry
 
     entry = Entry(
         id="ep_001",

@@ -7,14 +7,14 @@ from typing import ClassVar, Literal
 
 import pytest
 
-from cortistrate.core.persistence import (
+from corti.core.persistence import (
     AgentScopedFrontmatter,
     BaseFrontmatter,
     MarkdownReader,
     MemoryRoot,
     UserScopedFrontmatter,
 )
-from cortistrate.infra.persistence.markdown.writers import ProfileWriter
+from corti.infra.persistence.markdown.writers import ProfileWriter
 
 
 class _UserProfileFM(UserScopedFrontmatter):

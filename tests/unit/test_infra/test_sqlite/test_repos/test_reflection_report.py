@@ -11,16 +11,16 @@ from pathlib import Path
 import pytest
 from sqlmodel import SQLModel
 
-from cortistrate.config import SqliteSettings
-from cortistrate.core.persistence import (
+from corti.config import SqliteSettings
+from corti.core.persistence import (
     MemoryRoot,
     create_session_factory,
     create_system_engine,
 )
-from cortistrate.infra.persistence.sqlite.repos.reflection_report import (
+from corti.infra.persistence.sqlite.repos.reflection_report import (
     _ReflectionReportRepo,
 )
-from cortistrate.infra.persistence.sqlite.tables import ReflectionReport
+from corti.infra.persistence.sqlite.tables import ReflectionReport
 
 
 @pytest.fixture

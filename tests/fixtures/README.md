@@ -11,12 +11,12 @@ Derived from the LoCoMo dataset (`snap-research/locomo`, file
 `data/locomo10.json`).
 
 **License: CC BY-NC 4.0** — non-commercial use only. This file is
-carved out of the project-wide Apache-2.0 license; see `NOTICE` at the
+carved out of the project-wide Apache-2.0 license; see `legal/NOTICE` at the
 repository root for the explicit declaration.
 
 If you need to regenerate it: fetch `locomo10.json` from the upstream
 LoCoMo project, then adapt it to the fields the tests consume
-(`cortistrate_session_id`, `cortistrate_user_id_for_test`, `speakers`,
+(`corti_session_id`, `corti_user_id_for_test`, `speakers`,
 `dialog`, ...). The original conversion script is not part of the
 public repository.
 

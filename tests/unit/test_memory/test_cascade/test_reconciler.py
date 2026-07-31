@@ -7,8 +7,8 @@ dataclass instances in / decisions out. Covers the 4 cases:
 
 from __future__ import annotations
 
-from cortistrate.memory.cascade.reconciler import PriorState, reconcile
-from cortistrate.memory.cascade.types import ScanInput
+from corti.memory.cascade.reconciler import PriorState, reconcile
+from corti.memory.cascade.types import ScanInput
 
 
 def _scan(path: str, mtime: float = 1.0, kind: str = "episode") -> ScanInput:

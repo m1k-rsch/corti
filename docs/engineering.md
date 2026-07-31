@@ -11,7 +11,7 @@
 | Tool | Role |
 |---|---|
 | [uv](https://docs.astral.sh/uv/) | sole package manager (`uv sync`; do not use `pip install`) |
-| [hatchling](https://hatch.pypa.io/) | wheel build backend (src layout under `src/cortistrate`) |
+| [hatchling](https://hatch.pypa.io/) | wheel build backend (src layout under `src/corti`) |
 | [ruff](https://docs.astral.sh/ruff/) | lint + format (replaces black / isort / flake8) |
 | [import-linter](https://import-linter.readthedocs.io/) | enforces the DDD layer dependency direction |
 | [pytest](https://docs.pytest.org/) | unit + integration tests |
@@ -42,11 +42,11 @@ green pipeline.
 
 Settings load in ascending priority:
 
-1. `src/cortistrate/config/default.toml` — shipped with the package (lowest)
-2. `<memory-root>/cortistrate.toml` — user config (optional)
-3. `CORTISTRATE_*` environment variables (highest)
+1. `src/corti/config/default.toml` — shipped with the package (lowest)
+2. `<memory-root>/corti.toml` — user config (optional)
+3. `CORTI_*` environment variables (highest)
 
-Run `cortistrate init` to generate starter config and `cortistrate config show` to
+Run `corti init` to generate starter config and `corti config show` to
 inspect the effective result. Full reference: [configuration.md](configuration.md).
 
 ## Quality gates
@@ -93,7 +93,7 @@ reviewed pull request with all checks green.
   (changes / scope / API impact / tests / checklist).
 - **Issues** use the templates under [.github/ISSUE_TEMPLATE/](../.github/ISSUE_TEMPLATE/).
 
-See [CONTRIBUTING.md](../CONTRIBUTING.md) for the full onboarding walkthrough.
+See [CONTRIBUTING.md](../legal/CONTRIBUTING.md) for the full onboarding walkthrough.
 
 > This repository also ships Claude Code configuration — coding rules under
 > `.claude/rules/` and slash-command workflows under `.claude/skills/` — that
@@ -105,7 +105,7 @@ See [CONTRIBUTING.md](../CONTRIBUTING.md) for the full onboarding walkthrough.
 
 - Architecture: [architecture.md](architecture.md)
 - Coding rules: [../.claude/rules/](../.claude/rules/)
-- Contributor onboarding: [../CONTRIBUTING.md](../CONTRIBUTING.md)
+- Contributor onboarding: [../legal/CONTRIBUTING.md](../legal/CONTRIBUTING.md)
 - [uv](https://docs.astral.sh/uv/) ·
   [ruff](https://docs.astral.sh/ruff/) ·
   [import-linter](https://import-linter.readthedocs.io/) ·

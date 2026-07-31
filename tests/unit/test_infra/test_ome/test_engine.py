@@ -6,18 +6,18 @@ from typing import Any
 
 import pytest
 
-from cortistrate.infra.ome.config import OMEConfig
-from cortistrate.infra.ome.context import StrategyContext
-from cortistrate.infra.ome.decorator import offline_strategy
-from cortistrate.infra.ome.engine import OfflineEngine
-from cortistrate.infra.ome.events import BaseEvent
-from cortistrate.infra.ome.exceptions import (
+from corti.infra.ome.config import OMEConfig
+from corti.infra.ome.context import StrategyContext
+from corti.infra.ome.decorator import offline_strategy
+from corti.infra.ome.engine import OfflineEngine
+from corti.infra.ome.events import BaseEvent
+from corti.infra.ome.exceptions import (
     EngineLockHeldError,
     OMEError,
     StartupValidationError,
 )
-from cortistrate.infra.ome.records import RunStatus
-from cortistrate.infra.ome.triggers import Cron, Idle, Immediate
+from corti.infra.ome.records import RunStatus
+from corti.infra.ome.triggers import Cron, Idle, Immediate
 
 
 class _E(BaseEvent):
@@ -268,7 +268,7 @@ async def test_trigger_manual_with_default_event_uses_manual_tick(
 ) -> None:
     seen: list = []
 
-    from cortistrate.infra.ome.events import ManualTick
+    from corti.infra.ome.events import ManualTick
 
     @offline_strategy(
         name="manual_only",
@@ -297,7 +297,7 @@ async def test_trigger_manual_force_bypasses_enabled(
     cfg: OMEConfig,
 ) -> None:
     seen: list = []
-    from cortistrate.infra.ome.events import ManualTick
+    from corti.infra.ome.events import ManualTick
 
     @offline_strategy(
         name="off",
@@ -465,7 +465,7 @@ async def test_start_failure_cleans_up_engines_and_scheduler(
     scheduler thread down, and release the lock so a fresh ``OfflineEngine``
     can start on the same jobstore.
     """
-    from cortistrate.infra.ome import engine as engine_mod
+    from corti.infra.ome import engine as engine_mod
 
     async def _boom(*args: Any, **kwargs: Any) -> None:
         raise RuntimeError("crash recovery exploded")

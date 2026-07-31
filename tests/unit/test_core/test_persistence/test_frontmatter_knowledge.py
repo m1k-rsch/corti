@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from cortistrate.core.persistence.markdown.frontmatter import (
+from corti.core.persistence.markdown.frontmatter import (
     BaseFrontmatter,
     KnowledgeDocumentPathMixin,
     KnowledgeScopedMixin,

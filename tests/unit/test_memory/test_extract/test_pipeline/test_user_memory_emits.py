@@ -3,14 +3,13 @@ from __future__ import annotations
 import datetime as _dt
 from unittest.mock import AsyncMock, MagicMock, patch
 
+from corti.core.persistence import EntryId
+from corti.memory import IngestResult
+from corti.memory.events import EpisodeExtracted, UserPipelineStarted
+from corti.memory.extract.pipeline.user_memory import UserMemoryPipeline
+from corti.memory.models import CanonicalMessage
 from everalgo.types import ChatMessage, MemCell
 from everalgo.types import Episode as AlgoEpisode
-
-from cortistrate.core.persistence import EntryId
-from cortistrate.memory import IngestResult
-from cortistrate.memory.events import EpisodeExtracted, UserPipelineStarted
-from cortistrate.memory.extract.pipeline.user_memory import UserMemoryPipeline
-from cortistrate.memory.models import CanonicalMessage
 
 
 def _sample_memcell() -> MemCell:

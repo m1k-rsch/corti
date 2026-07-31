@@ -12,7 +12,7 @@ from typing import ClassVar, Literal
 import pytest
 from pydantic import ValidationError
 
-from cortistrate.core.persistence.markdown import UserScopedFrontmatter
+from corti.core.persistence.markdown import UserScopedFrontmatter
 
 
 class _SampleUserProfileFM(UserScopedFrontmatter):

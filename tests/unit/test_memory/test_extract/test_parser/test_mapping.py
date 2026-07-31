@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from cortistrate.config import load_settings
-from cortistrate.memory.extract.parser.mapping import build_raw_file, to_raw_file
+from corti.config import load_settings
+from corti.memory.extract.parser.mapping import build_raw_file, to_raw_file
 
 
 @pytest.fixture(autouse=True)
@@ -77,7 +77,7 @@ async def test_build_raw_file_oversize_raises(
 ) -> None:
     f = tmp_path / "big.html"
     f.write_bytes(b"x" * 100)
-    monkeypatch.setenv("CORTISTRATE_MULTIMODAL__FILE_URI_MAX_BYTES", "10")
+    monkeypatch.setenv("CORTI_MULTIMODAL__FILE_URI_MAX_BYTES", "10")
     load_settings.cache_clear()
     with pytest.raises(ValueError, match="too large"):
         await build_raw_file({"type": "html", "uri": f"file://{f}"})
@@ -88,7 +88,7 @@ async def test_build_raw_file_outside_allowlist_raises(
 ) -> None:
     f = tmp_path / "secret.html"
     f.write_bytes(b"<html></html>")
-    monkeypatch.setenv("CORTISTRATE_MULTIMODAL__FILE_URI_ALLOW_DIRS", '["/some/other/root"]')
+    monkeypatch.setenv("CORTI_MULTIMODAL__FILE_URI_ALLOW_DIRS", '["/some/other/root"]')
     load_settings.cache_clear()
     with pytest.raises(ValueError, match="outside the allowed roots"):
         await build_raw_file({"type": "html", "uri": f"file://{f}"})
@@ -99,7 +99,7 @@ async def test_build_raw_file_inside_allowlist_ok(
 ) -> None:
     f = tmp_path / "ok.html"
     f.write_bytes(b"<html>ok</html>")
-    monkeypatch.setenv("CORTISTRATE_MULTIMODAL__FILE_URI_ALLOW_DIRS", f'["{tmp_path}"]')
+    monkeypatch.setenv("CORTI_MULTIMODAL__FILE_URI_ALLOW_DIRS", f'["{tmp_path}"]')
     load_settings.cache_clear()
     rf = await build_raw_file({"type": "html", "uri": f"file://{f}"})
     assert rf.content == b"<html>ok</html>"

@@ -1,16 +1,16 @@
-"""Contract tests for ``integrations/hermes/cli.py`` (the ``hermes cortistrate`` CLI).
+"""Contract tests for ``integrations/hermes/cli.py`` (the ``hermes corti`` CLI).
 
 Pins the Hermes-side CLI surface discovered by Hermes' plugin loader:
 
 - ``register_cli`` builds the four subcommands (status/search/flush/setup)
   with the expected argument routing.
 - ``_active_scope`` selects ``user_id`` vs ``agent_id`` from ``owner``.
-- ``_load_config`` / ``_save_config`` read/write ``$HERMES_HOME/cortistrate.json``
+- ``_load_config`` / ``_save_config`` read/write ``$HERMES_HOME/corti.json``
   (0o600 atomic on write).
-- ``_redact`` masks any ``*_key`` / ``*_token`` field so ``hermes cortistrate
+- ``_redact`` masks any ``*_key`` / ``*_token`` field so ``hermes corti
   setup`` never echoes a secret to stdout.
 - ``_cmd_search`` / ``_cmd_flush`` happy paths route the right body to the
-  Cortistrate HTTP client (faked via ``httpx.MockTransport``).
+  Corti HTTP client (faked via ``httpx.MockTransport``).
 - ``_breaker_state`` returns ``None`` when no provider is loaded.
 
 Hermes-only symbols (``agent``, ``hermes_constants``, ``tools``, ``utils``)
@@ -80,7 +80,7 @@ def hermes_home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     home = tmp_path / "hermes-home"
     home.mkdir()
     monkeypatch.setenv("HERMES_HOME", str(home))
-    monkeypatch.delenv("CORTISTRATE_API_KEY", raising=False)
+    monkeypatch.delenv("CORTI_API_KEY", raising=False)
     return home
 
 
@@ -88,47 +88,47 @@ def hermes_home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 
 
 def _build_parser(cli) -> argparse.ArgumentParser:
-    """Build a top-level parser with the ``cortistrate`` subcommand wired up."""
+    """Build a top-level parser with the ``corti`` subcommand wired up."""
     parser = argparse.ArgumentParser(prog="hermes")
     subs = parser.add_subparsers(dest="cmd")
-    cortistrate_p = subs.add_parser("cortistrate")
-    cli.register_cli(cortistrate_p)
+    corti_p = subs.add_parser("corti")
+    cli.register_cli(corti_p)
     return parser
 
 
 def test_register_cli_builds_four_subcommands(cli):
     parser = _build_parser(cli)
-    # Each subcommand parses cleanly and sets the cortistrate_action dest. ``search``
+    # Each subcommand parses cleanly and sets the corti_action dest. ``search``
     # takes a positional query; the others take only optional flags.
     argv_for = {
-        "status": ["cortistrate", "status"],
-        "search": ["cortistrate", "search", "q"],
-        "flush": ["cortistrate", "flush"],
-        "setup": ["cortistrate", "setup"],
+        "status": ["corti", "status"],
+        "search": ["corti", "search", "q"],
+        "flush": ["corti", "flush"],
+        "setup": ["corti", "setup"],
     }
     for sub, argv in argv_for.items():
-        assert parser.parse_args(argv).cortistrate_action == sub
+        assert parser.parse_args(argv).corti_action == sub
     # An unknown subcommand is rejected by argparse.
     with pytest.raises(SystemExit):
-        parser.parse_args(["cortistrate", "bogus"])
+        parser.parse_args(["corti", "bogus"])
 
 
 def test_register_cli_search_defaults_and_choices(cli):
     parser = _build_parser(cli)
-    args = parser.parse_args(["cortistrate", "search", "hello"])
-    assert args.cortistrate_action == "search"
+    args = parser.parse_args(["corti", "search", "hello"])
+    assert args.corti_action == "search"
     assert args.query == "hello"
     assert args.owner == "user"
     assert args.method == "hybrid"
     assert args.top_k == 5
-    assert args.func is cli.cortistrate_command
+    assert args.func is cli.corti_command
 
 
 def test_register_cli_setup_accepts_all_flags(cli):
     parser = _build_parser(cli)
     args = parser.parse_args(
         [
-            "cortistrate",
+            "corti",
             "setup",
             "--mode",
             "oss",
@@ -154,8 +154,8 @@ def test_register_cli_setup_accepts_all_flags(cli):
 
 def test_register_cli_flush_defaults(cli):
     parser = _build_parser(cli)
-    args = parser.parse_args(["cortistrate", "flush"])
-    assert args.cortistrate_action == "flush"
+    args = parser.parse_args(["corti", "flush"])
+    assert args.corti_action == "flush"
     assert args.session_id == ""
     assert args.owner == "user"
 
@@ -209,11 +209,11 @@ def test_load_config_defaults_when_no_file(cli, hermes_home: Path):
     assert cfg["api_url"] == "http://127.0.0.1:8000"
     assert cfg["user_id"] == "hermes-user"
     assert cfg["api_key"] == ""
-    assert not (hermes_home / "cortistrate.json").exists()
+    assert not (hermes_home / "corti.json").exists()
 
 
 def test_load_config_reads_hermes_home_json(cli, hermes_home: Path):
-    (hermes_home / "cortistrate.json").write_text(
+    (hermes_home / "corti.json").write_text(
         json.dumps({"mode": "oss", "user_id": "alice", "api_key": "sk-x"})
     )
     cfg = cli._load_config()
@@ -226,7 +226,7 @@ def test_load_config_reads_hermes_home_json(cli, hermes_home: Path):
 
 def test_save_config_writes_mode_0600(cli, hermes_home: Path):
     path = cli._save_config({"api_url": "http://new", "mode": "oss"})
-    assert path == hermes_home / "cortistrate.json"
+    assert path == hermes_home / "corti.json"
     data = json.loads(path.read_text(encoding="utf-8"))
     assert data["api_url"] == "http://new"
     assert data["mode"] == "oss"
@@ -237,7 +237,7 @@ def test_save_config_writes_mode_0600(cli, hermes_home: Path):
 def test_save_config_merges_existing(cli, hermes_home: Path):
     cli._save_config({"api_url": "http://a", "user_id": "alice"})
     cli._save_config({"mode": "oss"})
-    data = json.loads((hermes_home / "cortistrate.json").read_text(encoding="utf-8"))
+    data = json.loads((hermes_home / "corti.json").read_text(encoding="utf-8"))
     assert data["api_url"] == "http://a"
     assert data["user_id"] == "alice"
     assert data["mode"] == "oss"
@@ -294,8 +294,8 @@ def test_cmd_search_routes_body_and_prints_json(
     monkeypatch.setattr(cli, "_client", _mock_client_factory(handler))
 
     parser = _build_parser(cli)
-    args = parser.parse_args(["cortistrate", "search", "tea", "--owner", "agent"])
-    assert cli.cortistrate_command(args) == 0
+    args = parser.parse_args(["corti", "search", "tea", "--owner", "agent"])
+    assert cli.corti_command(args) == 0
     out = capsys.readouterr().out
     payload = json.loads(out)
     assert payload["data"]["episodes"] == []
@@ -321,9 +321,9 @@ def test_cmd_flush_routes_session_and_scope(
 
     parser = _build_parser(cli)
     args = parser.parse_args(
-        ["cortistrate", "flush", "--session-id", "sess-42", "--owner", "user"]
+        ["corti", "flush", "--session-id", "sess-42", "--owner", "user"]
     )
-    assert cli.cortistrate_command(args) == 0
+    assert cli.corti_command(args) == 0
     out = capsys.readouterr().out
     payload = json.loads(out)
     assert payload["data"]["status"] == "extracted"
@@ -335,14 +335,14 @@ def test_cmd_setup_redacts_api_key_in_stdout(
 ):
     parser = _build_parser(cli)
     args = parser.parse_args(
-        ["cortistrate", "setup", "--api-key", "sk-topsecret", "--mode", "oss"]
+        ["corti", "setup", "--api-key", "sk-topsecret", "--mode", "oss"]
     )
-    assert cli.cortistrate_command(args) == 0
+    assert cli.corti_command(args) == 0
     out = capsys.readouterr().out
     assert "sk-topsecret" not in out
     assert "***" in out
     # The written file retains the real key (redaction is echo-only).
-    data = json.loads((hermes_home / "cortistrate.json").read_text(encoding="utf-8"))
+    data = json.loads((hermes_home / "corti.json").read_text(encoding="utf-8"))
     assert data["api_key"] == "sk-topsecret"
 
 

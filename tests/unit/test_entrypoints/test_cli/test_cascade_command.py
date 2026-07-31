@@ -1,4 +1,4 @@
-"""``cortistrate cascade`` — structural smoke + pure helper tests.
+"""``corti cascade`` — structural smoke + pure helper tests.
 
 The orchestrator paths require live sqlite + Postgres singletons; those
 are exercised by integration tests. Here we cover:
@@ -18,7 +18,7 @@ import pytest
 import typer
 from typer.testing import CliRunner
 
-from cortistrate.entrypoints.cli.commands import cascade as cascade_mod
+from corti.entrypoints.cli.commands import cascade as cascade_mod
 
 
 def test_app_registers_three_commands() -> None:
@@ -37,8 +37,8 @@ def test_help_exits_zero() -> None:
 def test_resolve_relative_under_root(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setenv("CORTISTRATE_ROOT", str(tmp_path))
-    from cortistrate.config import load_settings
+    monkeypatch.setenv("CORTI_ROOT", str(tmp_path))
+    from corti.config import load_settings
 
     load_settings.cache_clear()
 
@@ -49,8 +49,8 @@ def test_resolve_relative_under_root(
 def test_resolve_relative_outside_root_raises(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setenv("CORTISTRATE_ROOT", str(tmp_path / "memory"))
-    from cortistrate.config import load_settings
+    monkeypatch.setenv("CORTI_ROOT", str(tmp_path / "memory"))
+    from corti.config import load_settings
 
     load_settings.cache_clear()
 

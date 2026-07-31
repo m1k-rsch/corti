@@ -6,14 +6,14 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from cortistrate.infra.ome._dispatch.runner import Runner
-from cortistrate.infra.ome._stores.run_record import RunRecordStore
-from cortistrate.infra.ome._stores.storage import OMEStorage
-from cortistrate.infra.ome.context import StrategyContext
-from cortistrate.infra.ome.decorator import offline_strategy
-from cortistrate.infra.ome.events import BaseEvent
-from cortistrate.infra.ome.records import RunStatus
-from cortistrate.infra.ome.triggers import Immediate
+from corti.infra.ome._dispatch.runner import Runner
+from corti.infra.ome._stores.run_record import RunRecordStore
+from corti.infra.ome._stores.storage import OMEStorage
+from corti.infra.ome.context import StrategyContext
+from corti.infra.ome.decorator import offline_strategy
+from corti.infra.ome.events import BaseEvent
+from corti.infra.ome.records import RunStatus
+from corti.infra.ome.triggers import Immediate
 
 
 class _E(BaseEvent):

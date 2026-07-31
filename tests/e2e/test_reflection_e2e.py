@@ -25,7 +25,7 @@ from benchmarks.run import (
     ANSWER_PROMPT,
     JUDGE_SYSTEM_PROMPT,
     JUDGE_USER_PROMPT,
-    CortistrateClient,
+    CortiClient,
     LLMClientPool,
     _build_context,
     _extract_final_answer,
@@ -106,7 +106,7 @@ def parse_sessions(
     session_indices: list[int],
     conv_index: int,
 ) -> list[dict[str, Any]]:
-    """Parse LoCoMo sessions into the cortistrate /add message format.
+    """Parse LoCoMo sessions into the corti /add message format.
 
     Returns a list of dicts, each with ``session_idx``, ``session_id``,
     and ``messages`` (ready for the ``/api/v1/memory/add`` payload).
@@ -146,7 +146,7 @@ def parse_sessions(
 # ---------------------------------------------------------------------------
 
 
-_SYSTEM_DB = DATA_PATH.parent.parent / ".cortistrate" / ".index" / "sqlite" / "system.db"
+_SYSTEM_DB = DATA_PATH.parent.parent / ".corti" / ".index" / "sqlite" / "system.db"
 
 
 def print_episode_locations(
@@ -165,7 +165,7 @@ def print_episode_locations(
             print(f"    [source] {ep.get('id', '?')} session={ep.get('session_id')}")
         if len(original) > 3:
             print(f"    ... and {len(original) - 3} more sources")
-    root = str(DATA_PATH.parent.parent / ".cortistrate")
+    root = str(DATA_PATH.parent.parent / ".corti")
     print(f"    md root: {root}")
 
 
@@ -207,7 +207,7 @@ def count_deprecated_episodes(owner_id: str) -> int:
 
 
 def add_and_flush(
-    client: CortistrateClient,
+    client: CortiClient,
     sessions: list[dict[str, Any]],
     *,
     quiet: bool = True,
@@ -235,7 +235,7 @@ def wait_pipeline(seconds: int = 180) -> None:
 
 
 def trigger_reflection(
-    client: CortistrateClient,
+    client: CortiClient,
     *,
     timeout: float = 120.0,
 ) -> None:
@@ -253,7 +253,7 @@ def trigger_reflection(
 
 
 def search_episodes(
-    client: CortistrateClient,
+    client: CortiClient,
     query: str,
     owner_id: str,
     *,
@@ -379,7 +379,7 @@ class TCResult:
 # ---------------------------------------------------------------------------
 
 
-def tc1_adoption_init(client: CortistrateClient) -> TCResult:
+def tc1_adoption_init(client: CortiClient) -> TCResult:
     tc = TCResult("TC1: Adoption INIT")
     print_section("TC1: Adoption INIT (conv0, sessions 2,8,13,17)")
     owner = _owner_id("caroline", 0)
@@ -404,7 +404,7 @@ def tc1_adoption_init(client: CortistrateClient) -> TCResult:
     return tc
 
 
-def tc2_adoption_update(client: CortistrateClient) -> TCResult:
+def tc2_adoption_update(client: CortiClient) -> TCResult:
     tc = TCResult("TC2: Adoption UPDATE")
     print_section("TC2: Adoption UPDATE (conv0, session 19)")
     owner = _owner_id("caroline", 0)
@@ -427,7 +427,7 @@ def tc2_adoption_update(client: CortistrateClient) -> TCResult:
     return tc
 
 
-def tc3_lgbtq_init(client: CortistrateClient) -> TCResult:
+def tc3_lgbtq_init(client: CortiClient) -> TCResult:
     tc = TCResult("TC3: LGBTQ+Conflict INIT")
     print_section("TC3: LGBTQ+Conflict INIT (conv0, sessions 1,3,5,12)")
     owner = _owner_id("caroline", 0)
@@ -446,7 +446,7 @@ def tc3_lgbtq_init(client: CortistrateClient) -> TCResult:
     return tc
 
 
-def tc4_lgbtq_update(client: CortistrateClient) -> TCResult:
+def tc4_lgbtq_update(client: CortiClient) -> TCResult:
     tc = TCResult("TC4: LGBTQ+Conflict UPDATE")
     print_section("TC4: LGBTQ+Conflict UPDATE (conv0, session 14)")
     owner = _owner_id("caroline", 0)
@@ -469,7 +469,7 @@ def tc4_lgbtq_update(client: CortistrateClient) -> TCResult:
     return tc
 
 
-def tc5_pet_init(client: CortistrateClient) -> TCResult:
+def tc5_pet_init(client: CortiClient) -> TCResult:
     tc = TCResult("TC5: Pet Count INIT")
     print_section("TC5: Pet Count INIT (conv5, sessions 1,5,12,24)")
     owner = _owner_id("andrew", 5)
@@ -488,7 +488,7 @@ def tc5_pet_init(client: CortistrateClient) -> TCResult:
     return tc
 
 
-def tc6_pet_update(client: CortistrateClient) -> TCResult:
+def tc6_pet_update(client: CortiClient) -> TCResult:
     tc = TCResult("TC6: Pet Count UPDATE")
     print_section("TC6: Pet Count UPDATE (conv5, sessions 27,28)")
     owner = _owner_id("andrew", 5)
@@ -511,7 +511,7 @@ def tc6_pet_update(client: CortistrateClient) -> TCResult:
     return tc
 
 
-def tc7_health_init(client: CortistrateClient) -> TCResult:
+def tc7_health_init(client: CortiClient) -> TCResult:
     tc = TCResult("TC7: Health Relapse INIT")
     print_section("TC7: Health INIT (conv8, sessions 2,4,8,10,13,14)")
     owner = _owner_id("sam", 8)
@@ -530,7 +530,7 @@ def tc7_health_init(client: CortistrateClient) -> TCResult:
     return tc
 
 
-def tc8_health_update(client: CortistrateClient) -> TCResult:
+def tc8_health_update(client: CortiClient) -> TCResult:
     tc = TCResult("TC8: Health Relapse UPDATE")
     print_section("TC8: Health UPDATE (conv8, sessions 16,20)")
     owner = _owner_id("sam", 8)
@@ -558,7 +558,7 @@ def tc8_health_update(client: CortistrateClient) -> TCResult:
 # ---------------------------------------------------------------------------
 
 
-def tc9_search_visibility(client: CortistrateClient) -> TCResult:
+def tc9_search_visibility(client: CortiClient) -> TCResult:
     tc = TCResult("TC9: Search Visibility")
     print_section("TC9: Search Visibility")
     checks = [
@@ -580,7 +580,7 @@ def tc9_search_visibility(client: CortistrateClient) -> TCResult:
     return tc
 
 
-def tc11_idempotency(client: CortistrateClient) -> TCResult:
+def tc11_idempotency(client: CortiClient) -> TCResult:
     tc = TCResult("TC11: Idempotency")
     print_section("TC11: Idempotency")
     owner = _owner_id("caroline", 0)
@@ -605,7 +605,7 @@ def tc11_idempotency(client: CortistrateClient) -> TCResult:
     return tc
 
 
-def tc12_atomic_facts(client: CortistrateClient) -> TCResult:
+def tc12_atomic_facts(client: CortiClient) -> TCResult:
     tc = TCResult("TC12: Atomic Facts Re-extraction")
     print_section("TC12: Atomic Facts Re-extraction")
     owner = _owner_id("caroline", 0)
@@ -619,7 +619,7 @@ def tc12_atomic_facts(client: CortistrateClient) -> TCResult:
     return tc
 
 
-def tc13_topic_isolation(client: CortistrateClient) -> TCResult:
+def tc13_topic_isolation(client: CortiClient) -> TCResult:
     tc = TCResult("TC13: Cross-topic Isolation")
     print_section("TC13: Cross-topic Isolation")
     owner = _owner_id("caroline", 0)
@@ -649,7 +649,7 @@ def tc13_topic_isolation(client: CortistrateClient) -> TCResult:
 
 
 def tc14_answer_judge(
-    client: CortistrateClient,
+    client: CortiClient,
     llm_client: LLMClientPool,
     llm_model: str,
 ) -> TCResult:
@@ -770,10 +770,10 @@ def main() -> None:
         else sorted(TC_REGISTRY.keys())
     )
 
-    client = CortistrateClient(base_url=args.base_url)
-    llm_model = args.llm_model or os.getenv("CORTISTRATE_LLM__MODEL", "openai/gpt-4.1-mini")
-    api_key = os.getenv("CORTISTRATE_LLM__API_KEY", "")
-    base_url = os.getenv("CORTISTRATE_LLM__BASE_URL", "https://openrouter.ai/api/v1")
+    client = CortiClient(base_url=args.base_url)
+    llm_model = args.llm_model or os.getenv("CORTI_LLM__MODEL", "openai/gpt-4.1-mini")
+    api_key = os.getenv("CORTI_LLM__API_KEY", "")
+    base_url = os.getenv("CORTI_LLM__BASE_URL", "https://openrouter.ai/api/v1")
     llm_client = LLMClientPool(api_keys=[api_key], base_url=base_url)
 
     print_section("Reflection E2E Test")

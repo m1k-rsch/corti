@@ -12,8 +12,8 @@ from pathlib import Path
 import pytest
 from sqlalchemy import text
 
-from cortistrate.config import SqliteSettings
-from cortistrate.core.persistence import (
+from corti.config import SqliteSettings
+from corti.core.persistence import (
     MemoryRoot,
     create_session_factory,
     create_system_engine,

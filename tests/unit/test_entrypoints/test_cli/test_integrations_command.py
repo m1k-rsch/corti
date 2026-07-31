@@ -1,4 +1,4 @@
-"""``cortistrate integrations`` — installer CLI contract tests.
+"""``corti integrations`` — installer CLI contract tests.
 
 Pins the ``install`` / ``uninstall`` Typer commands against a fake bundle
 directory and a throwaway ``HERMES_HOME``. Uses ``typer.testing.CliRunner``
@@ -12,7 +12,7 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from cortistrate.entrypoints.cli.commands import integrations as integrations_mod
+from corti.entrypoints.cli.commands import integrations as integrations_mod
 
 
 @pytest.fixture
@@ -48,7 +48,7 @@ def claude_skills(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 def bundle(tmp_path: Path) -> Path:
     src = tmp_path / "bundle"
     src.mkdir()
-    (src / "plugin.yaml").write_text("name: cortistrate\n")
+    (src / "plugin.yaml").write_text("name: corti\n")
     return src
 
 
@@ -77,11 +77,11 @@ def test_status_help_exits_zero(runner: CliRunner):
 
 
 def _target(hermes_home: Path) -> Path:
-    return hermes_home / "plugins" / "cortistrate"
+    return hermes_home / "plugins" / "corti"
 
 
 def _claude_target(claude_skills: Path) -> Path:
-    return claude_skills / "cortistrate"
+    return claude_skills / "corti"
 
 
 def test_install_symlinks_hermes(runner: CliRunner, hermes_home: Path, bundle: Path):
@@ -197,7 +197,7 @@ def test_uninstall_refuses_real_dir(runner: CliRunner, hermes_home: Path, bundle
 def test_uninstall_force_skips_bundle_check(
     runner: CliRunner, hermes_home: Path, tmp_path: Path
 ):
-    """--force unlinks without prompting, even for non-cortistrate targets."""
+    """--force unlinks without prompting, even for non-corti targets."""
     other = tmp_path / "other"
     other.mkdir()
     target = _target(hermes_home)
@@ -212,10 +212,10 @@ def test_uninstall_force_skips_bundle_check(
     assert not target.exists()
 
 
-def test_uninstall_refuses_non_cortistrate_without_force(
+def test_uninstall_refuses_non_corti_without_force(
     runner: CliRunner, hermes_home: Path, tmp_path: Path
 ):
-    """Without --force, a non-cortistrate symlink prompts and aborts on 'n'."""
+    """Without --force, a non-corti symlink prompts and aborts on 'n'."""
     other = tmp_path / "other"
     other.mkdir()
     target = _target(hermes_home)

@@ -72,7 +72,7 @@ def test_scanner_catches_forbidden_pattern(
 ) -> None:
     """Each pattern listed in the rule must produce a violation."""
     body = "import datetime\nimport time\n" + line + "\n"
-    _make_src(tmp_path, {"cortistrate/sample.py": body})
+    _make_src(tmp_path, {"corti/sample.py": body})
     scanner = _load_scanner_with(tmp_path)
     rc = scanner.main()
     assert rc == 1, f"scanner should flag {line!r}"
@@ -83,10 +83,10 @@ def test_scanner_catches_forbidden_pattern(
 
 def test_scanner_respects_file_allowlist(tmp_path: Path) -> None:
     """Files on the allowlist may legitimately use forbidden patterns."""
-    sample_path = tmp_path / "src" / "cortistrate" / "datetime.py"
+    sample_path = tmp_path / "src" / "corti" / "datetime.py"
     _make_src(
         tmp_path,
-        {"cortistrate/datetime.py": "x = datetime.now()\n"},
+        {"corti/datetime.py": "x = datetime.now()\n"},
     )
     scanner = _load_scanner_with(tmp_path, allowlist={sample_path})
     rc = scanner.main()
@@ -98,7 +98,7 @@ def test_scanner_respects_noqa_tz_marker(tmp_path: Path) -> None:
     _make_src(
         tmp_path,
         {
-            "cortistrate/sample.py": (
+            "corti/sample.py": (
                 "import datetime\n"
                 "x = datetime.now()  # tz-noqa -- documented exception\n"
             )
@@ -117,7 +117,7 @@ def test_scanner_ignores_pure_comment_line(tmp_path: Path) -> None:
     _make_src(
         tmp_path,
         {
-            "cortistrate/sample.py": (
+            "corti/sample.py": (
                 "import datetime\n# Don't use datetime.now() — see rules.\n"
             )
         },
@@ -134,7 +134,7 @@ def test_scanner_ignores_triple_quoted_docstring(tmp_path: Path) -> None:
         '"""\n'
         "x = 1\n"
     )
-    _make_src(tmp_path, {"cortistrate/sample.py": body})
+    _make_src(tmp_path, {"corti/sample.py": body})
     scanner = _load_scanner_with(tmp_path)
     assert scanner.main() == 0
 
@@ -144,7 +144,7 @@ def test_scanner_ignores_inline_trailing_comment(tmp_path: Path) -> None:
     _make_src(
         tmp_path,
         {
-            "cortistrate/sample.py": (
+            "corti/sample.py": (
                 "import datetime\nx = 1  # used to be datetime.now() before Q2\n"
             )
         },
@@ -156,14 +156,14 @@ def test_scanner_ignores_inline_trailing_comment(tmp_path: Path) -> None:
 def test_scanner_clean_on_typical_use_of_helper(tmp_path: Path) -> None:
     """Code that goes through ``component.utils.datetime`` is clean."""
     body = (
-        "from cortistrate.component.utils.datetime import (\n"
+        "from corti.component.utils.datetime import (\n"
         "    get_utc_now, get_now_with_timezone, to_display_tz,\n"
         ")\n"
         "ts = get_utc_now()\n"
         "display = to_display_tz(ts)\n"
         "wall = get_now_with_timezone()\n"
     )
-    _make_src(tmp_path, {"cortistrate/sample.py": body})
+    _make_src(tmp_path, {"corti/sample.py": body})
     scanner = _load_scanner_with(tmp_path)
     assert scanner.main() == 0
 

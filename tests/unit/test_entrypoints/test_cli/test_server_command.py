@@ -1,4 +1,4 @@
-"""``cortistrate server start`` — argument resolution + uvicorn handoff.
+"""``corti server start`` — argument resolution + uvicorn handoff.
 
 Uvicorn ``run`` is the external boundary and is mocked. We assert the
 host/port/log_level resolution chain (CLI flag > env > default) and the
@@ -12,20 +12,20 @@ import os
 import pytest
 from typer.testing import CliRunner
 
-from cortistrate.entrypoints.cli.commands import server as server_mod
-from cortistrate.entrypoints.cli.main import app as root_app
+from corti.entrypoints.cli.commands import server as server_mod
+from corti.entrypoints.cli.main import app as root_app
 
 
 @pytest.fixture(autouse=True)
 def _isolate_env(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:  # type: ignore[no-untyped-def]
-    """Strip CORTISTRATE_* env vars so default resolution is deterministic."""
+    """Strip CORTI_* env vars so default resolution is deterministic."""
     for k in list(os.environ):
-        if k.startswith("CORTISTRATE_"):
+        if k.startswith("CORTI_"):
             monkeypatch.delenv(k, raising=False)
-    monkeypatch.delenv("CORTISTRATE_LOG_LEVEL", raising=False)
-    monkeypatch.setenv("CORTISTRATE_ROOT", str(tmp_path))
-    (tmp_path / "cortistrate.toml").write_text("# test\n")
-    from cortistrate.config import load_settings
+    monkeypatch.delenv("CORTI_LOG_LEVEL", raising=False)
+    monkeypatch.setenv("CORTI_ROOT", str(tmp_path))
+    (tmp_path / "corti.toml").write_text("# test\n")
+    from corti.config import load_settings
 
     load_settings.cache_clear()
 
@@ -53,16 +53,16 @@ def test_start_uses_default_host_port_log_level(captured: dict[str, object]) -> 
     assert kwargs["log_level"] == "info"
     assert kwargs["factory"] is True
     args = captured["args"]
-    assert args == ("cortistrate.entrypoints.api.app:create_app",)
+    assert args == ("corti.entrypoints.api.app:create_app",)
 
 
 def test_start_cli_flags_override_env(
     captured: dict[str, object], monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setenv("CORTISTRATE_API__HOST", "1.2.3.4")
-    monkeypatch.setenv("CORTISTRATE_API__PORT", "9000")
-    monkeypatch.setenv("CORTISTRATE_API__LOG_LEVEL", "debug")
-    from cortistrate.config import load_settings
+    monkeypatch.setenv("CORTI_API__HOST", "1.2.3.4")
+    monkeypatch.setenv("CORTI_API__PORT", "9000")
+    monkeypatch.setenv("CORTI_API__LOG_LEVEL", "debug")
+    from corti.config import load_settings
 
     load_settings.cache_clear()
     result = CliRunner().invoke(
@@ -89,9 +89,9 @@ def test_start_cli_flags_override_env(
 def test_start_falls_back_to_env_when_flags_omitted(
     captured: dict[str, object], monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setenv("CORTISTRATE_API__HOST", "10.0.0.1")
-    monkeypatch.setenv("CORTISTRATE_API__PORT", "8765")
-    from cortistrate.config import load_settings
+    monkeypatch.setenv("CORTI_API__HOST", "10.0.0.1")
+    monkeypatch.setenv("CORTI_API__PORT", "8765")
+    from corti.config import load_settings
 
     load_settings.cache_clear()
     result = CliRunner().invoke(root_app, ["server", "start"])
@@ -125,8 +125,8 @@ def test_start_with_root_option(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path,  # type: ignore[no-untyped-def]
 ) -> None:
-    """``--root`` sets CORTISTRATE_ROOT for settings resolution."""
-    from cortistrate.config import load_settings
+    """``--root`` sets CORTI_ROOT for settings resolution."""
+    from corti.config import load_settings
 
     load_settings.cache_clear()
     result = CliRunner().invoke(root_app, ["server", "start", "--root", str(tmp_path)])

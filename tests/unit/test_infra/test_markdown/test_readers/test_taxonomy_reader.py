@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from cortistrate.infra.persistence.markdown import ensure_taxonomy, parse_taxonomy
+from corti.infra.persistence.markdown import ensure_taxonomy, parse_taxonomy
 
 
 @pytest.fixture()

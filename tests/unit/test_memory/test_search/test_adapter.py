@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from cortistrate.memory.search.adapter import resolve_pipeline
-from cortistrate.memory.search.dto import SearchMethod
+from corti.memory.search.adapter import resolve_pipeline
+from corti.memory.search.dto import SearchMethod
 
 
 def test_keyword_skips_everalgo() -> None:

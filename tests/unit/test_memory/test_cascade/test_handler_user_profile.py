@@ -15,11 +15,11 @@ from pathlib import Path
 
 import pytest
 
-from cortistrate.component.embedding import EmbeddingProvider
-from cortistrate.component.tokenizer import Tokenizer
-from cortistrate.core.persistence import MemoryRoot
-from cortistrate.infra.persistence.markdown import ProfileWriter, UserProfileFrontmatter
-from cortistrate.memory.cascade.handlers import HandlerDeps, UserProfileHandler
+from corti.component.embedding import EmbeddingProvider
+from corti.component.tokenizer import Tokenizer
+from corti.core.persistence import MemoryRoot
+from corti.infra.persistence.markdown import ProfileWriter, UserProfileFrontmatter
+from corti.memory.cascade.handlers import HandlerDeps, UserProfileHandler
 
 
 class _StubTokenizer(Tokenizer):
@@ -76,7 +76,7 @@ def memory_root(tmp_path: Path) -> MemoryRoot:
 
 @pytest.fixture
 def fake_repo(monkeypatch: pytest.MonkeyPatch) -> _FakeProfileRepo:
-    from cortistrate.memory.cascade.handlers import user_profile as up_mod
+    from corti.memory.cascade.handlers import user_profile as up_mod
 
     repo = _FakeProfileRepo()
     monkeypatch.setattr(up_mod, "user_profile_repo", repo)

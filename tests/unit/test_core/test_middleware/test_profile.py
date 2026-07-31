@@ -8,7 +8,7 @@ import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
-from cortistrate.core.middleware.profile import ProfileMiddleware, _profiling_enabled
+from corti.core.middleware.profile import ProfileMiddleware, _profiling_enabled
 
 
 def _build_app() -> FastAPI:

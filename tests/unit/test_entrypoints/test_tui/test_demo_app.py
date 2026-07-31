@@ -1,15 +1,15 @@
-"""Cortistrate demo TUI color contracts."""
+"""Corti demo TUI color contracts."""
 
 from __future__ import annotations
 
 import pytest
 
-from cortistrate.entrypoints.tui.demo.app import (
+from corti.entrypoints.tui.demo.app import (
     SPHERE_FRAME_HEIGHT,
     SPHERE_FRAME_WIDTH,
     TERMINAL_CELL_HEIGHT_RATIO,
+    CortiDemoApp,
     DotSphereWidget,
-    CortistrateDemoApp,
     _field_header_text,
     _hero_text,
     _payoff_text,
@@ -18,12 +18,12 @@ from cortistrate.entrypoints.tui.demo.app import (
     _source_tree_text,
     _sphere_caption,
 )
-from cortistrate.entrypoints.tui.demo.data import build_demo_story
-from cortistrate.entrypoints.tui.demo.widgets.sphere import SPHERE_STATES
+from corti.entrypoints.tui.demo.data import build_demo_story
+from corti.entrypoints.tui.demo.widgets.sphere import SPHERE_STATES
 
 
 def test_demo_tui_uses_poster_derived_brand_palette() -> None:
-    css = CortistrateDemoApp.CSS
+    css = CortiDemoApp.CSS
 
     assert "#F9B91C" in css
     assert "#31302B" in css
@@ -36,7 +36,7 @@ def test_demo_tui_uses_poster_derived_brand_palette() -> None:
 
 
 def test_demo_tui_uses_elevated_instrument_layout() -> None:
-    css = CortistrateDemoApp.CSS
+    css = CortiDemoApp.CSS
 
     assert "#command-strip" in css
     assert "#memory-field" in css
@@ -51,7 +51,7 @@ def test_demo_tui_uses_elevated_instrument_layout() -> None:
 
 
 def test_demo_tui_uses_balanced_panel_proportions() -> None:
-    css = CortistrateDemoApp.CSS
+    css = CortiDemoApp.CSS
 
     command_strip = _css_block(css, "#command-strip")
     signal_rail = _css_block(css, "#signal-rail")

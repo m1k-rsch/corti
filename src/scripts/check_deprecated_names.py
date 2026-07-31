@@ -77,7 +77,7 @@ def main() -> int:
 
     print(
         "Deprecated-name check failed.\n"
-        "Use Cortistrate or Cortistrate Cloud. Do not use deprecated product naming.\n"
+        "Use Corti or Corti Cloud. Do not use deprecated product naming.\n"
     )
     for violation in violations:
         print(f"- {violation.path}:{violation.line_number}: {violation.line}")

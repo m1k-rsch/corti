@@ -8,9 +8,9 @@ from typing import ClassVar, Literal
 import pytest
 from pydantic import ValidationError
 
-from cortistrate.core.persistence import MemoryRoot, UserScopedFrontmatter
-from cortistrate.infra.persistence.markdown.readers import ProfileReader
-from cortistrate.infra.persistence.markdown.writers import ProfileWriter
+from corti.core.persistence import MemoryRoot, UserScopedFrontmatter
+from corti.infra.persistence.markdown.readers import ProfileReader
+from corti.infra.persistence.markdown.writers import ProfileWriter
 
 
 class _UserProfileFM(UserScopedFrontmatter):

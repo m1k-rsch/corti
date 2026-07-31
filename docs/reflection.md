@@ -10,16 +10,16 @@ more accurate and more compact with use, instead of piling up into noise.
 ## Prerequisites
 
 Reflection's merge step calls an LLM, and re-clustering the merged narrative
-calls an embedding model. Configure both as you would for the rest of Cortistrate
-— an OpenAI-compatible `[llm]` and `[embedding]` block in `<root>/cortistrate.toml`,
-or the matching `CORTISTRATE_LLM__*` / `CORTISTRATE_EMBEDDING__*` environment variables.
+calls an embedding model. Configure both as you would for the rest of Corti
+— an OpenAI-compatible `[llm]` and `[embedding]` block in `<root>/corti.toml`,
+or the matching `CORTI_LLM__*` / `CORTI_EMBEDDING__*` environment variables.
 If a provider is unavailable, the affected clusters are skipped and logged
 rather than failing the run.
 
 ## Quick start
 
-> The examples below assume Cortistrate is running on the default port 8000.
-> `<root>` is the Cortistrate memory root (see [QUICKSTART](../QUICKSTART.md)).
+> The examples below assume Corti is running on the default port 8000.
+> `<root>` is the Corti memory root (see [QUICKSTART](../QUICKSTART.md)).
 
 Reflection is off by default. Turn it on in `<root>/ome.toml` — **one line**:
 
@@ -97,7 +97,7 @@ conversation → Episode → Cluster ───► Reflection consolidates the cl
 A scheduled run processes every user across all app/project tenants that have
 clusters.
 
-After each conversation, Cortistrate extracts an **Episode** (a summary of a
+After each conversation, Corti extracts an **Episode** (a summary of a
 conversation segment), and geometric clustering groups semantically similar,
 time-adjacent Episodes into a **Cluster**. The same topic thus ends up
 scattered as several point-in-time snapshots within one cluster:
@@ -196,11 +196,11 @@ deprecated_entries:
 |---|---|---|---|
 | `reflect_episodes.enabled` | `<root>/ome.toml` | `false` | Set to `true` to enable (the only setting needed) |
 | `reflect_episodes.cron` | `<root>/ome.toml` | `0 2 * * 1` | Run time, as a standard cron expression (`0 2 * * 1` = Mondays at 02:00); **optional**, omit to use the built-in default. Running more than weekly is not recommended |
-| `clustering.threshold` | `<root>/cortistrate.toml` | `0.65` | Clustering similarity threshold |
-| `clustering.time_window_days` | `<root>/cortistrate.toml` | `7.0` | Clustering time window (days) |
+| `clustering.threshold` | `<root>/corti.toml` | `0.65` | Clustering similarity threshold |
+| `clustering.time_window_days` | `<root>/corti.toml` | `7.0` | Clustering time window (days) |
 
 Two files, two scopes: `ome.toml` holds OME-strategy config (Reflection's
-on/off switch and schedule); `cortistrate.toml` holds general settings (clustering
+on/off switch and schedule); `corti.toml` holds general settings (clustering
 and the like). Both live under the memory root, and you only write the keys
 you want to override — everything else falls back to the shipped defaults in
 `config/default.toml`, which you never edit by hand.

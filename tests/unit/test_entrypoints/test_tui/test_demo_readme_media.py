@@ -1,10 +1,10 @@
-"""Cortistrate demo README media generation contracts."""
+"""Corti demo README media generation contracts."""
 
 from __future__ import annotations
 
 import html
 
-from cortistrate.entrypoints.tui.demo.readme_media import (
+from corti.entrypoints.tui.demo.readme_media import (
     ANIMATION_FPS,
     ANIMATION_FRAMES_PER_STATE,
     ANIMATION_TERMINAL_SIZE,
@@ -79,19 +79,19 @@ def test_readme_media_normalizes_rich_terminal_random_ids() -> None:
         "<style>.terminal-12345-matrix {}</style>"
         '<clipPath id="terminal-12345-line-0"></clipPath>'
         '<text class="terminal-12345-r1" '
-        'clip-path="url(#terminal-12345-line-0)">Cortistrate</text>'
+        'clip-path="url(#terminal-12345-line-0)">Corti</text>'
     )
 
     normalized = normalize_svg_terminal_ids(svg)
 
     assert "terminal-12345" not in normalized
-    assert normalized.count("terminal-cortistrate") == 4
+    assert normalized.count("terminal-corti") == 4
 
 
 async def test_export_frame_freezes_animation_before_rendering_requested_state(
     tmp_path, monkeypatch
 ) -> None:
-    from cortistrate.entrypoints.tui.demo.app import DotSphereWidget
+    from corti.entrypoints.tui.demo.app import DotSphereWidget
 
     def fast_mount(self: DotSphereWidget) -> None:
         self._animation_timer = self.set_interval(0.001, self._advance)

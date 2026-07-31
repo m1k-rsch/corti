@@ -31,9 +31,9 @@ from collections.abc import Awaitable, Callable
 import httpx
 import pytest
 
-from cortistrate.component.utils import datetime as dt_module
-from cortistrate.component.utils.datetime import from_iso_format
-from cortistrate.config import load_settings
+from corti.component.utils import datetime as dt_module
+from corti.component.utils.datetime import from_iso_format
+from corti.config import load_settings
 
 
 async def _switch_display_tz(monkeypatch: pytest.MonkeyPatch, tz: str) -> None:
@@ -43,7 +43,7 @@ async def _switch_display_tz(monkeypatch: pytest.MonkeyPatch, tz: str) -> None:
     ``functools.cache``-d; missing either ``cache_clear`` would let the
     new env var read silently no-op.
     """
-    monkeypatch.setenv("CORTISTRATE_MEMORY__TIMEZONE", tz)
+    monkeypatch.setenv("CORTI_MEMORY__TIMEZONE", tz)
     load_settings.cache_clear()
     dt_module._display_tz.cache_clear()
 
@@ -59,13 +59,13 @@ async def test_full_pipeline_tz_switch_preserves_utc_instant(
 
     Steps:
 
-    1. Configure ``CORTISTRATE_MEMORY__TIMEZONE=Asia/Shanghai``.
+    1. Configure ``CORTI_MEMORY__TIMEZONE=Asia/Shanghai``.
     2. POST /add a single message with a pinned epoch-ms timestamp.
     3. POST /flush — forces boundary detection to carve a memcell out
        of the single-message buffer.
     4. Wait for cascade to drain (md → Postgres indexed).
     5. POST /search + POST /get: capture episode timestamp strings.
-    6. Switch ``CORTISTRATE_MEMORY__TIMEZONE=UTC``.
+    6. Switch ``CORTI_MEMORY__TIMEZONE=UTC``.
     7. POST /search + POST /get again: capture episode timestamp strings.
     8. Parse all four timestamp strings back to UTC instants. They must
        all be equal. The offsets and wall-clock numbers will differ

@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from cortistrate.core.errors import MultimodalNotEnabledError
-from cortistrate.memory.extract.parser import availability
+from corti.core.errors import MultimodalNotEnabledError
+from corti.memory.extract.parser import availability
 
 
 def test_has_unparsed_multimodal_true_for_unparsed_nontext() -> None:

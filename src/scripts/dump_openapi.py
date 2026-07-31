@@ -46,7 +46,7 @@ def _build_schema() -> dict:
     os.environ["ENV"] = "DEV"
     # Local import so an import-time evaluation of ``ENV`` (read inside
     # ``create_app``) sees the override above.
-    from cortistrate.entrypoints.api.app import create_app
+    from corti.entrypoints.api.app import create_app
 
     # Pass an empty lifespan list so we don't pull up SQLite / Postgres /
     # OME — the schema is computed from static route declarations alone.

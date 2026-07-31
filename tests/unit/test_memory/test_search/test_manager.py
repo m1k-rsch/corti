@@ -20,10 +20,10 @@ from collections.abc import Mapping, Sequence
 from typing import Any, ClassVar
 
 import pytest
-from everalgo.types import Candidate, FactCandidate
 
-from cortistrate.memory.search.dto import SearchMethod, SearchRequest
-from cortistrate.memory.search.manager import SearchManager
+from corti.memory.search.dto import SearchMethod, SearchRequest
+from corti.memory.search.manager import SearchManager
+from everalgo.types import Candidate, FactCandidate
 
 # ── Stubs ───────────────────────────────────────────────────────────────
 
@@ -437,7 +437,7 @@ class _StubReranker:
     """Minimal reranker stub — returns trivial scores."""
 
     async def rerank(self, query: str, documents: Sequence[str]) -> list[Any]:
-        from cortistrate.component.rerank.protocol import RerankResult
+        from corti.component.rerank.protocol import RerankResult
 
         return [RerankResult(index=i, score=1.0) for i in range(len(documents))]
 
@@ -461,7 +461,7 @@ async def test_agentic_episode_delegates_to_search_episodes_agentic(
     """AGENTIC method delegates to search_episodes_agentic and returns its result."""
     import datetime as _dt
 
-    from cortistrate.memory.search.dto import SearchEpisodeItem
+    from corti.memory.search.dto import SearchEpisodeItem
 
     fake_result = [
         SearchEpisodeItem(
@@ -483,7 +483,7 @@ async def test_agentic_episode_delegates_to_search_episodes_agentic(
         return fake_result
 
     monkeypatch.setattr(
-        "cortistrate.memory.search.manager.search_episodes_agentic", _fake_agentic
+        "corti.memory.search.manager.search_episodes_agentic", _fake_agentic
     )
 
     mgr = _build_manager(

@@ -1,4 +1,4 @@
-# Cortistrate Use Cases
+# Corti Use Cases
 
 Use cases show what persistent memory makes possible in real products and
 workflows. Some examples are packaged in this repository; others point to
@@ -10,7 +10,7 @@ external demos or integrations you can study and adapt.
 
 [![banner-gif](https://github.com/user-attachments/assets/840470d7-a838-4c05-8685-dd797d4e9cdf)](https://cortistrate.dev/usecase_reunite)
 
-#### Reunite - Find with Cortistrate
+#### Reunite - Find with Corti
 
 Parents describe what they remember. Children describe what they recall. Reunite uses semantic memory to surface the connections.
 
@@ -33,24 +33,24 @@ Browser-native hive-mind for CLI coding agents - Claude Code, Codex, Gemini, and
 <tr>
 <td width="50%" valign="top">
 
-[![banner-gif](https://github.com/user-attachments/assets/867d9329-ce9a-496f-ab1e-15c77974e5fa)](https://github.com/tt-a1i/cortistrateos-mcp)
+[![banner-gif](https://github.com/user-attachments/assets/867d9329-ce9a-496f-ab1e-15c77974e5fa)](https://github.com/tt-a1i/cortios-mcp)
 
-#### AI Coding Assistants with Cortistrate
+#### AI Coding Assistants with Corti
 
-Universal long-term memory layer for AI coding assistants, powered by Cortistrate.
+Universal long-term memory layer for AI coding assistants, powered by Corti.
 
-[Code](https://github.com/tt-a1i/cortistrateos-mcp)
+[Code](https://github.com/tt-a1i/cortios-mcp)
 
 </td>
 <td width="50%" valign="top">
 
-[![banner-gif](https://github.com/user-attachments/assets/a4f0fd86-1c81-4445-bebc-e51eb5e33b30)](https://github.com/yuansui123/AI-Data-Technician-CortistrateOS)
+[![banner-gif](https://github.com/user-attachments/assets/a4f0fd86-1c81-4445-bebc-e51eb5e33b30)](https://github.com/yuansui123/AI-Data-Technician-CortiOS)
 
 #### AI Data Technician
 
 An agentic AI system that learns from scientist interaction to inspect, analyze, and classify high-dimensional time series data - with persistent memory that improves across sessions.
 
-[Code](https://github.com/yuansui123/AI-Data-Technician-CortistrateOS)
+[Code](https://github.com/yuansui123/AI-Data-Technician-CortiOS)
 
 </td>
 </tr>
@@ -60,9 +60,9 @@ An agentic AI system that learns from scientist interaction to inspect, analyze,
 
 ![banner-gif](https://github.com/user-attachments/assets/650b901b-c9ba-4001-bac7-626b009df830)
 
-#### Rokid AI Assistant with Cortistrate
+#### Rokid AI Assistant with Corti
 
-Connect to Cortistrate within Rokid Glasses enabling long-term memory for all of your smart activities.
+Connect to Corti within Rokid Glasses enabling long-term memory for all of your smart activities.
 
 Coming soon
 
@@ -120,7 +120,7 @@ Record, visualize, and explore your tasting journey through an immersive 3D star
 
 [![banner-gif](https://github.com/user-attachments/assets/93ac2a68-4f18-4fcb-8d87-80aeb00a9d7c)](https://github.com/kellyvv/OpenHer)
 
-#### Cortistrate Open Her
+#### Corti Open Her
 
 Build AI that feels. Open-source persona engine - personality emerges from neural drives, not prompts. Inspired by Her.
 
@@ -143,13 +143,13 @@ Ruminer brings persistent memory to a browser agent so it can carry personal con
 </td>
 <td width="50%" valign="top">
 
-[![banner-gif](https://github.com/user-attachments/assets/c258a6c4-fe70-497a-98d1-3dade4a932f6)](https://github.com/nanxingw/Cortistrate)
+[![banner-gif](https://github.com/user-attachments/assets/c258a6c4-fe70-497a-98d1-3dade4a932f6)](https://github.com/nanxingw/Corti)
 
-#### Cortistrate Sync with Cortistrate
+#### Corti Sync with Corti
 
-One command to connect any AI coding CLI to Cortistrate long-term memory.
+One command to connect any AI coding CLI to Corti long-term memory.
 
-[Code](https://github.com/nanxingw/Cortistrate)
+[Code](https://github.com/nanxingw/Corti)
 
 </td>
 </tr>
@@ -235,20 +235,20 @@ A context-native AI wearable that listens to everyday life and converts conversa
 
 #### Legacy OpenClaw Agent Memory
 
-Archived pre-1.0.0 plugin reference. New integrations should use the current Cortistrate API.
+Archived pre-1.0.0 plugin reference. New integrations should use the current Corti API.
 
 [Learn more](migration-to-1.0.0.md)
 
 </td>
 <td width="50%" valign="top">
 
-[![banner-gif](https://github.com/user-attachments/assets/3a2357a1-c0c3-464a-8979-0d1cdfc9b0d4)](https://github.com/TEN-framework/ten-framework/tree/04cb80601374fa9e35b4e544b2dbd23286ca7763/ai_agents/agents/examples/voice-assistant-with-CortistrateOS)
+[![banner-gif](https://github.com/user-attachments/assets/3a2357a1-c0c3-464a-8979-0d1cdfc9b0d4)](https://github.com/TEN-framework/ten-framework/tree/04cb80601374fa9e35b4e544b2dbd23286ca7763/ai_agents/agents/examples/voice-assistant-with-CortiOS)
 
 #### Live2D Character with Memory
 
 Add long-term memory to a real-time Live2D character, powered by [TEN Framework](https://github.com/TEN-framework/ten-framework).
 
-[Code](https://github.com/TEN-framework/ten-framework/tree/04cb80601374fa9e35b4e544b2dbd23286ca7763/ai_agents/agents/examples/voice-assistant-with-CortistrateOS)
+[Code](https://github.com/TEN-framework/ten-framework/tree/04cb80601374fa9e35b4e544b2dbd23286ca7763/ai_agents/agents/examples/voice-assistant-with-CortiOS)
 
 </td>
 </tr>

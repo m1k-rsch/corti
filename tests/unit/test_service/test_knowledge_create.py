@@ -1,4 +1,4 @@
-"""Unit tests for :func:`cortistrate.service.knowledge.create_document`.
+"""Unit tests for :func:`corti.service.knowledge.create_document`.
 
 White-box surfaces: ``KnowledgeExtractor.aextract`` (mocked),
 ``KnowledgeWriter.write`` (mocked), ``knowledge_document_repo.doc_id_exists``
@@ -11,14 +11,14 @@ from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from everalgo.types import KnowledgeMemory, ParsedContent
 
-from cortistrate.service.knowledge import (
+from corti.service.knowledge import (
     CreateDocumentResult,
     DuplicateDocumentError,
     ExtractionEmptyError,
     create_document,
 )
+from everalgo.types import KnowledgeMemory, ParsedContent
 
 # ── Fixtures ─────────────────────────────────────────────────────────────
 
@@ -64,7 +64,7 @@ def knowledge_dir(tmp_path: Path) -> Path:
 
 # ── Shared patch targets ─────────────────────────────────────────────────
 
-_MOD = "cortistrate.service.knowledge"
+_MOD = "corti.service.knowledge"
 
 
 # ── Tests ────────────────────────────────────────────────────────────────

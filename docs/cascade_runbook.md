@@ -7,7 +7,7 @@ the recurring operational questions.
 
 ## What runs where
 
-When `cortistrate server start` boots, the FastAPI lifespan wires six
+When `corti server start` boots, the FastAPI lifespan wires six
 providers in order:
 
 1. **Metrics** — Prometheus collector.
@@ -29,7 +29,7 @@ Every loop talks to the same `md_change_state` sqlite table. The
 worker's claim mode (`pending → processing → done/failed`) keeps
 concurrent workers honest.
 
-## Health: `cortistrate cascade status`
+## Health: `corti cascade status`
 
 ```
 queue:
@@ -49,7 +49,7 @@ lsn:
   never auto-clear these — they represent malformed md the user must
   edit.
 
-## Recovering from failures: `cortistrate cascade fix`
+## Recovering from failures: `corti cascade fix`
 
 `cascade fix` (no flag) lists every failed row. With `--apply`:
 
@@ -67,20 +67,20 @@ start.
 YAML frontmatter issue) and re-save; the watcher picks the change up
 naturally.
 
-## One-shot replay: `cortistrate cascade sync [PATH]`
+## One-shot replay: `corti cascade sync [PATH]`
 
 Use this when the watcher missed an event (WSL mount, network share,
 external editor with no inotify) or when you want a deterministic
 flush before, say, a smoke test:
 
 ```bash
-cortistrate cascade sync                           # drain everything pending
-cortistrate cascade sync users/u1/episodes/X.md    # re-enqueue + drain
+corti cascade sync                           # drain everything pending
+corti cascade sync users/u1/episodes/X.md    # re-enqueue + drain
 ```
 
 The CLI builds the same `CascadeOrchestrator` as the daemon but only
 calls `sync_once` / `drain_once` — no watcher / scanner background
-task. So it's safe to run in parallel with a live `cortistrate server`.
+task. So it's safe to run in parallel with a live `corti server`.
 
 ## Recovery paths
 
@@ -93,7 +93,7 @@ declare (or vice versa), the boot fails with:
 ```
 Postgres table 'episode' schema drift: missing=[...], extra=[...].
 The index is rebuildable from md — recover with
-`rm -rf ~/.cortistrate/.index/postgres` and restart.
+`rm -rf ~/.corti/.index/postgres` and restart.
 ```
 
 This is the documented recovery: delete the index, restart the
@@ -128,7 +128,7 @@ Workarounds:
 - Rely on the scanner — at default 30 s interval, throughput is
   bounded but eventually-consistent.
 - Drop the scan interval to ~5 s if the memory root is small.
-- Run `cortistrate cascade sync` explicitly after batch edits.
+- Run `corti cascade sync` explicitly after batch edits.
 
 ### Daemon process crash mid-batch
 
@@ -185,8 +185,8 @@ place.
 
 ### Cascade scheduler knobs
 
-All defaults live in `cortistrate.memory.cascade.orchestrator.CascadeConfig`
-and `cortistrate.memory.cascade.worker.CascadeWorker`:
+All defaults live in `corti.memory.cascade.orchestrator.CascadeConfig`
+and `corti.memory.cascade.worker.CascadeWorker`:
 
 | Knob | Default | Effect |
 |---|---|---|
@@ -203,9 +203,9 @@ operator override will surface there.
 ### Postgres index cache (`index_cache_size_bytes`)
 
 Lives in `PostgresSettings`; overridable via the
-`CORTISTRATE_POSTGRES__INDEX_CACHE_SIZE_BYTES` environment variable. This
+`CORTI_POSTGRES__INDEX_CACHE_SIZE_BYTES` environment variable. This
 is the only knob that bounds the steady-state file-descriptor count
-of a long-running Cortistrate daemon — see
+of a long-running Corti daemon — see
 [Recovery paths § FD exhaustion](#fd-exhaustion-os-error-24--emfile)
 for why nothing else (prune, rebuild, `drop_index`) helps.
 
@@ -221,7 +221,7 @@ on the real `Episode` schema):
 | `32 MB` | ~630 | ~1.4 ms | Linux default 1024 (1.6× headroom) |
 | `unbounded` | grows forever | ~1.3 ms | NEVER use in a daemon |
 
-Cortistrate's measured steady-state working set after a `rebuild_indexes`
+Corti's measured steady-state working set after a `rebuild_indexes`
 cycle is roughly **50-100 readers / 3-6 MB resident** (5 tables × ~7
 BM25 columns × ~10 `part_N` reader entries each), so the 16 MB default
 provides ~3× headroom for burst traffic and stale-but-not-yet-evicted
@@ -269,5 +269,5 @@ is a deployment-side change with no schema work.
 - **Reference-file change detection (agent_skill)**: edits to
   `references/*.md` siblings won't trigger a re-index — only changes
   to `SKILL.md` itself fire the watcher. Workaround: run
-  `cortistrate cascade sync agents/<a>/skills/skill_<n>/SKILL.md` after
+  `corti cascade sync agents/<a>/skills/skill_<n>/SKILL.md` after
   editing references.

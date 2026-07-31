@@ -1,8 +1,8 @@
-"""Cortistrate playable demo story contracts."""
+"""Corti playable demo story contracts."""
 
 from __future__ import annotations
 
-from cortistrate.entrypoints.tui.demo.data import (
+from corti.entrypoints.tui.demo.data import (
     DEFAULT_MEMORY_SEED,
     DEFAULT_QUERY,
     build_demo_story,

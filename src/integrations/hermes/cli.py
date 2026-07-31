@@ -1,6 +1,6 @@
-"""Hermes-side CLI for the Cortistrate memory plugin (``hermes cortistrate <subcommand>``).
+"""Hermes-side CLI for the Corti memory plugin (``hermes corti <subcommand>``).
 
-Runs in the Hermes process when Cortistrate is the active memory provider. The
+Runs in the Hermes process when Corti is the active memory provider. The
 module is loaded *before* the provider is initialised (Hermes' plugin CLI
 discovery imports ``cli.py`` purely to build the argparse tree), so it stays
 lightweight: stdlib + the local ``._constants`` / ``._config`` helpers only.
@@ -13,10 +13,10 @@ Subcommands:
 - ``status``   — reachability + active mode/user/scope + breaker state.
 - ``search``   — one-off search against the active config; prints JSON.
 - ``flush``    — POST ``/memory/flush`` for a session.
-- ``setup``    — non-interactive shortcut that writes/merges ``cortistrate.json``.
+- ``setup``    — non-interactive shortcut that writes/merges ``corti.json``.
 
-Config lives at ``$HERMES_HOME/cortistrate.json`` (see ``integrations/hermes/
-README.md``). Secret ``CORTISTRATE_API_KEY`` belongs in ``~/.hermes/.env``.
+Config lives at ``$HERMES_HOME/corti.json`` (see ``integrations/hermes/
+README.md``). Secret ``CORTI_API_KEY`` belongs in ``~/.hermes/.env``.
 """
 
 from __future__ import annotations
@@ -41,7 +41,7 @@ from ._constants import (
 
 logger = logging.getLogger(__name__)
 
-_CONFIG_FILE_NAME = "cortistrate.json"
+_CONFIG_FILE_NAME = "corti.json"
 _OWNER_CHOICES = ("user", "agent")
 
 # Substrings that mark a config key as secret: anything matching these is
@@ -53,7 +53,7 @@ def _redact(values: dict[str, Any]) -> dict[str, Any]:
     """Return a shallow copy of ``values`` with secret fields masked.
 
     Any key ending in ``_key`` or ``_token`` (e.g. ``api_key``,
-    ``refresh_token``) is replaced with ``"***"`` so ``hermes cortistrate setup``
+    ``refresh_token``) is replaced with ``"***"`` so ``hermes corti setup``
     can safely echo the written values without leaking secrets to stdout.
     """
     return {
@@ -88,7 +88,7 @@ def _default_config() -> dict[str, Any]:
     return {
         "mode": "platform",
         "api_url": _DEFAULT_API_URL,
-        "api_key": os.environ.get("CORTISTRATE_API_KEY", ""),
+        "api_key": os.environ.get("CORTI_API_KEY", ""),
         "user_id": _DEFAULT_USER_ID,
         "agent_id": _DEFAULT_AGENT_ID,
         "app_id": _DEFAULT_APP_ID,
@@ -97,7 +97,7 @@ def _default_config() -> dict[str, Any]:
 
 
 def _load_config() -> dict[str, Any]:
-    """Load config from defaults + ``$HERMES_HOME/cortistrate.json`` overrides."""
+    """Load config from defaults + ``$HERMES_HOME/corti.json`` overrides."""
     cfg = _default_config()
     path = _hermes_home() / _CONFIG_FILE_NAME
     if path.is_file():
@@ -111,7 +111,7 @@ def _load_config() -> dict[str, Any]:
 
 
 def _save_config(values: dict[str, Any]) -> Path:
-    """Merge ``values`` into ``$HERMES_HOME/cortistrate.json`` (atomic-ish)."""
+    """Merge ``values`` into ``$HERMES_HOME/corti.json`` (atomic-ish)."""
     home = _hermes_home()
     home.mkdir(parents=True, exist_ok=True)
     path = home / _CONFIG_FILE_NAME
@@ -130,7 +130,7 @@ def _save_config(values: dict[str, Any]) -> Path:
 
 
 # ---------------------------------------------------------------------------
-# Cortistrate HTTP client helpers
+# Corti HTTP client helpers
 # ---------------------------------------------------------------------------
 
 
@@ -139,7 +139,7 @@ def _client(cfg: dict[str, Any]):
     import httpx  # type: ignore[import-not-found]
 
     headers: dict[str, str] = {}
-    api_key = cfg.get("api_key") or os.environ.get("CORTISTRATE_API_KEY", "")
+    api_key = cfg.get("api_key") or os.environ.get("CORTI_API_KEY", "")
     if api_key:
         headers["Authorization"] = f"Bearer {api_key}"
     return httpx.Client(
@@ -170,14 +170,14 @@ def _health_check(cfg: dict[str, Any]) -> dict[str, Any]:
 
 
 def register_cli(subparser: argparse.ArgumentParser) -> None:
-    """Build the ``hermes cortistrate`` argparse subcommand tree.
+    """Build the ``hermes corti`` argparse subcommand tree.
 
     Called by Hermes' plugin CLI registration system during argparse setup.
-    The *subparser* is the parser for ``hermes cortistrate``.
+    The *subparser* is the parser for ``hermes corti``.
     """
-    subs = subparser.add_subparsers(dest="cortistrate_action")
+    subs = subparser.add_subparsers(dest="corti_action")
 
-    subs.add_parser("status", help="Show Cortistrate reachability and active config.")
+    subs.add_parser("status", help="Show Corti reachability and active config.")
 
     search_p = subs.add_parser(
         "search", help="One-off memory search; prints JSON results."
@@ -221,17 +221,17 @@ def register_cli(subparser: argparse.ArgumentParser) -> None:
 
     setup_p = subs.add_parser(
         "setup",
-        help="Non-interactive shortcut: write/merge cortistrate.json.",
+        help="Non-interactive shortcut: write/merge corti.json.",
     )
     setup_p.add_argument("--mode", choices=["platform", "oss"], default="platform")
-    setup_p.add_argument("--api-url", default="", help="Cortistrate API base URL.")
-    setup_p.add_argument("--api-key", default="", help="Cortistrate API key.")
+    setup_p.add_argument("--api-url", default="", help="Corti API base URL.")
+    setup_p.add_argument("--api-key", default="", help="Corti API key.")
     setup_p.add_argument("--user-id", default="", help="User identifier.")
     setup_p.add_argument("--agent-id", default="", help="Agent identifier.")
-    setup_p.add_argument("--app-id", default="", help="Cortistrate app_id (scope).")
-    setup_p.add_argument("--project-id", default="", help="Cortistrate project_id (scope).")
+    setup_p.add_argument("--app-id", default="", help="Corti app_id (scope).")
+    setup_p.add_argument("--project-id", default="", help="Corti project_id (scope).")
 
-    subparser.set_defaults(func=cortistrate_command)
+    subparser.set_defaults(func=corti_command)
 
 
 # ---------------------------------------------------------------------------
@@ -239,10 +239,10 @@ def register_cli(subparser: argparse.ArgumentParser) -> None:
 # ---------------------------------------------------------------------------
 
 
-def cortistrate_command(args: argparse.Namespace) -> int:
-    action = getattr(args, "cortistrate_action", None)
+def corti_command(args: argparse.Namespace) -> int:
+    action = getattr(args, "corti_action", None)
     if not action:
-        print("Usage: hermes cortistrate {status|search|flush|setup}")
+        print("Usage: hermes corti {status|search|flush|setup}")
         return 2
     try:
         if action == "status":
@@ -254,12 +254,12 @@ def cortistrate_command(args: argparse.Namespace) -> int:
         elif action == "setup":
             _cmd_setup(args)
         else:
-            print(f"Unknown cortistrate action: {action}")
+            print(f"Unknown corti action: {action}")
             return 2
         return 0
     except Exception as exc:
-        logger.error("cortistrate command '%s' failed: %s", action, exc)
-        print(f"cortistrate {action}: {exc}")
+        logger.error("corti command '%s' failed: %s", action, exc)
+        print(f"corti {action}: {exc}")
         return 1
 
 
@@ -356,7 +356,7 @@ def _cmd_flush(args: argparse.Namespace) -> None:
     cfg = _load_config()
     scope = _active_scope(cfg, owner=args.owner)
     fallback = scope.get("agent_id") or scope.get("user_id")
-    session_id = args.session_id or f"cortistrate-cli-{fallback}"
+    session_id = args.session_id or f"corti-cli-{fallback}"
     body: dict[str, Any] = {
         "session_id": session_id,
         "app_id": scope["app_id"],

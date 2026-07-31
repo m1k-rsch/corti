@@ -18,8 +18,8 @@ Drives every knowledge API endpoint end-to-end with a **real LLM**:
 Uses ``httpx.AsyncClient`` against ``create_app()`` with full lifespan
 (SQLite + Postgres + Cascade + OME).
 
-Marked ``live_llm`` + ``slow`` — requires ``CORTISTRATE_LLM__*`` +
-``CORTISTRATE_EMBEDDING__*`` credentials in ``.env``.
+Marked ``live_llm`` + ``slow`` — requires ``CORTI_LLM__*`` +
+``CORTI_EMBEDDING__*`` credentials in ``.env``.
 """
 
 from __future__ import annotations

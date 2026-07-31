@@ -5,28 +5,28 @@ from __future__ import annotations
 import pytest
 from pydantic import SecretStr
 
-from cortistrate.component.embedding import (
+from corti.component.embedding import (
     OpenAIEmbeddingProvider,
     build_embedding_provider,
 )
-from cortistrate.config.settings import EmbeddingSettings
+from corti.config.settings import EmbeddingSettings
 
 
 def test_raises_when_model_missing() -> None:
     s = EmbeddingSettings(model=None, api_key=SecretStr("k"), base_url="https://x")
-    with pytest.raises(ValueError, match="CORTISTRATE_EMBEDDING__MODEL"):
+    with pytest.raises(ValueError, match="CORTI_EMBEDDING__MODEL"):
         build_embedding_provider(s)
 
 
 def test_raises_when_api_key_missing() -> None:
     s = EmbeddingSettings(model="m", api_key=None, base_url="https://x")
-    with pytest.raises(ValueError, match="CORTISTRATE_EMBEDDING__API_KEY"):
+    with pytest.raises(ValueError, match="CORTI_EMBEDDING__API_KEY"):
         build_embedding_provider(s)
 
 
 def test_raises_when_base_url_missing() -> None:
     s = EmbeddingSettings(model="m", api_key=SecretStr("k"), base_url=None)
-    with pytest.raises(ValueError, match="CORTISTRATE_EMBEDDING__BASE_URL"):
+    with pytest.raises(ValueError, match="CORTI_EMBEDDING__BASE_URL"):
         build_embedding_provider(s)
 
 

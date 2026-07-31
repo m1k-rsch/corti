@@ -5,8 +5,8 @@ from __future__ import annotations
 import pytest
 from fastapi import FastAPI
 
-from cortistrate.entrypoints.api.lifespans import cascade as cascade_lifespan_mod
-from cortistrate.entrypoints.api.lifespans.cascade import CascadeLifespanProvider
+from corti.entrypoints.api.lifespans import cascade as cascade_lifespan_mod
+from corti.entrypoints.api.lifespans.cascade import CascadeLifespanProvider
 
 
 class _StubOrchestrator:
@@ -30,10 +30,10 @@ def test_provider_metadata() -> None:
 async def test_startup_constructs_and_starts_orchestrator(
     tmp_path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setenv("CORTISTRATE_ROOT", str(tmp_path))
-    monkeypatch.setenv("CORTISTRATE_EMBEDDING__MODEL", "stub-model")
-    monkeypatch.setenv("CORTISTRATE_EMBEDDING__BASE_URL", "http://stub.invalid/v1")
-    monkeypatch.setenv("CORTISTRATE_EMBEDDING__API_KEY", "stub-key")
+    monkeypatch.setenv("CORTI_ROOT", str(tmp_path))
+    monkeypatch.setenv("CORTI_EMBEDDING__MODEL", "stub-model")
+    monkeypatch.setenv("CORTI_EMBEDDING__BASE_URL", "http://stub.invalid/v1")
+    monkeypatch.setenv("CORTI_EMBEDDING__API_KEY", "stub-key")
 
     captured: list[_StubOrchestrator] = []
 
@@ -59,10 +59,10 @@ async def test_shutdown_without_startup_is_noop() -> None:
 async def test_shutdown_stops_orchestrator_and_clears_reference(
     tmp_path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setenv("CORTISTRATE_ROOT", str(tmp_path))
-    monkeypatch.setenv("CORTISTRATE_EMBEDDING__MODEL", "stub-model")
-    monkeypatch.setenv("CORTISTRATE_EMBEDDING__BASE_URL", "http://stub.invalid/v1")
-    monkeypatch.setenv("CORTISTRATE_EMBEDDING__API_KEY", "stub-key")
+    monkeypatch.setenv("CORTI_ROOT", str(tmp_path))
+    monkeypatch.setenv("CORTI_EMBEDDING__MODEL", "stub-model")
+    monkeypatch.setenv("CORTI_EMBEDDING__BASE_URL", "http://stub.invalid/v1")
+    monkeypatch.setenv("CORTI_EMBEDDING__API_KEY", "stub-key")
 
     captured: list[_StubOrchestrator] = []
 

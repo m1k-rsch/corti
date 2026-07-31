@@ -5,20 +5,20 @@ from __future__ import annotations
 import pytest
 from pydantic import SecretStr
 
-from cortistrate.component.llm import build_llm_provider
-from cortistrate.component.llm.openai_provider import OpenAIProvider
-from cortistrate.config.settings import LLMSettings
+from corti.component.llm import build_llm_provider
+from corti.component.llm.openai_provider import OpenAIProvider
+from corti.config.settings import LLMSettings
 
 
 def test_raises_when_api_key_missing() -> None:
     s = LLMSettings(model="m", api_key=None, base_url="https://x")
-    with pytest.raises(ValueError, match="CORTISTRATE_LLM__API_KEY"):
+    with pytest.raises(ValueError, match="CORTI_LLM__API_KEY"):
         build_llm_provider(s)
 
 
 def test_raises_when_base_url_missing() -> None:
     s = LLMSettings(model="m", api_key=SecretStr("k"), base_url=None)
-    with pytest.raises(ValueError, match="CORTISTRATE_LLM__BASE_URL"):
+    with pytest.raises(ValueError, match="CORTI_LLM__BASE_URL"):
         build_llm_provider(s)
 
 

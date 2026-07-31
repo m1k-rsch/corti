@@ -9,7 +9,7 @@ Pydantic-side guarantees the manager / route can rely on:
 * Unknown fields on the request are rejected (``extra="forbid"``)
 
 Filter DSL coverage lives in ``test_memory/test_search/test_filters.py``
-since ``/get`` shares :class:`cortistrate.memory.search.FilterNode`.
+since ``/get`` shares :class:`corti.memory.search.FilterNode`.
 """
 
 from __future__ import annotations
@@ -17,7 +17,7 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from cortistrate.memory.get.dto import (
+from corti.memory.get.dto import (
     GetMemoryType,
     GetRequest,
 )

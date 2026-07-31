@@ -8,11 +8,11 @@ from pathlib import Path
 import pytest
 from sqlmodel import SQLModel
 
-from cortistrate.component.embedding import EmbeddingProvider
-from cortistrate.component.tokenizer import build_tokenizer
-from cortistrate.core.persistence import MemoryRoot
-from cortistrate.infra.persistence.sqlite import dispose_engine, get_engine
-from cortistrate.memory.cascade import CascadeConfig, CascadeOrchestrator
+from corti.component.embedding import EmbeddingProvider
+from corti.component.tokenizer import build_tokenizer
+from corti.core.persistence import MemoryRoot
+from corti.infra.persistence.sqlite import dispose_engine, get_engine
+from corti.memory.cascade import CascadeConfig, CascadeOrchestrator
 
 
 class _StubEmbedder(EmbeddingProvider):
@@ -30,10 +30,10 @@ async def runtime(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> AsyncIterator[MemoryRoot]:
     """Boot sqlite + Postgres against a tmp memory_root."""
-    monkeypatch.setenv("CORTISTRATE_ROOT", str(tmp_path))
-    monkeypatch.setenv("CORTISTRATE_EMBEDDING__MODEL", "stub-model")
-    monkeypatch.setenv("CORTISTRATE_EMBEDDING__BASE_URL", "http://stub.invalid/v1")
-    monkeypatch.setenv("CORTISTRATE_EMBEDDING__API_KEY", "stub-key")
+    monkeypatch.setenv("CORTI_ROOT", str(tmp_path))
+    monkeypatch.setenv("CORTI_EMBEDDING__MODEL", "stub-model")
+    monkeypatch.setenv("CORTI_EMBEDDING__BASE_URL", "http://stub.invalid/v1")
+    monkeypatch.setenv("CORTI_EMBEDDING__API_KEY", "stub-key")
 
     await dispose_engine()
     engine = get_engine()

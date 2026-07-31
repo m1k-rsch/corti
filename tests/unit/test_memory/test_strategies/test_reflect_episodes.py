@@ -9,9 +9,9 @@ from __future__ import annotations
 
 import inspect
 
-from cortistrate.infra.ome.triggers import Cron
-from cortistrate.memory.events import EpisodeExtracted
-from cortistrate.memory.strategies.reflect_episodes import reflect_episodes
+from corti.infra.ome.triggers import Cron
+from corti.memory.events import EpisodeExtracted
+from corti.memory.strategies.reflect_episodes import reflect_episodes
 
 
 async def test_strategy_meta_is_attached() -> None:

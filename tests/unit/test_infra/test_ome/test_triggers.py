@@ -3,8 +3,8 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from cortistrate.infra.ome.events import BaseEvent
-from cortistrate.infra.ome.triggers import Cron, Idle, Immediate
+from corti.infra.ome.events import BaseEvent
+from corti.infra.ome.triggers import Cron, Idle, Immediate
 
 
 class _A(BaseEvent):

@@ -4,7 +4,7 @@ from typing import Protocol
 
 import structlog
 
-from cortistrate.infra.ome.context import StrategyContext
+from corti.infra.ome.context import StrategyContext
 
 
 def test_strategy_context_is_protocol() -> None:

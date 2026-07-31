@@ -1,6 +1,6 @@
-# Cortistrate Documentation
+# Corti Documentation
 
-Documentation for [Cortistrate](../README.md) — md-first memory extraction
+Documentation for [Corti](../README.md) — md-first memory extraction
 framework. Organised by [Diátaxis](https://diataxis.fr/) — what kind of
 question you have determines which section to read.
 
@@ -11,8 +11,8 @@ before wiring it into a real workflow.
 
 | Doc | Purpose |
 |---|---|
-| [cortistrate-demo.md](cortistrate-demo.md) | `cortistrate demo` — local educational TUI to feel the memory lifecycle before configuring keys |
-| [hermes-integration.md](hermes-integration.md) | Wire Hermes Agent to Cortistrate as a long-term memory backend — install, config, lifecycle, tools |
+| [corti-demo.md](corti-demo.md) | `corti demo` — local educational TUI to feel the memory lifecycle before configuring keys |
+| [hermes-integration.md](hermes-integration.md) | Wire Hermes Agent to Corti as a long-term memory backend — install, config, lifecycle, tools |
 
 ## Reference
 
@@ -24,7 +24,7 @@ already know what you want to do and need to know exactly how.
 | [api.md](api.md) | HTTP API v1 reference — endpoints, request / response, error contracts |
 | [knowledge.md](knowledge.md) | Knowledge base module — upload, search, taxonomy, storage layout |
 | [reflection.md](reflection.md) | Reflection — offline memory consolidation: enable, schedule, storage, triggering |
-| [cli.md](cli.md) | `cortistrate` CLI subcommands + env var conventions |
+| [cli.md](cli.md) | `corti` CLI subcommands + env var conventions |
 | [storage_layout.md](storage_layout.md) | Memory-root tree + frontmatter chassis + EntryId encoding |
 | [prompt_slots.md](prompt_slots.md) | PromptSlot loader — bundled default prompts (Layer 1 live; app/runtime overlays planned) |
 | [configuration.md](configuration.md) | TOML / env-var configuration reference |
@@ -69,13 +69,13 @@ Top-level project files live next to the repo root:
 
 - [README.md](../README.md) — quick start & feature overview
 - [QUICKSTART.md](../QUICKSTART.md) — 5-minute walkthrough (install → service → search)
-- [CONTRIBUTING.md](../CONTRIBUTING.md) — how to contribute (issue-only model)
+- [CONTRIBUTING.md](legal/CONTRIBUTING.md) — how to contribute (issue-only model)
 - [CHANGELOG.md](../CHANGELOG.md) — release notes
-- [release-notes-1.1.0.md](release-notes-1.1.0.md) — Cortistrate 1.1.0 highlights (Knowledge, Reflection, OME)
+- [release-notes-1.1.0.md](release-notes-1.1.0.md) — Corti 1.1.0 highlights (Knowledge, Reflection, OME)
 - [migration-to-1.0.0.md](migration-to-1.0.0.md) — migrate off pre-1.0.0 APIs / infrastructure
 - [SECURITY.md](../SECURITY.md) — security policy & private vulnerability reporting
 - [CITATION.md](../CITATION.md) — academic citation info
-- [ACKNOWLEDGMENTS.md](../ACKNOWLEDGMENTS.md) — third-party acknowledgments
+- [ACKNOWLEDGMENTS.md](legal/ACKNOWLEDGMENTS.md) — third-party acknowledgments
 
 Coding conventions and slash command workflows are auto-loaded by
 Claude Code from [.claude/rules/](../.claude/rules/) and

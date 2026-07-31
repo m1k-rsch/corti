@@ -42,7 +42,9 @@ from everalgo.knowledge._flatten import flatten
 from everalgo.knowledge._llm_json import parse_llm_json
 from everalgo.knowledge._postprocess import apostprocess_topics
 from everalgo.knowledge._topic_build import build_topic_clips
-from everalgo.knowledge.prompts.en.topic_tree_extract import TOPIC_TREE_EXTRACT_PROMPT_EN
+from everalgo.knowledge.prompts.en.topic_tree_extract import (
+    TOPIC_TREE_EXTRACT_PROMPT_EN,
+)
 from everalgo.llm.types import ChatMessage
 
 if TYPE_CHECKING:

@@ -1,8 +1,8 @@
 {
-  "name": "cortistrate-claude-code",
+  "name": "corti-claude-code",
   "version": "0.1.0",
   "type": "module",
-  "description": "Cortistrate plugin for Claude Code — persistent memory across sessions",
+  "description": "Corti plugin for Claude Code — persistent memory across sessions",
   "scripts": {
     "test:save": "node scripts/test-save-memories.js",
     "test:retrieve": "node scripts/test-retrieve-memories.js",
@@ -17,8 +17,8 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/mark1kwok/cortistrate"
+    "url": "https://github.com/m1k-rsch/corti"
   },
   "license": "Apache-2.0",
-  "keywords": ["memory", "agent", "cortistrate", "persistent", "context"]
+  "keywords": ["memory", "agent", "corti", "persistent", "context"]
 }

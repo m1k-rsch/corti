@@ -15,7 +15,7 @@ PRIMARY_LINK_RE = re.compile(
     flags=re.M,
 )
 ENV_EXAMPLE = Path(".env.example")
-ENV_TEMPLATE = Path("src/cortistrate/templates/env.template")
+ENV_TEMPLATE = Path("src/corti/templates/env.template")
 
 
 def _markdown_files() -> list[Path]:

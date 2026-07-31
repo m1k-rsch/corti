@@ -15,8 +15,8 @@ from pathlib import Path
 import pytest
 from sqlmodel import SQLModel
 
-from cortistrate.config import SqliteSettings
-from cortistrate.core.persistence import (
+from corti.config import SqliteSettings
+from corti.core.persistence import (
     BaseTable,
     Field,
     MemoryRoot,

@@ -46,7 +46,7 @@ async def test_dev_mode_openapi_endpoint_matches_committed_docs(
     # Force dev-mode so ``openapi_url="/openapi.json"`` is registered.
     monkeypatch.setenv("ENV", "DEV")
 
-    from cortistrate.entrypoints.api.app import create_app
+    from corti.entrypoints.api.app import create_app
 
     app = create_app(lifespan_providers=[])
     transport = httpx.ASGITransport(app=app)

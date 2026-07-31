@@ -1,4 +1,4 @@
-"""Setup wizard for the Cortistrate Hermes plugin — Hermes-agnostic.
+"""Setup wizard for the Corti Hermes plugin — Hermes-agnostic.
 
 Uses only stdlib + the local ``_config._atomic_write_text`` helper. The
 real Hermes provider (``__init__.py``, Phase 2) adapts ``post_setup`` here
@@ -56,14 +56,14 @@ def _toml_value(value: Any) -> str:
     return json.dumps(str(value), ensure_ascii=False)
 
 
-def write_cortistrate_toml(
-    cortistrate_root: Path,
+def write_corti_toml(
+    corti_root: Path,
     *,
     llm: dict[str, Any],
     embedding: dict[str, Any],
     rerank: dict[str, Any] | None,
 ) -> Path:
-    """Write ``cortistrate.toml`` under ``~/.cortistrate`` (or ``cortistrate_root``).
+    """Write ``corti.toml`` under ``~/.corti`` (or ``corti_root``).
 
     Sections: ``[llm]`` and ``[embedding]`` are always written; ``[rerank]``
     only when ``rerank`` is provided. Each section emits ``model``,
@@ -73,12 +73,12 @@ def write_cortistrate_toml(
 
     The file is chmod 600. Returns the written path.
     """
-    root = Path(cortistrate_root).expanduser() if cortistrate_root else Path.home() / ".cortistrate"
+    root = Path(corti_root).expanduser() if corti_root else Path.home() / ".corti"
     root.mkdir(parents=True, exist_ok=True)
-    path = root / "cortistrate.toml"
+    path = root / "corti.toml"
 
     blocks = [
-        "# Cortistrate configuration — written by the Hermes Cortistrate plugin setup.",
+        "# Corti configuration — written by the Hermes Corti plugin setup.",
         "",
         _toml_section("llm", llm),
         _toml_section("embedding", embedding),
@@ -125,25 +125,25 @@ def _emit_toml(data: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def build_cortistrate_json(
+def build_corti_json(
     api_url: str,
     mode: str,
     user_id: str,
     agent_id: str,
-    cortistrate_root: str | None,
+    corti_root: str | None,
 ) -> dict[str, Any]:
-    """Build the dict that gets written to ``$HERMES_HOME/cortistrate.json``."""
+    """Build the dict that gets written to ``$HERMES_HOME/corti.json``."""
     return {
         "api_url": api_url,
         "mode": mode,
         "user_id": user_id,
         "agent_id": agent_id,
-        "cortistrate_root": cortistrate_root,
+        "corti_root": corti_root,
     }
 
 
-def _write_cortistrate_json(hermes_home: Path, payload: dict[str, Any]) -> Path:
-    path = Path(hermes_home) / "cortistrate.json"
+def _write_corti_json(hermes_home: Path, payload: dict[str, Any]) -> Path:
+    path = Path(hermes_home) / "corti.json"
     text = json.dumps(payload, ensure_ascii=False, indent=2) + "\n"
     _atomic_write_text(path, text, mode=_JSON_FILE_MODE)
     return path
@@ -161,7 +161,7 @@ def post_setup(
     Parameters
     ----------
     hermes_home:
-        The Hermes home directory; ``cortistrate.json`` is written here.
+        The Hermes home directory; ``corti.json`` is written here.
     config:
         Existing plugin config (merged defaults + env + previous JSON).
     interactive:
@@ -172,10 +172,10 @@ def post_setup(
     inputs:
         Pre-collected wizard answers for non-interactive runs. Recognised
         keys: ``mode``, ``api_url``, ``user_id``, ``agent_id``,
-        ``cortistrate_root``, ``llm``, ``embedding``,
+        ``corti_root``, ``llm``, ``embedding``,
         ``rerank``.
 
-    Returns the final ``cortistrate.json`` dict (also written to disk).
+    Returns the final ``corti.json`` dict (also written to disk).
     """
     hermes_home = Path(hermes_home)
     hermes_home.mkdir(parents=True, exist_ok=True)
@@ -186,43 +186,43 @@ def post_setup(
 
     mode = inputs.get("mode") or config.get("mode") or "platform"
     if mode not in ("platform", "oss"):
-        raise ValueError(f"unknown Cortistrate mode: {mode!r}")
+        raise ValueError(f"unknown Corti mode: {mode!r}")
 
     user_id = inputs.get("user_id") or config.get("user_id") or _DEFAULT_USER_ID
     agent_id = inputs.get("agent_id") or config.get("agent_id") or _DEFAULT_AGENT_ID
-    cortistrate_root = inputs.get("cortistrate_root") or config.get("cortistrate_root")
+    corti_root = inputs.get("corti_root") or config.get("corti_root")
 
     if mode == "platform":
         api_url = inputs.get("api_url") or config.get("api_url") or _DEFAULT_API_URL
-        payload = build_cortistrate_json(
+        payload = build_corti_json(
             api_url=api_url,
             mode=mode,
             user_id=user_id,
             agent_id=agent_id,
-            cortistrate_root=None,
+            corti_root=None,
         )
-        _write_cortistrate_json(hermes_home, payload)
+        _write_corti_json(hermes_home, payload)
         return payload
 
     # mode == "oss"
-    if cortistrate_root:
-        oss_root = Path(cortistrate_root).expanduser()
+    if corti_root:
+        oss_root = Path(corti_root).expanduser()
     else:
-        oss_root = Path.home() / ".cortistrate"
+        oss_root = Path.home() / ".corti"
     llm = inputs.get("llm") or {}
     embedding = inputs.get("embedding") or {}
     rerank = inputs.get("rerank")
-    write_cortistrate_toml(oss_root, llm=llm, embedding=embedding, rerank=rerank)
+    write_corti_toml(oss_root, llm=llm, embedding=embedding, rerank=rerank)
 
     api_url = inputs.get("api_url") or config.get("api_url") or _DEFAULT_API_URL
-    payload = build_cortistrate_json(
+    payload = build_corti_json(
         api_url=api_url,
         mode=mode,
         user_id=user_id,
         agent_id=agent_id,
-        cortistrate_root=str(oss_root),
+        corti_root=str(oss_root),
     )
-    _write_cortistrate_json(hermes_home, payload)
+    _write_corti_json(hermes_home, payload)
     return payload
 
 
@@ -237,14 +237,14 @@ def _prompt_wizard(config: dict[str, Any]) -> dict[str, Any]:
 
     if inputs.get("mode", default_mode) == "platform":
         default_api_url = config.get("api_url") or _DEFAULT_API_URL
-        api_url = _prompt("Cortistrate API URL", default=default_api_url).strip()
+        api_url = _prompt("Corti API URL", default=default_api_url).strip()
         if api_url:
             inputs["api_url"] = api_url
     else:
-        default_root = config.get("cortistrate_root") or str(Path.home() / ".cortistrate")
-        root = _prompt("Cortistrate root", default=default_root).strip()
+        default_root = config.get("corti_root") or str(Path.home() / ".corti")
+        root = _prompt("Corti root", default=default_root).strip()
         if root:
-            inputs["cortistrate_root"] = root
+            inputs["corti_root"] = root
         inputs["llm"] = _prompt_provider("LLM", config.get("llm") or {})
         inputs["embedding"] = _prompt_provider(
             "Embedding", config.get("embedding") or {}

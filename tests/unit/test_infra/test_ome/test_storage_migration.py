@@ -7,7 +7,7 @@ from pathlib import Path
 import aiosqlite
 import pytest
 
-from cortistrate.infra.ome._stores.storage import OMEStorage
+from corti.infra.ome._stores.storage import OMEStorage
 
 
 @pytest.mark.asyncio

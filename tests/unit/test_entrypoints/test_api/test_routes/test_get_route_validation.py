@@ -21,13 +21,13 @@ from pathlib import Path
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from cortistrate.config import load_settings
-from cortistrate.entrypoints.api.app import create_app
+from corti.config import load_settings
+from corti.entrypoints.api.app import create_app
 
-# ``cortistrate.service.__init__`` re-exports ``get`` shadowing the
+# ``corti.service.__init__`` re-exports ``get`` shadowing the
 # submodule. Reach the real module via importlib so we can reset its
 # ``_manager`` lazy singleton.
-get_service_mod = import_module("cortistrate.service.get")
+get_service_mod = import_module("corti.service.get")
 
 
 @pytest.fixture
@@ -36,7 +36,7 @@ async def client(
     monkeypatch: pytest.MonkeyPatch,
 ) -> AsyncIterator[AsyncClient]:
     """FastAPI app with no lifespan; resets get-path singletons per test."""
-    monkeypatch.setenv("CORTISTRATE_ROOT", str(tmp_path))
+    monkeypatch.setenv("CORTI_ROOT", str(tmp_path))
     load_settings.cache_clear()
 
     get_service_mod._manager = None

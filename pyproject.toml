@@ -1,14 +1,14 @@
 [project]
-name = "cortistrate"
+name = "corti"
 version = "0.1.0"
-description = "Cortistrate — markdown memory framework for AI agent swarms; cross-machine, multi-agent, self-hosted"
+description = "Corti — markdown memory framework for AI agent swarms; cross-machine, multi-agent, self-hosted"
 license = {text = "Apache-2.0"}
 readme = "README.md"
 requires-python = ">=3.12"
 authors = [
-    {name = "Cortistrate AI"},
+    {name = "Corti AI"},
 ]
-keywords = ["memory", "ai-agent", "markdown", "postgresql", "pgvector", "rag", "cortistrate"]
+keywords = ["memory", "ai-agent", "markdown", "postgresql", "pgvector", "rag", "corti"]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Developers",
@@ -64,7 +64,7 @@ dependencies = [
     "anyio>=4.0",                  # Async file I/O (anyio.Path, to_thread.run_sync) for the markdown layer
 
     # Vendored algorithm library (formerly everalgo-* PyPI packages).
-    # Source lives under src/everalgo/ — see ACKNOWLEDGMENTS.md for attribution.
+    # Source lives under src/everalgo/ — see legal/ACKNOWLEDGMENTS.md for attribution.
     "tiktoken>=0.7",              # tokenisation for boundary detection + prompt budget
     "asgiref>=3.0",               # async sync bridge (rank + knowledge modules)
     "httpx>=0.27.0",              # HTTP client for multimodal parser
@@ -78,19 +78,19 @@ multimodal = ["cairosvg>=2.7.0"]  # SVG parsing support for multimodal content
 
 [project.urls]
 Homepage = "https://cortistrate.dev"
-Repository = "https://github.com/mark1kwok/cortistrate"
-Changelog = "https://github.com/mark1kwok/cortistrate/blob/main/CHANGELOG.md"
-"Bug Tracker" = "https://github.com/mark1kwok/cortistrate/issues"
+Repository = "https://github.com/m1k-rsch/corti"
+Changelog = "https://github.com/m1k-rsch/corti/blob/main/CHANGELOG.md"
+"Bug Tracker" = "https://github.com/m1k-rsch/corti/issues"
 
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [tool.hatch.build.targets.wheel]
-packages = ["src/cortistrate", "src/everalgo", "src/integrations", "src/scripts"]
+packages = ["src/corti", "src/everalgo", "src/integrations", "src/scripts"]
 
-# ``env.template`` lives at src/cortistrate/templates/env.template and is
-# auto-included via ``packages``. ``cortistrate init`` reads it through
+# ``env.template`` lives at src/corti/templates/env.template and is
+# auto-included via ``packages``. ``corti init`` reads it through
 # ``importlib.resources``. No force-include needed.
 
 # sdist uses an include-whitelist (not exclude) so we don't accidentally ship
@@ -106,17 +106,17 @@ include = [
     "/docs",
     "/pyproject.toml",
     "/README.md",
-    "/CONTRIBUTING.md",
-    "/CODE_OF_CONDUCT.md",
-    "/ACKNOWLEDGMENTS.md",
-    "/LICENSE",
-    "/NOTICE",
+    "/legal/LICENSE",
+    "/legal/NOTICE",
+    "/legal/ACKNOWLEDGMENTS.md",
+    "/legal/CONTRIBUTING.md",
+    "/legal/CODE_OF_CONDUCT.md",
     "/config.example.toml",
 ]
 exclude = [".uv-cache", ".venv"]
 
 [project.scripts]
-cortistrate = "cortistrate.entrypoints.cli.main:app"
+corti = "corti.entrypoints.cli.main:app"
 
 # ───────────────────────────────────────────────────────────────────────────────
 # Tooling
@@ -170,7 +170,7 @@ markers = [
 ]
 
 [tool.coverage.run]
-source = ["src/cortistrate"]
+source = ["src/corti"]
 branch = true
 omit = ["**/__init__.py"]
 
@@ -184,28 +184,28 @@ exclude_lines = [
 ]
 
 [tool.importlinter]
-root_packages = ["cortistrate", "everalgo"]
+root_packages = ["corti", "everalgo"]
 
 [[tool.importlinter.contracts]]
 name = "Layered architecture"
 type = "layers"
 layers = [
-    "cortistrate.entrypoints",
-    "cortistrate.service",
-    "cortistrate.memory",
-    "cortistrate.infra",
+    "corti.entrypoints",
+    "corti.service",
+    "corti.memory",
+    "corti.infra",
 ]
 
 [[tool.importlinter.contracts]]
 name = "Subpackage internals are private"
 type = "forbidden"
-source_modules = ["cortistrate.service", "cortistrate.memory", "cortistrate.entrypoints"]
+source_modules = ["corti.service", "corti.memory", "corti.entrypoints"]
 # `**` matches any descendant (writer.py, reader.py, sub.foo.bar, ...).
 # Public API must be reached via the subpackage `__init__.py`.
 forbidden_modules = [
-    "cortistrate.infra.persistence.markdown.**",
-    "cortistrate.infra.persistence.pg.**",
-    "cortistrate.infra.persistence.sqlite.**",
+    "corti.infra.persistence.markdown.**",
+    "corti.infra.persistence.pg.**",
+    "corti.infra.persistence.sqlite.**",
 ]
 # `forbidden` contracts run a *transitive closure* — any path from a
 # source module to a forbidden module fails the check, even when the
@@ -215,34 +215,34 @@ forbidden_modules = [
 # children to assemble the public API surface that outer layers reach.
 # These edges are normal Python package wiring, *not* a privacy
 # breach — without these ignores, even a legitimate
-# ``from cortistrate.infra.persistence.sqlite import X`` would be punished
+# ``from corti.infra.persistence.sqlite import X`` would be punished
 # because the transitive scan walks one hop further into the package.
 #
 # Direct imports from outer layers into a subpackage internal module
-# (e.g. ``from cortistrate.infra.persistence.sqlite.tables import X`` written
+# (e.g. ``from corti.infra.persistence.sqlite.tables import X`` written
 # in ``service`` or ``entrypoints``) remain blocked — that edge is not
 # in this whitelist.
 ignore_imports = [
-    "cortistrate.infra.persistence.sqlite -> cortistrate.infra.persistence.sqlite.tables",
-    "cortistrate.infra.persistence.sqlite -> cortistrate.infra.persistence.sqlite.repos",
-    "cortistrate.infra.persistence.sqlite -> cortistrate.infra.persistence.sqlite.sqlite_manager",
-    "cortistrate.infra.persistence.pg -> cortistrate.infra.persistence.pg.tables",
-    "cortistrate.infra.persistence.pg -> cortistrate.infra.persistence.pg.repos",
-    "cortistrate.infra.persistence.pg -> cortistrate.infra.persistence.pg.pg_manager",
-    "cortistrate.infra.persistence.markdown -> cortistrate.infra.persistence.markdown.mds",
-    "cortistrate.infra.persistence.markdown -> cortistrate.infra.persistence.markdown.writers",
-    "cortistrate.infra.persistence.markdown -> cortistrate.infra.persistence.markdown.readers",
+    "corti.infra.persistence.sqlite -> corti.infra.persistence.sqlite.tables",
+    "corti.infra.persistence.sqlite -> corti.infra.persistence.sqlite.repos",
+    "corti.infra.persistence.sqlite -> corti.infra.persistence.sqlite.sqlite_manager",
+    "corti.infra.persistence.pg -> corti.infra.persistence.pg.tables",
+    "corti.infra.persistence.pg -> corti.infra.persistence.pg.repos",
+    "corti.infra.persistence.pg -> corti.infra.persistence.pg.pg_manager",
+    "corti.infra.persistence.markdown -> corti.infra.persistence.markdown.mds",
+    "corti.infra.persistence.markdown -> corti.infra.persistence.markdown.writers",
+    "corti.infra.persistence.markdown -> corti.infra.persistence.markdown.readers",
 ]
 
 [[tool.importlinter.contracts]]
 name = "OME does not depend on memory/service/entrypoints or sibling infra subpackages"
 type = "forbidden"
-source_modules = ["cortistrate.infra.ome"]
+source_modules = ["corti.infra.ome"]
 forbidden_modules = [
-    "cortistrate.infra.persistence",
-    "cortistrate.memory",
-    "cortistrate.service",
-    "cortistrate.entrypoints",
+    "corti.infra.persistence",
+    "corti.memory",
+    "corti.service",
+    "corti.entrypoints",
 ]
 
 [dependency-groups]

@@ -1,8 +1,8 @@
 {
   "source": "LoCoMo conv_0 (Caroline & Melanie)",
   "license": "see LoCoMo upstream (snap-research/locomo)",
-  "cortistrate_session_id": "locomo_c0_caroline_melanie",
-  "cortistrate_user_id_for_test": "u_smoke_001",
+  "corti_session_id": "locomo_c0_caroline_melanie",
+  "corti_user_id_for_test": "u_smoke_001",
   "speakers": [
     "caroline",
     "melanie"
@@ -11,7 +11,7 @@
   "total_batches": 19,
   "intra_session_gap_seconds": 30,
   "conversion_rules": {
-    "session_id": "all LoCoMo sessions collapse to one cortistrate session",
+    "session_id": "all LoCoMo sessions collapse to one corti session",
     "sender_id": "LoCoMo `speaker` lowercased",
     "role": "always 'user' (both LoCoMo speakers are user inputs)",
     "timestamp": "session_<N>_date_time parsed as UTC, +30s per message within a batch",

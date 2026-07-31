@@ -14,24 +14,24 @@ batching by 6 messages per `/add` call and then `/flush` at the end.
 ## Prereqs
 
 1. **LLM client configured** in `.env`:
-   - `CORTISTRATE_LLM__API_KEY=...`
-   - `CORTISTRATE_LLM__BASE_URL=...` (OpenAI-compatible)
-   - `CORTISTRATE_LLM__MODEL=...` (defaults to `gpt-4.1-mini`)
+   - `CORTI_LLM__API_KEY=...`
+   - `CORTI_LLM__BASE_URL=...` (OpenAI-compatible)
+   - `CORTI_LLM__MODEL=...` (defaults to `gpt-4.1-mini`)
    - Without these, the boundary stage logs `memorize_no_llm_client` and skips the run.
-2. **Memory root**: defaults to `~/.cortistrate`; override with `CORTISTRATE_ROOT=...`.
+2. **Memory root**: defaults to `~/.corti`; override with `CORTI_ROOT=...`.
 3. **Mode** is read from `settings.memorize.mode` (toml/env) before the first `memorize()` call.
 
 ## Run
 
 ```bash
 # Chat mode — boundary uses everalgo.boundary.detect_boundaries
-CORTISTRATE_MEMORIZE__MODE=chat uv run python scripts/e2e_memorize/run.py \
+CORTI_MEMORIZE__MODE=chat uv run python scripts/e2e_memorize/run.py \
     --fixture scripts/e2e_memorize/fixtures/chat_session.json \
     --expected-mode chat
 
 # Agent mode — boundary uses everalgo.agent_memory.AgentBoundaryDetector
 # (filter→detect→remap; tool items preserved in cells)
-CORTISTRATE_MEMORIZE__MODE=agent uv run python scripts/e2e_memorize/run.py \
+CORTI_MEMORIZE__MODE=agent uv run python scripts/e2e_memorize/run.py \
     --fixture scripts/e2e_memorize/fixtures/agent_session.json \
     --expected-mode agent
 
@@ -52,7 +52,7 @@ in the last 10 minutes.
 ### 2. Episode md (sync — 4A)
 
 ```
-~/.cortistrate/users/<owner_id>/episodes/episode-YYYY-MM-DD.md
+~/.corti/users/<owner_id>/episodes/episode-YYYY-MM-DD.md
 ```
 
 - Chat fixture: 2 owners (`u_alice`, `u_bob`) — expect Episodes split into
@@ -64,7 +64,7 @@ in the last 10 minutes.
 ### 3. SQLite memcell rows
 
 ```bash
-sqlite3 ~/.cortistrate/.index/sqlite/system.db \
+sqlite3 ~/.corti/.index/sqlite/system.db \
     "select memcell_id, track, owner_id, owner_type, json_array_length(sender_ids_json) as senders
      from memcell order by timestamp"
 ```
@@ -76,7 +76,7 @@ sqlite3 ~/.cortistrate/.index/sqlite/system.db \
 ### 4. Unprocessed buffer
 
 ```bash
-sqlite3 ~/.cortistrate/.index/sqlite/system.db \
+sqlite3 ~/.corti/.index/sqlite/system.db \
     "select session_id, count(*) from unprocessed_buffer
      where track='memorize' group by session_id"
 ```
@@ -95,7 +95,7 @@ The fixture's session_id is randomised per invocation, so previous runs
 don't pollute the new one. To wipe everything:
 
 ```bash
-rm -rf ~/.cortistrate/users ~/.cortistrate/agents ~/.cortistrate/.index/sqlite/system.db
+rm -rf ~/.corti/users ~/.corti/agents ~/.corti/.index/sqlite/system.db
 ```
 
 ## Boundary expectations cheat sheet

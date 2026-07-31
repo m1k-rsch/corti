@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from cortistrate.infra.ome._stores.counter import CounterStore
-from cortistrate.infra.ome._stores.storage import OMEStorage
+from corti.infra.ome._stores.counter import CounterStore
+from corti.infra.ome._stores.storage import OMEStorage
 
 
 @pytest.fixture

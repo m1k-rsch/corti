@@ -13,7 +13,7 @@ from collections.abc import Callable
 import httpx
 import pytest
 
-from cortistrate.component.rerank import (
+from corti.component.rerank import (
     DeepInfraRerankProvider,
     RerankServiceError,
 )
@@ -25,7 +25,7 @@ def _patch_httpx(
 ) -> None:
     """Make ``httpx.AsyncClient(timeout=...)`` use a MockTransport."""
     transport = httpx.MockTransport(handler)
-    import cortistrate.component.rerank.deepinfra_provider as mod
+    import corti.component.rerank.deepinfra_provider as mod
 
     real_cls = httpx.AsyncClient
 

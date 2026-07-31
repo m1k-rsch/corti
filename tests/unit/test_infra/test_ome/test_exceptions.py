@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from cortistrate.infra.ome.events import BaseEvent
-from cortistrate.infra.ome.exceptions import (
+from corti.infra.ome.events import BaseEvent
+from corti.infra.ome.exceptions import (
     EmitNotDeclaredError,
     OMEError,
     StartupValidationError,

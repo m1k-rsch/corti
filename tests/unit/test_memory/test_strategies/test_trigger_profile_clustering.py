@@ -13,14 +13,14 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import numpy as np
 import pytest
 import structlog.testing
-from everalgo.clustering import Cluster as AlgoCluster
 
-from cortistrate.infra.ome.testing import FakeStrategyContext
-from cortistrate.memory._partition_locks import _reset_for_tests
-from cortistrate.memory.events import EpisodeExtracted, ProfileClusterUpdated
-from cortistrate.memory.strategies.trigger_profile_clustering import (
+from corti.infra.ome.testing import FakeStrategyContext
+from corti.memory._partition_locks import _reset_for_tests
+from corti.memory.events import EpisodeExtracted, ProfileClusterUpdated
+from corti.memory.strategies.trigger_profile_clustering import (
     trigger_profile_clustering,
 )
+from everalgo.clustering import Cluster as AlgoCluster
 
 
 @pytest.fixture(autouse=True)
@@ -66,18 +66,18 @@ async def test_creates_new_cluster_when_no_existing(
 
     with (
         patch(
-            "cortistrate.memory.strategies.trigger_profile_clustering.get_embedder",
+            "corti.memory.strategies.trigger_profile_clustering.get_embedder",
             return_value=embedder,
         ),
         patch(
-            "cortistrate.memory.strategies.trigger_profile_clustering.cluster_repo"
+            "corti.memory.strategies.trigger_profile_clustering.cluster_repo"
         ) as mock_repo,
         patch(
-            "cortistrate.memory.strategies.trigger_profile_clustering.cluster_by_geometry",
+            "corti.memory.strategies.trigger_profile_clustering.cluster_by_geometry",
             new=MagicMock(return_value=None),
         ) as mock_cluster,
         patch(
-            "cortistrate.memory.strategies.trigger_profile_clustering.mint_cluster_id",
+            "corti.memory.strategies.trigger_profile_clustering.mint_cluster_id",
             return_value="cl_newuser00001",
         ),
         structlog.testing.capture_logs() as captured,
@@ -145,14 +145,14 @@ async def test_merges_into_existing_cluster_when_algo_matches() -> None:
 
     with (
         patch(
-            "cortistrate.memory.strategies.trigger_profile_clustering.get_embedder",
+            "corti.memory.strategies.trigger_profile_clustering.get_embedder",
             return_value=embedder,
         ),
         patch(
-            "cortistrate.memory.strategies.trigger_profile_clustering.cluster_repo"
+            "corti.memory.strategies.trigger_profile_clustering.cluster_repo"
         ) as mock_repo,
         patch(
-            "cortistrate.memory.strategies.trigger_profile_clustering.cluster_by_geometry",
+            "corti.memory.strategies.trigger_profile_clustering.cluster_by_geometry",
             new=MagicMock(return_value=merged_cluster),
         ),
     ):
@@ -195,14 +195,14 @@ async def _run_serialisation_probe(owner_a: str, owner_b: str) -> list[str]:
 
     with (
         patch(
-            "cortistrate.memory.strategies.trigger_profile_clustering.get_embedder",
+            "corti.memory.strategies.trigger_profile_clustering.get_embedder",
             return_value=mock_embedder,
         ),
         patch(
-            "cortistrate.memory.strategies.trigger_profile_clustering.cluster_repo"
+            "corti.memory.strategies.trigger_profile_clustering.cluster_repo"
         ) as mock_repo,
         patch(
-            "cortistrate.memory.strategies.trigger_profile_clustering.cluster_by_geometry",
+            "corti.memory.strategies.trigger_profile_clustering.cluster_by_geometry",
             new=mock_cluster_by_geometry,
         ),
     ):

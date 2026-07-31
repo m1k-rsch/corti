@@ -4,12 +4,12 @@ from typing import Any
 
 import pytest
 
-from cortistrate.infra.ome._dispatch.registry import StrategyRegistry
-from cortistrate.infra.ome.context import StrategyContext
-from cortistrate.infra.ome.decorator import offline_strategy
-from cortistrate.infra.ome.events import BaseEvent, CronTick, IdleTick, ManualTick
-from cortistrate.infra.ome.exceptions import StartupValidationError
-from cortistrate.infra.ome.triggers import Cron, Idle, Immediate
+from corti.infra.ome._dispatch.registry import StrategyRegistry
+from corti.infra.ome.context import StrategyContext
+from corti.infra.ome.decorator import offline_strategy
+from corti.infra.ome.events import BaseEvent, CronTick, IdleTick, ManualTick
+from corti.infra.ome.exceptions import StartupValidationError
+from corti.infra.ome.triggers import Cron, Idle, Immediate
 
 
 class _A(BaseEvent):
@@ -149,7 +149,7 @@ class _EventWithoutUid(BaseEvent):
 
 
 def test_validate_passes_when_gate_event_field_present() -> None:
-    from cortistrate.infra.ome.gates import Counter
+    from corti.infra.ome.gates import Counter
 
     reg = StrategyRegistry()
 
@@ -167,7 +167,7 @@ def test_validate_passes_when_gate_event_field_present() -> None:
 
 
 def test_validate_raises_when_gate_event_field_missing_on_immediate() -> None:
-    from cortistrate.infra.ome.gates import Counter
+    from corti.infra.ome.gates import Counter
 
     reg = StrategyRegistry()
 
@@ -190,7 +190,7 @@ def test_validate_raises_when_gate_event_field_missing_on_immediate() -> None:
 
 
 def test_validate_raises_when_gate_event_field_missing_in_one_of_multiple() -> None:
-    from cortistrate.infra.ome.gates import Counter
+    from corti.infra.ome.gates import Counter
 
     reg = StrategyRegistry()
 
@@ -210,7 +210,7 @@ def test_validate_raises_when_gate_event_field_missing_in_one_of_multiple() -> N
 
 def test_validate_passes_when_gate_event_field_is_none() -> None:
     """gate.event_field=None means global bucket; no field-existence check."""
-    from cortistrate.infra.ome.gates import Counter
+    from corti.infra.ome.gates import Counter
 
     reg = StrategyRegistry()
 
@@ -244,7 +244,7 @@ def test_validate_passes_when_no_gate() -> None:
 
 def test_validate_raises_when_gate_event_field_missing_on_cron_tick() -> None:
     """Cron strategy: gate.event_field must exist on CronTick."""
-    from cortistrate.infra.ome.gates import Counter
+    from corti.infra.ome.gates import Counter
 
     reg = StrategyRegistry()
 

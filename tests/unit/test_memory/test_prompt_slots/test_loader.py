@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from cortistrate.memory.prompt_slots.loader import PromptLoader
+from corti.memory.prompt_slots.loader import PromptLoader
 
 
 def _write_slot(root: Path, name: str, content: str) -> None:

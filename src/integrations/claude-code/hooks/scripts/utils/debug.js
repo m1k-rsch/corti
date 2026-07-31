@@ -1,22 +1,22 @@
 /**
- * Shared debug utility for Cortistrate hooks
+ * Shared debug utility for Corti hooks
  *
  * Usage:
  *   import { debug, setDebugPrefix } from './utils/debug.js';
  *   setDebugPrefix('inject');  // Optional: add prefix to log lines
  *   debug('hookInput:', data);
  *
- * Enable by setting CORTISTRATE_DEBUG=1 in .env file or environment
- * Logs are written to /tmp/cortistrate-debug.log
+ * Enable by setting CORTI_DEBUG=1 in .env file or environment
+ * Logs are written to /tmp/corti-debug.log
  */
 
 import { appendFileSync } from 'fs';
 import { getConfig } from './config.js';  // This loads .env
 
-const DEBUG_LOG_PATH = '/tmp/cortistrate-debug.log';
+const DEBUG_LOG_PATH = '/tmp/corti-debug.log';
 
 // Check debug flag (after config.js loads .env)
-const DEBUG = process.env.CORTISTRATE_DEBUG === '1' || process.env.CORTISTRATE_DEBUG === '1';
+const DEBUG = process.env.CORTI_DEBUG === '1' || process.env.CORTI_DEBUG === '1';
 
 // Optional prefix for log lines (e.g., 'inject' or 'store')
 let debugPrefix = '';
@@ -31,7 +31,7 @@ export function setDebugPrefix(prefix) {
 
 /**
  * Write debug message to log file
- * Only writes when CORTISTRATE_DEBUG=1
+ * Only writes when CORTI_DEBUG=1
  *
  * @param {...any} args - Arguments to log (objects are JSON stringified)
  */

@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Cortistrate OSS MCP Server (stdio transport).
+"""Corti OSS MCP Server (stdio transport).
 
-Thin MCP layer over the Cortistrate OSS REST API.
+Thin MCP layer over the Corti OSS REST API.
 Claude Code spawns this as a child process; it reads JSON-RPC from stdin,
-calls Cortistrate via HTTP, and writes JSON-RPC to stdout.
+calls Corti via HTTP, and writes JSON-RPC to stdout.
 
-Tools (mirror Hermes cortistrate plugin):
+Tools (mirror Hermes corti plugin):
   mem_search   - Search memories (keyword/hybrid/vector/agentic)
   mem_recall   - Get recent memories (briefing)
   mem_remember - Store a fact immediately (add + flush)
@@ -18,40 +18,38 @@ Scoping (shared with Hermes + Claude Code hooks):
   agent_id    = pc-claude-code (configurable via env)
 
 Env vars:
-  CORTISTRATE_BASE_URL   - Cortistrate API URL (default: http://127.0.0.1:5473)
-  CORTISTRATE_USER_ID    - default
-  CORTISTRATE_AGENT_ID   - pc-claude-code
-  CORTISTRATE_APP_ID     - shared-agent-memory
-  CORTISTRATE_PROJECT_ID - default
+  CORTI_BASE_URL   - Corti API URL (default: http://127.0.0.1:5473)
+  CORTI_USER_ID    - default
+  CORTI_AGENT_ID   - pc-claude-code
+  CORTI_APP_ID     - shared-agent-memory
+  CORTI_PROJECT_ID - default
 """
 
 from __future__ import annotations
 
 import asyncio
-import json
 import os
-import sys
 import time
 from typing import Any
 
 import httpx
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
-from mcp.types import Tool, TextContent
+from mcp.types import TextContent, Tool
 
 # ── Config ────────────────────────────────────────────────────────────────────
 
-CORTISTRATE_URL = os.getenv("CORTISTRATE_BASE_URL", "http://127.0.0.1:5473")
-APP_ID = os.getenv("CORTISTRATE_APP_ID", "shared-agent-memory")
-PROJECT_ID = os.getenv("CORTISTRATE_PROJECT_ID", "default")
-USER_ID = os.getenv("CORTISTRATE_USER_ID", "default")
-AGENT_ID = os.getenv("CORTISTRATE_AGENT_ID", "pc-claude-code")
+CORTI_URL = os.getenv("CORTI_BASE_URL", "http://127.0.0.1:5473")
+APP_ID = os.getenv("CORTI_APP_ID", "shared-agent-memory")
+PROJECT_ID = os.getenv("CORTI_PROJECT_ID", "default")
+USER_ID = os.getenv("CORTI_USER_ID", "default")
+AGENT_ID = os.getenv("CORTI_AGENT_ID", "pc-claude-code")
 MCP_SESSION = "claude-code-mcp"
 
 _client: httpx.AsyncClient | None = None
-_server = Server("cortistrate-oss")
+_server = Server("corti-oss")
 
-# ── Cortistrate REST helper ────────────────────────────────────────────────────────
+# ── Corti REST helper ────────────────────────────────────────────────────────
 
 def _scope() -> dict:
     return {"app_id": APP_ID, "project_id": PROJECT_ID, "user_id": USER_ID}
@@ -60,7 +58,7 @@ def _scope() -> dict:
 async def _post(path: str, body: dict) -> dict:
     global _client
     if _client is None:
-        _client = httpx.AsyncClient(base_url=CORTISTRATE_URL, timeout=120.0)
+        _client = httpx.AsyncClient(base_url=CORTI_URL, timeout=120.0)
     resp = await _client.post(path, json={**body, **_scope()})
     resp.raise_for_status()
     envelope = resp.json()
@@ -73,7 +71,7 @@ _TOOLS = [
     Tool(
         name="mem_search",
         description=(
-            "Search the Cortistrate memory store for relevant episodes, atomic "
+            "Search the Corti memory store for relevant episodes, atomic "
             "facts, and the user profile. Call this before answering "
             "context-dependent questions about the user or prior work."
         ),
@@ -102,7 +100,7 @@ _TOOLS = [
     Tool(
         name="mem_recall",
         description=(
-            "Get a briefing of recent memories from Cortistrate. Useful at the "
+            "Get a briefing of recent memories from Corti. Useful at the "
             "start of a task to recall what was done recently."
         ),
         inputSchema={
@@ -120,7 +118,7 @@ _TOOLS = [
     Tool(
         name="mem_add",
         description=(
-            "Store an important fact or piece of information to Cortistrate "
+            "Store an important fact or piece of information to Corti "
             "memory. Use when the user explicitly asks to remember "
             "something, or when you discover a durable fact worth "
             "preserving across sessions."

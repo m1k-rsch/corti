@@ -76,5 +76,5 @@ def format_natural_language_time(timestamp_ms: int, *, lang: Lang = "en") -> str
         weekday = ["星期一", "星期二", "星期三", "星期四", "星期五", "星期六", "星期日"][dt.weekday()]
         hour_12 = dt.hour % 12 or 12
         ampm = "下午" if dt.hour >= 12 else "上午"
-        return f"{dt.year} 年 {dt.month} 月 {dt.day} 日（{weekday}）{ampm} {hour_12}:{dt.minute:02d} UTC"  # noqa: RUF001
+        return f"{dt.year} 年 {dt.month} 月 {dt.day} 日（{weekday}）{ampm} {hour_12}:{dt.minute:02d} UTC"
     return dt.strftime("%B %d, %Y (%A) at %I:%M %p UTC")

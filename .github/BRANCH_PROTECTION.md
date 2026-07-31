@@ -1,6 +1,6 @@
 # Branch Protection Baseline
 
-Use this as the admin checklist for `main` after the Cortistrate 1.0.0 history reset.
+Use this as the admin checklist for `main` after the Corti 1.0.0 history reset.
 
 ## Required Repository Rule
 

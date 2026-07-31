@@ -14,15 +14,15 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import numpy as np
 import pytest
+
+from corti.infra.ome.testing import FakeStrategyContext
+from corti.infra.persistence.markdown import UserProfileFrontmatter
+from corti.memory._partition_locks import _reset_for_tests
+from corti.memory.events import ProfileClusterUpdated
+from corti.memory.strategies.extract_user_profile import extract_user_profile
 from everalgo.clustering import Cluster as AlgoCluster
 from everalgo.types import ChatMessage, MemCell
 from everalgo.types import Profile as AlgoProfile
-
-from cortistrate.infra.ome.testing import FakeStrategyContext
-from cortistrate.infra.persistence.markdown import UserProfileFrontmatter
-from cortistrate.memory._partition_locks import _reset_for_tests
-from cortistrate.memory.events import ProfileClusterUpdated
-from cortistrate.memory.strategies.extract_user_profile import extract_user_profile
 
 
 @pytest.fixture(autouse=True)
@@ -117,26 +117,26 @@ async def test_init_mode_writes_profile_when_no_existing(
 
     with (
         patch(
-            "cortistrate.memory.strategies.extract_user_profile.cluster_repo"
+            "corti.memory.strategies.extract_user_profile.cluster_repo"
         ) as mock_cluster_repo,
         patch(
-            "cortistrate.memory.strategies.extract_user_profile.episode_repo"
+            "corti.memory.strategies.extract_user_profile.episode_repo"
         ) as mock_episode_repo,
         patch(
-            "cortistrate.memory.strategies.extract_user_profile.memcell_repo"
+            "corti.memory.strategies.extract_user_profile.memcell_repo"
         ) as mock_memcell_repo,
         patch(
-            "cortistrate.memory.strategies.extract_user_profile.get_llm_client",
+            "corti.memory.strategies.extract_user_profile.get_llm_client",
             return_value=object(),
         ),
         patch(
-            "cortistrate.memory.strategies.extract_user_profile.ProfileExtractor"
+            "corti.memory.strategies.extract_user_profile.ProfileExtractor"
         ) as mock_extractor_cls,
         patch(
-            "cortistrate.memory.strategies.extract_user_profile.ProfileReader"
+            "corti.memory.strategies.extract_user_profile.ProfileReader"
         ) as mock_reader_cls,
         patch(
-            "cortistrate.memory.strategies.extract_user_profile.ProfileWriter"
+            "corti.memory.strategies.extract_user_profile.ProfileWriter"
         ) as mock_writer_cls,
     ):
         mock_cluster_repo.list_for_owner = AsyncMock(return_value=[cluster])
@@ -145,7 +145,7 @@ async def test_init_mode_writes_profile_when_no_existing(
         mock_reader_cls.return_value.read = AsyncMock(return_value=None)
         mock_writer_cls.return_value.write = AsyncMock(return_value=None)
         mock_extractor_cls.return_value.aextract = AsyncMock(return_value=new_profile)
-        mod = importlib.import_module("cortistrate.memory.strategies.extract_user_profile")
+        mod = importlib.import_module("corti.memory.strategies.extract_user_profile")
         monkeypatch.setattr(mod, "_writer", None, raising=False)
         monkeypatch.setattr(mod, "_reader", None, raising=False)
 
@@ -203,26 +203,26 @@ async def test_update_mode_rehydrates_old_profile(
 
     with (
         patch(
-            "cortistrate.memory.strategies.extract_user_profile.cluster_repo"
+            "corti.memory.strategies.extract_user_profile.cluster_repo"
         ) as mock_cluster_repo,
         patch(
-            "cortistrate.memory.strategies.extract_user_profile.episode_repo"
+            "corti.memory.strategies.extract_user_profile.episode_repo"
         ) as mock_episode_repo,
         patch(
-            "cortistrate.memory.strategies.extract_user_profile.memcell_repo"
+            "corti.memory.strategies.extract_user_profile.memcell_repo"
         ) as mock_memcell_repo,
         patch(
-            "cortistrate.memory.strategies.extract_user_profile.get_llm_client",
+            "corti.memory.strategies.extract_user_profile.get_llm_client",
             return_value=object(),
         ),
         patch(
-            "cortistrate.memory.strategies.extract_user_profile.ProfileExtractor"
+            "corti.memory.strategies.extract_user_profile.ProfileExtractor"
         ) as mock_extractor_cls,
         patch(
-            "cortistrate.memory.strategies.extract_user_profile.ProfileReader"
+            "corti.memory.strategies.extract_user_profile.ProfileReader"
         ) as mock_reader_cls,
         patch(
-            "cortistrate.memory.strategies.extract_user_profile.ProfileWriter"
+            "corti.memory.strategies.extract_user_profile.ProfileWriter"
         ) as mock_writer_cls,
     ):
         mock_cluster_repo.list_for_owner = AsyncMock(return_value=[cluster])
@@ -233,7 +233,7 @@ async def test_update_mode_rehydrates_old_profile(
         )
         mock_writer_cls.return_value.write = AsyncMock(return_value=None)
         mock_extractor_cls.return_value.aextract = AsyncMock(return_value=new_profile)
-        mod = importlib.import_module("cortistrate.memory.strategies.extract_user_profile")
+        mod = importlib.import_module("corti.memory.strategies.extract_user_profile")
         monkeypatch.setattr(mod, "_writer", None, raising=False)
         monkeypatch.setattr(mod, "_reader", None, raising=False)
 
@@ -271,19 +271,19 @@ async def test_skips_when_no_members(monkeypatch: pytest.MonkeyPatch) -> None:
 
     with (
         patch(
-            "cortistrate.memory.strategies.extract_user_profile.cluster_repo"
+            "corti.memory.strategies.extract_user_profile.cluster_repo"
         ) as mock_cluster_repo,
         patch(
-            "cortistrate.memory.strategies.extract_user_profile.memcell_repo"
+            "corti.memory.strategies.extract_user_profile.memcell_repo"
         ) as mock_memcell_repo,
         patch(
-            "cortistrate.memory.strategies.extract_user_profile.ProfileExtractor"
+            "corti.memory.strategies.extract_user_profile.ProfileExtractor"
         ) as mock_extractor_cls,
         patch(
-            "cortistrate.memory.strategies.extract_user_profile.ProfileReader"
+            "corti.memory.strategies.extract_user_profile.ProfileReader"
         ) as mock_reader_cls,
         patch(
-            "cortistrate.memory.strategies.extract_user_profile.ProfileWriter"
+            "corti.memory.strategies.extract_user_profile.ProfileWriter"
         ) as mock_writer_cls,
     ):
         mock_cluster_repo.list_for_owner = AsyncMock(return_value=[stale_cluster])
@@ -293,7 +293,7 @@ async def test_skips_when_no_members(monkeypatch: pytest.MonkeyPatch) -> None:
         )
         mock_writer_cls.return_value.write = AsyncMock(return_value=None)
         mock_extractor_cls.return_value.aextract = AsyncMock()
-        mod = importlib.import_module("cortistrate.memory.strategies.extract_user_profile")
+        mod = importlib.import_module("corti.memory.strategies.extract_user_profile")
         monkeypatch.setattr(mod, "_writer", None, raising=False)
         monkeypatch.setattr(mod, "_reader", None, raising=False)
 
@@ -335,26 +335,26 @@ async def _run_serialisation_probe(
 
     with (
         patch(
-            "cortistrate.memory.strategies.extract_user_profile.cluster_repo"
+            "corti.memory.strategies.extract_user_profile.cluster_repo"
         ) as mock_cluster_repo,
         patch(
-            "cortistrate.memory.strategies.extract_user_profile.episode_repo"
+            "corti.memory.strategies.extract_user_profile.episode_repo"
         ) as mock_episode_repo,
         patch(
-            "cortistrate.memory.strategies.extract_user_profile.memcell_repo"
+            "corti.memory.strategies.extract_user_profile.memcell_repo"
         ) as mock_memcell_repo,
         patch(
-            "cortistrate.memory.strategies.extract_user_profile.ProfileReader"
+            "corti.memory.strategies.extract_user_profile.ProfileReader"
         ) as mock_reader_cls,
         patch(
-            "cortistrate.memory.strategies.extract_user_profile.ProfileWriter"
+            "corti.memory.strategies.extract_user_profile.ProfileWriter"
         ) as mock_writer_cls,
         patch(
-            "cortistrate.memory.strategies.extract_user_profile.get_llm_client",
+            "corti.memory.strategies.extract_user_profile.get_llm_client",
             return_value=object(),
         ),
         patch(
-            "cortistrate.memory.strategies.extract_user_profile.ProfileExtractor"
+            "corti.memory.strategies.extract_user_profile.ProfileExtractor"
         ) as mock_extractor_cls,
     ):
         mock_cluster_repo.list_for_owner = AsyncMock(
@@ -376,7 +376,7 @@ async def _run_serialisation_probe(
         mock_writer_cls.return_value.write = AsyncMock(return_value=None)
         mock_extractor_cls.return_value.aextract = mock_aextract
 
-        mod = importlib.import_module("cortistrate.memory.strategies.extract_user_profile")
+        mod = importlib.import_module("corti.memory.strategies.extract_user_profile")
         monkeypatch.setattr(mod, "_reader", None, raising=False)
         monkeypatch.setattr(mod, "_writer", None, raising=False)
 

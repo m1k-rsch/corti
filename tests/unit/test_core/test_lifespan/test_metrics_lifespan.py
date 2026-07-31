@@ -5,8 +5,8 @@ from __future__ import annotations
 from fastapi import FastAPI
 from prometheus_client import CollectorRegistry
 
-from cortistrate.core.lifespan.metrics_lifespan import MetricsLifespanProvider
-from cortistrate.core.observability.metrics import (
+from corti.core.lifespan.metrics_lifespan import MetricsLifespanProvider
+from corti.core.observability.metrics import (
     reset_metrics_registry,
     set_metrics_registry,
 )

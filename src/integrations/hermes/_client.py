@@ -1,15 +1,15 @@
-"""Synchronous HTTP client for the Cortistrate memory API.
+"""Synchronous HTTP client for the Corti memory API.
 
 Wraps :class:`httpx.AsyncClient` running on a single dedicated background
 event-loop thread (daemon) so the public surface stays synchronous — the
 Hermes memory-provider ABC is sync, and this avoids blocking a global loop or
 spawning a loop per call. All network / server errors are normalised to
-:class:`CortistrateClientError` with a machine-readable ``code`` field so the
+:class:`CortiClientError` with a machine-readable ``code`` field so the
 provider's circuit breaker can classify transient vs client failures.
 
 This module is Hermes-agnostic: it depends only on the stdlib, ``httpx``, and
 its sibling ``_types`` / ``_constants`` modules. It must not import anything
-from ``cortistrate.*`` (this code runs inside the Hermes process).
+from ``corti.*`` (this code runs inside the Hermes process).
 """
 
 from __future__ import annotations
@@ -25,7 +25,7 @@ import httpx
 from ._constants import _ADD_BATCH_SIZE, _DEFAULT_APP_ID, _DEFAULT_PROJECT_ID
 from ._types import (
     AddResponse,
-    CortistrateClientError,
+    CortiClientError,
     FlushResponse,
     GetData,
     MessageItem,
@@ -59,8 +59,8 @@ _SEARCH_KWARGS = (
 _GET_KWARGS = ("page", "page_size", "sort_by", "sort_order", "filters")
 
 
-class CortistrateApiClient:
-    """Synchronous client for the Cortistrate ``/api/v1/memory/*`` endpoints.
+class CortiApiClient:
+    """Synchronous client for the Corti ``/api/v1/memory/*`` endpoints.
 
     The event-loop thread and ``httpx.AsyncClient`` are created lazily on the
     first request. Call :meth:`close` to tear them down.
@@ -86,14 +86,14 @@ class CortistrateApiClient:
             # that passed the _closed gate in _run() before close() ran must
             # not resurrect a fresh loop on a closed client.
             if self._closed:
-                raise CortistrateClientError("client is closed", code="CLIENT_CLOSED")
+                raise CortiClientError("client is closed", code="CLIENT_CLOSED")
             if self._loop is not None:
                 return
             loop = asyncio.new_event_loop()
             thread = threading.Thread(
                 target=self._run_loop,
                 args=(loop,),
-                name="cortistrate-api-loop",
+                name="corti-api-loop",
                 daemon=True,
             )
             thread.start()
@@ -119,7 +119,7 @@ class CortistrateApiClient:
     def _run(self, coro: Coroutine[Any, Any, T]) -> T:
         """Post ``coro`` to the background loop and wait for its result."""
         if self._closed:
-            raise CortistrateClientError("client is closed", code="CLIENT_CLOSED")
+            raise CortiClientError("client is closed", code="CLIENT_CLOSED")
         self._ensure_loop()
         assert self._loop is not None
         fut = asyncio.run_coroutine_threadsafe(coro, self._loop)
@@ -127,7 +127,7 @@ class CortistrateApiClient:
             return fut.result(timeout=self._timeout + _FUTURE_GRACE_SECS)
         except TimeoutError as exc:
             # Future did not resolve in time (loop stalled or request hung).
-            raise CortistrateClientError(
+            raise CortiClientError(
                 "request timed out waiting for event loop",
                 code="EXTERNAL_SERVICE_UNAVAILABLE",
             ) from exc
@@ -137,7 +137,7 @@ class CortistrateApiClient:
         try:
             resp = await self._client.post(path, json=body)
         except (httpx.ConnectError, httpx.TimeoutException) as exc:
-            raise CortistrateClientError(
+            raise CortiClientError(
                 str(exc) or exc.__class__.__name__,
                 code="EXTERNAL_SERVICE_UNAVAILABLE",
             ) from exc
@@ -146,13 +146,13 @@ class CortistrateApiClient:
         try:
             envelope = resp.json()
         except ValueError as exc:
-            raise CortistrateClientError(
+            raise CortiClientError(
                 f"HTTP {resp.status_code}: non-JSON response",
                 code="INTERNAL_ERROR",
             ) from exc
         data = envelope.get("data") if isinstance(envelope, dict) else None
         if not isinstance(data, dict):
-            raise CortistrateClientError(
+            raise CortiClientError(
                 "response envelope missing data object",
                 code="INTERNAL_ERROR",
             )
@@ -163,7 +163,7 @@ class CortistrateApiClient:
         try:
             envelope = resp.json()
         except ValueError:
-            raise CortistrateClientError(
+            raise CortiClientError(
                 f"HTTP {resp.status_code}: {resp.text[:200]}",
                 code="INTERNAL_ERROR",
             ) from None
@@ -171,8 +171,8 @@ class CortistrateApiClient:
         if isinstance(error, dict):
             code = str(error.get("code") or "INTERNAL_ERROR")
             message = str(error.get("message") or f"HTTP {resp.status_code}")
-            raise CortistrateClientError(message, code=code)
-        raise CortistrateClientError(
+            raise CortiClientError(message, code=code)
+        raise CortiClientError(
             f"HTTP {resp.status_code}: {resp.text[:200]}",
             code="INTERNAL_ERROR",
         )

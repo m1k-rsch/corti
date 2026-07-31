@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from cortistrate.infra.ome.config import (
+from corti.infra.ome.config import (
     CounterOverride,
     OMEConfig,
     StrategyOverride,
@@ -12,7 +12,7 @@ from cortistrate.infra.ome.config import (
 
 
 def test_ome_config_defaults() -> None:
-    from cortistrate.core.persistence.memory_root import MemoryRoot
+    from corti.core.persistence.memory_root import MemoryRoot
 
     c = OMEConfig()
     assert c.jobstore_path == MemoryRoot.default().ome_db

@@ -28,7 +28,7 @@ from pathlib import Path
 import httpx
 import pytest
 
-from cortistrate.infra.persistence.markdown import (
+from corti.infra.persistence.markdown import (
     AtomicFactDailyFrontmatter,
     EpisodeDailyFrontmatter,
     ForesightDailyFrontmatter,
@@ -91,14 +91,14 @@ def _count_episode_entries(md_files: list[Path]) -> int:
 
 
 def _maybe_snapshot_memory_root(memory_root: Path) -> None:
-    """Copy ``memory_root`` to ``$CORTISTRATE_KEEP_CORPUS_TO`` when set.
+    """Copy ``memory_root`` to ``$CORTI_KEEP_CORPUS_TO`` when set.
 
     Used to harvest a known-good corpus (md + sqlite + Postgres three-piece
     set) after a green test run, for later upload as the /search e2e
     fixture. Pure sync I/O — kept out of the async test body so ASYNC240
     doesn't complain about pathlib usage on the async path.
     """
-    keep_to = os.environ.get("CORTISTRATE_KEEP_CORPUS_TO")
+    keep_to = os.environ.get("CORTI_KEEP_CORPUS_TO")
     if not keep_to:
         return
     dest = Path(keep_to).resolve()
@@ -131,7 +131,7 @@ async def test_long_conversation_produces_all_memory_types(
 ) -> None:
     """One big seamless run: add 19 batches, flush, poll, assert everything."""
 
-    session_id = long_conversation["cortistrate_session_id"]
+    session_id = long_conversation["corti_session_id"]
     memory_root = core_pipeline_runtime
 
     # ── Stage 0: baseline ─────────────────────────────────────────────────
@@ -271,7 +271,7 @@ async def test_long_conversation_produces_all_memory_types(
     # 5.5 profile (md only — profile retrieval path is stub; we only assert
     # the writer wrote something). Profile lives as a single file
     # ``users/<user_id>/user.md`` (schema: ``UserProfileFrontmatter.PROFILE_FILENAME``).
-    from cortistrate.infra.persistence.markdown import UserProfileFrontmatter
+    from corti.infra.persistence.markdown import UserProfileFrontmatter
 
     profile_filename = UserProfileFrontmatter.PROFILE_FILENAME
     profile_files: list[Path] = []
@@ -313,7 +313,7 @@ async def test_long_conversation_produces_all_memory_types(
     )
 
     # ── Stage 6: optional corpus snapshot ─────────────────────────────────
-    # When ``CORTISTRATE_KEEP_CORPUS_TO=<dest>`` is set, copy the post-test
+    # When ``CORTI_KEEP_CORPUS_TO=<dest>`` is set, copy the post-test
     # ``memory_root`` to ``<dest>`` so it can be tarred + uploaded as a
     # test corpus for the /search e2e suite. Skipped silently when the
     # env var is absent (default test runs don't snapshot).

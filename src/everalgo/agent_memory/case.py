@@ -17,10 +17,20 @@ from asgiref.sync import async_to_sync
 from everalgo.agent_memory._text import count_tokens, json_default, truncate_text
 from everalgo.agent_memory.prompts.case_compress import AGENT_CASE_COMPRESS_PROMPT
 from everalgo.agent_memory.prompts.case_filter import AGENT_CASE_FILTER_PROMPT
-from everalgo.agent_memory.prompts.tool_pre_compress import AGENT_TOOL_PRE_COMPRESS_PROMPT
+from everalgo.agent_memory.prompts.tool_pre_compress import (
+    AGENT_TOOL_PRE_COMPRESS_PROMPT,
+)
 from everalgo.llm.types import ChatMessage as LLMChatMessage
 from everalgo.prompts import render_prompt
-from everalgo.types import AgentCase, ChatMessage, ConversationItem, MemCell, ToolCall, ToolCallRequest, ToolCallResult
+from everalgo.types import (
+    AgentCase,
+    ChatMessage,
+    ConversationItem,
+    MemCell,
+    ToolCall,
+    ToolCallRequest,
+    ToolCallResult,
+)
 from everalgo.types._render import render_content
 
 if TYPE_CHECKING:
@@ -343,7 +353,7 @@ def _heuristic_trim(messages: Sequence[ConversationItem]) -> tuple[list[Conversa
     return trimmed, total_tokens
 
 
-def _apply_truncation(  # noqa: C901  — algorithm-intrinsic branches
+def _apply_truncation(
     messages: Sequence[ConversationItem],
     max_tool_output: int,
     max_tool_args: int,
@@ -406,7 +416,7 @@ def _calc_group_size(items: Sequence[ConversationItem], group: list[int]) -> int
     return sum(_calc_tool_content_size(items[idx]) for idx in group)
 
 
-async def _pre_compress_to_list(  # noqa: C901  — algorithm-intrinsic branches
+async def _pre_compress_to_list(
     original_data: Sequence[ConversationItem],
     client: LLMClient,
     *,
@@ -652,7 +662,7 @@ async def _call_llm_for_tool_pre_compress(llm: LLMClient, rendered: str) -> list
         raise ValueError(f"Tool pre-compress response missing 'compressed_messages': {list(data.keys())!r}")
     compressed = data["compressed_messages"]
     if not isinstance(compressed, list):
-        raise ValueError(f"compressed_messages must be a list, got {type(compressed).__name__}: {compressed!r}")  # noqa: TRY004
+        raise ValueError(f"compressed_messages must be a list, got {type(compressed).__name__}: {compressed!r}")
     return cast("list[Any]", compressed)  # type: ignore[redundant-cast]
 
 

@@ -12,15 +12,15 @@ from unittest.mock import AsyncMock, patch
 
 import numpy as np
 import pytest
-from everalgo.types import AgentCase, AtomicFact, ChatMessage, Foresight, MemCell
 from structlog.testing import capture_logs
 
-from cortistrate.memory.events import (
+from corti.memory.events import (
     AgentCaseExtracted,
     AgentPipelineStarted,
     EpisodeExtracted,
     UserPipelineStarted,
 )
+from everalgo.types import AgentCase, AtomicFact, ChatMessage, Foresight, MemCell
 
 
 class _DeterministicHashEmbedder:
@@ -90,13 +90,13 @@ async def test_emit_dispatches_both_strategies_to_success(
     """
     import importlib
 
-    from cortistrate.core.persistence import MemoryRoot
-    from cortistrate.infra.ome.records import RunStatus
+    from corti.core.persistence import MemoryRoot
+    from corti.infra.ome.records import RunStatus
 
-    svc = importlib.import_module("cortistrate.service.memorize")
+    svc = importlib.import_module("corti.service.memorize")
 
     # Redirect MemoryRoot.default() to tmp_path so _get_engine() writes ome.db
-    # under the test's isolated temp directory instead of the real ~/.cortistrate.
+    # under the test's isolated temp directory instead of the real ~/.corti.
     monkeypatch.setattr(
         MemoryRoot,
         "default",
@@ -104,8 +104,8 @@ async def test_emit_dispatches_both_strategies_to_success(
     )
     # Reset singletons so they rebuild against the patched MemoryRoot.
     monkeypatch.setattr(svc, "_ome_engine", None, raising=False)
-    _af_mod = importlib.import_module("cortistrate.memory.strategies.extract_atomic_facts")
-    _fs_mod = importlib.import_module("cortistrate.memory.strategies.extract_foresight")
+    _af_mod = importlib.import_module("corti.memory.strategies.extract_atomic_facts")
+    _fs_mod = importlib.import_module("corti.memory.strategies.extract_foresight")
     monkeypatch.setattr(_af_mod, "_writer", None, raising=False)
     monkeypatch.setattr(_fs_mod, "_writer", None, raising=False)
 
@@ -121,17 +121,17 @@ async def test_emit_dispatches_both_strategies_to_success(
 
     with (
         patch(
-            "cortistrate.memory.strategies.extract_atomic_facts.AtomicFactExtractor"
+            "corti.memory.strategies.extract_atomic_facts.AtomicFactExtractor"
         ) as mock_af,
         patch(
-            "cortistrate.memory.strategies.extract_foresight.ForesightExtractor"
+            "corti.memory.strategies.extract_foresight.ForesightExtractor"
         ) as mock_fs,
         patch(
-            "cortistrate.memory.strategies.extract_atomic_facts.get_llm_client",
+            "corti.memory.strategies.extract_atomic_facts.get_llm_client",
             return_value=object(),
         ),
         patch(
-            "cortistrate.memory.strategies.extract_foresight.get_llm_client",
+            "corti.memory.strategies.extract_foresight.get_llm_client",
             return_value=object(),
         ),
         capture_logs() as logs,
@@ -215,7 +215,7 @@ async def _setup_system_db_schema(monkeypatch: pytest.MonkeyPatch) -> None:
     """
     from sqlmodel import SQLModel
 
-    from cortistrate.infra.persistence.sqlite import sqlite_manager
+    from corti.infra.persistence.sqlite import sqlite_manager
 
     if sqlite_manager._engine is not None:
         await sqlite_manager.dispose_engine()
@@ -229,7 +229,7 @@ async def _setup_system_db_schema(monkeypatch: pytest.MonkeyPatch) -> None:
 async def _teardown_system_db_schema() -> None:
     """Dispose the per-test sqlite engine so its worker thread doesn't outlive
     the event loop (counterpart of :func:`_setup_system_db_schema`)."""
-    from cortistrate.infra.persistence.sqlite import sqlite_manager
+    from corti.infra.persistence.sqlite import sqlite_manager
 
     if sqlite_manager._engine is not None:
         await sqlite_manager.dispose_engine()
@@ -272,10 +272,10 @@ async def test_emit_dispatches_agent_case_strategy_to_success(
     """
     import importlib
 
-    from cortistrate.core.persistence import MemoryRoot
-    from cortistrate.infra.ome.records import RunStatus
+    from corti.core.persistence import MemoryRoot
+    from corti.infra.ome.records import RunStatus
 
-    svc = importlib.import_module("cortistrate.service.memorize")
+    svc = importlib.import_module("corti.service.memorize")
 
     monkeypatch.setattr(
         MemoryRoot,
@@ -283,7 +283,7 @@ async def test_emit_dispatches_agent_case_strategy_to_success(
         classmethod(lambda cls: MemoryRoot(root=tmp_path)),
     )
     monkeypatch.setattr(svc, "_ome_engine", None, raising=False)
-    _ac_mod = importlib.import_module("cortistrate.memory.strategies.extract_agent_case")
+    _ac_mod = importlib.import_module("corti.memory.strategies.extract_agent_case")
     monkeypatch.setattr(_ac_mod, "_writer", None, raising=False)
 
     fake_case = AgentCase(
@@ -297,10 +297,10 @@ async def test_emit_dispatches_agent_case_strategy_to_success(
 
     with (
         patch(
-            "cortistrate.memory.strategies.extract_agent_case.AgentCaseExtractor"
+            "corti.memory.strategies.extract_agent_case.AgentCaseExtractor"
         ) as mock_ac,
         patch(
-            "cortistrate.memory.strategies.extract_agent_case.get_llm_client",
+            "corti.memory.strategies.extract_agent_case.get_llm_client",
             return_value=object(),
         ),
         capture_logs() as logs,
@@ -363,14 +363,13 @@ async def test_skill_chain_e2e(
     import importlib
     from unittest.mock import MagicMock
 
+    from corti.core.persistence import MemoryRoot
+    from corti.infra.ome.records import RunStatus
     from everalgo.testing.fake_llm import FakeLLMClient
     from everalgo.types import AgentSkill as AlgoAgentSkill
 
-    from cortistrate.core.persistence import MemoryRoot
-    from cortistrate.infra.ome.records import RunStatus
-
-    svc = importlib.import_module("cortistrate.service.memorize")
-    skill_mod = importlib.import_module("cortistrate.memory.strategies.extract_agent_skill")
+    svc = importlib.import_module("corti.service.memorize")
+    skill_mod = importlib.import_module("corti.memory.strategies.extract_agent_skill")
 
     monkeypatch.setattr(
         MemoryRoot,
@@ -409,28 +408,28 @@ async def test_skill_chain_e2e(
 
     with (
         patch(
-            "cortistrate.memory.strategies.trigger_skill_clustering.get_embedder",
+            "corti.memory.strategies.trigger_skill_clustering.get_embedder",
             return_value=embedder,
         ),
         patch(
-            "cortistrate.memory.strategies.trigger_skill_clustering.get_llm_client",
+            "corti.memory.strategies.trigger_skill_clustering.get_llm_client",
             return_value=fake_llm,
         ),
         patch(
-            "cortistrate.memory.strategies.extract_agent_skill.agent_case_repo"
+            "corti.memory.strategies.extract_agent_skill.agent_case_repo"
         ) as mock_case_repo,
         patch(
-            "cortistrate.memory.strategies.extract_agent_skill.agent_skill_repo"
+            "corti.memory.strategies.extract_agent_skill.agent_skill_repo"
         ) as mock_skill_repo,
         patch(
-            "cortistrate.memory.strategies.extract_agent_skill.get_llm_client",
+            "corti.memory.strategies.extract_agent_skill.get_llm_client",
             return_value=object(),
         ),
         patch(
-            "cortistrate.memory.strategies.extract_agent_skill.AgentSkillExtractor"
+            "corti.memory.strategies.extract_agent_skill.AgentSkillExtractor"
         ) as mock_extractor_cls,
         patch(
-            "cortistrate.memory.strategies.extract_agent_skill.AgentSkillWriter"
+            "corti.memory.strategies.extract_agent_skill.AgentSkillWriter"
         ) as mock_writer_cls,
         capture_logs() as logs,
     ):
@@ -510,14 +509,13 @@ async def test_profile_chain_e2e(
     import importlib
     from unittest.mock import MagicMock
 
+    from corti.core.persistence import MemoryRoot
+    from corti.infra.ome.records import RunStatus
     from everalgo.types import Profile as AlgoProfile
 
-    from cortistrate.core.persistence import MemoryRoot
-    from cortistrate.infra.ome.records import RunStatus
-
-    svc = importlib.import_module("cortistrate.service.memorize")
+    svc = importlib.import_module("corti.service.memorize")
     profile_mod = importlib.import_module(
-        "cortistrate.memory.strategies.extract_user_profile"
+        "corti.memory.strategies.extract_user_profile"
     )
 
     monkeypatch.setattr(
@@ -563,26 +561,26 @@ async def test_profile_chain_e2e(
 
     with (
         patch(
-            "cortistrate.memory.strategies.trigger_profile_clustering.get_embedder",
+            "corti.memory.strategies.trigger_profile_clustering.get_embedder",
             return_value=embedder,
         ),
         patch(
-            "cortistrate.memory.strategies.extract_user_profile.episode_repo"
+            "corti.memory.strategies.extract_user_profile.episode_repo"
         ) as mock_episode_repo,
         patch(
-            "cortistrate.memory.strategies.extract_user_profile.memcell_repo"
+            "corti.memory.strategies.extract_user_profile.memcell_repo"
         ) as mock_memcell_repo,
         patch(
-            "cortistrate.memory.strategies.extract_user_profile.ProfileReader"
+            "corti.memory.strategies.extract_user_profile.ProfileReader"
         ) as mock_reader_cls,
         patch(
-            "cortistrate.memory.strategies.extract_user_profile.ProfileWriter"
+            "corti.memory.strategies.extract_user_profile.ProfileWriter"
         ) as mock_writer_cls,
         patch(
-            "cortistrate.memory.strategies.extract_user_profile.ProfileExtractor"
+            "corti.memory.strategies.extract_user_profile.ProfileExtractor"
         ) as mock_extractor_cls,
         patch(
-            "cortistrate.memory.strategies.extract_user_profile.get_llm_client",
+            "corti.memory.strategies.extract_user_profile.get_llm_client",
             return_value=object(),
         ),
         capture_logs() as logs,

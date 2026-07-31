@@ -1,13 +1,13 @@
 # Knowledge Base
 
 The Knowledge module turns unstructured documents (Markdown, PDF, DOCX, …)
-into a searchable topic library. Upload a file, and Cortistrate extracts a
+into a searchable topic library. Upload a file, and Corti extracts a
 structured topic tree via LLM, indexes it for keyword + vector search,
 and keeps the original file for reference.
 
 ## Quick start
 
-> The examples below assume Cortistrate is running on the default port 8000.
+> The examples below assume Corti is running on the default port 8000.
 > See [README](../README.md) or [QUICKSTART](../QUICKSTART.md) to start
 > the server.
 
@@ -52,7 +52,7 @@ single source of truth; SQLite and Postgres are derived indexes built
 automatically by the cascade daemon.
 
 ```
-~/.cortistrate/<app>/<project>/knowledge/
+~/.corti/<app>/<project>/knowledge/
 ├── .taxonomy.md                              ← category definitions (YAML)
 ├── Technology/
 │   └── Q1_Engineering_Report_d_a1b2c3d4e5f6/
@@ -152,7 +152,7 @@ Lifecycle:
 
 ## Taxonomy
 
-Categories are defined in `.taxonomy.md` at the knowledge root. Cortistrate
+Categories are defined in `.taxonomy.md` at the knowledge root. Corti
 ships with 20 default categories:
 
 | Category | Description |
@@ -235,8 +235,8 @@ Content-Type: multipart/form-data
     "category_id": "Technology",
     "topic_count": 8,
     "source_name": "my-report.pdf",
-    "md_path": "/home/user/.cortistrate/default_app/default_project/knowledge/Technology/Q1_Report_d_a1b2c3d4e5f6",
-    "original_file_path": "/home/user/.cortistrate/.../Q1_Report_d_a1b2c3d4e5f6/_original/my-report.pdf"
+    "md_path": "/home/user/.corti/default_app/default_project/knowledge/Technology/Q1_Report_d_a1b2c3d4e5f6",
+    "original_file_path": "/home/user/.corti/.../Q1_Report_d_a1b2c3d4e5f6/_original/my-report.pdf"
   }
 }
 ```
@@ -355,7 +355,7 @@ Returns full metadata, summary, original file path, and topic overview list.
     "summary": "This report covers Q1 engineering outcomes...",
     "source_name": "my-report.pdf",
     "source_type": "file",
-    "original_file_path": "/home/user/.cortistrate/.../Q1_Report_d_a1b2c3d4e5f6/_original/my-report.pdf",
+    "original_file_path": "/home/user/.corti/.../Q1_Report_d_a1b2c3d4e5f6/_original/my-report.pdf",
     "topics": [
       {
         "topic_id": "d_a1b2c3d4e5f6_1",
@@ -439,8 +439,8 @@ there is no provider-free fallback (this is by design: no silent
 degradation). The two failure modes map to distinct status codes:
 
 - **Provider not configured** → `500 CONFIGURATION_ERROR` (a required
-  setting is missing; retrying will not help — set `CORTISTRATE_EMBEDDING__*` /
-  `CORTISTRATE_RERANK__*`).
+  setting is missing; retrying will not help — set `CORTI_EMBEDDING__*` /
+  `CORTI_RERANK__*`).
 - **Provider configured but failing/timing out at call time** →
   `503 EXTERNAL_SERVICE_UNAVAILABLE` (transient; retryable).
 
@@ -510,7 +510,7 @@ query ─→ embed ─→ keyword (BM25) ─┐
 
 ### Configuration
 
-Search tuning parameters in `src/cortistrate/config/default.toml`:
+Search tuning parameters in `src/corti/config/default.toml`:
 
 ```toml
 [knowledge.search]
@@ -524,8 +524,8 @@ top_k_cap = 100      # hard cap on returned results
 Override via environment variables:
 
 ```bash
-export CORTISTRATE_KNOWLEDGE__SEARCH__RECALL_N=500
-export CORTISTRATE_KNOWLEDGE__SEARCH__RERANK_N=100
+export CORTI_KNOWLEDGE__SEARCH__RECALL_N=500
+export CORTI_KNOWLEDGE__SEARCH__RERANK_N=100
 ```
 
 ## Cascade sync
@@ -549,8 +549,8 @@ Typical latency from file write to search availability: **1–3 seconds**.
 
 ## Supported file formats
 
-Cortistrate accepts text-based files natively. Binary formats require the
-`cortistrate[multimodal]` extra (depends on LibreOffice for document conversion).
+Corti accepts text-based files natively. Binary formats require the
+`corti[multimodal]` extra (depends on LibreOffice for document conversion).
 
 | Category | Formats | Requires `[multimodal]` |
 |----------|---------|:-----------------------:|
@@ -580,7 +580,7 @@ Install the `pymupdf` and `whisper` extra dependencies for multimodal support:
 | 500 | `CONFIGURATION_ERROR` | Embedding or rerank provider not configured |
 | 503 | `EXTERNAL_SERVICE_UNAVAILABLE` | Configured embedding/rerank provider failing at call time |
 | 422 | `EXTRACTION_EMPTY` | Document parsed but extractor produced no topics |
-| 503 | `CAPABILITY_UNAVAILABLE` | `cortistrate[multimodal]` not installed |
+| 503 | `CAPABILITY_UNAVAILABLE` | `corti[multimodal]` not installed |
 
 All error responses use the standard error envelope — see
 [api.md → Errors](api.md#errors).

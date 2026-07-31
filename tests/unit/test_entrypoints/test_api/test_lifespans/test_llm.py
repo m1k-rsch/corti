@@ -7,8 +7,8 @@ from unittest.mock import patch
 import pytest
 from fastapi import FastAPI
 
-from cortistrate.component.llm import LLMNotConfiguredError
-from cortistrate.entrypoints.api.lifespans import LLMLifespanProvider
+from corti.component.llm import LLMNotConfiguredError
+from corti.entrypoints.api.lifespans import LLMLifespanProvider
 
 
 async def test_startup_raises_when_credentials_missing() -> None:
@@ -17,7 +17,7 @@ async def test_startup_raises_when_credentials_missing() -> None:
 
     with (
         patch(
-            "cortistrate.entrypoints.api.lifespans.llm.get_llm_client",
+            "corti.entrypoints.api.lifespans.llm.get_llm_client",
             side_effect=LLMNotConfiguredError("missing api_key"),
         ),
         pytest.raises(LLMNotConfiguredError),
@@ -31,7 +31,7 @@ async def test_startup_returns_client_when_configured() -> None:
     sentinel = object()
 
     with patch(
-        "cortistrate.entrypoints.api.lifespans.llm.get_llm_client",
+        "corti.entrypoints.api.lifespans.llm.get_llm_client",
         return_value=sentinel,
     ):
         result = await provider.startup(app)

@@ -8,18 +8,18 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from cortistrate.infra.ome._background.config_reloader import (
+from corti.infra.ome._background.config_reloader import (
     ConfigReloader,
     apply_overrides,
 )
-from cortistrate.infra.ome._dispatch.registry import StrategyRegistry
-from cortistrate.infra.ome.config import CounterOverride, StrategyOverride, TomlRoot
-from cortistrate.infra.ome.context import StrategyContext
-from cortistrate.infra.ome.decorator import offline_strategy
-from cortistrate.infra.ome.engine import OfflineEngine
-from cortistrate.infra.ome.events import BaseEvent
-from cortistrate.infra.ome.gates import Counter
-from cortistrate.infra.ome.triggers import Cron, Idle, Immediate
+from corti.infra.ome._dispatch.registry import StrategyRegistry
+from corti.infra.ome.config import CounterOverride, StrategyOverride, TomlRoot
+from corti.infra.ome.context import StrategyContext
+from corti.infra.ome.decorator import offline_strategy
+from corti.infra.ome.engine import OfflineEngine
+from corti.infra.ome.events import BaseEvent
+from corti.infra.ome.gates import Counter
+from corti.infra.ome.triggers import Cron, Idle, Immediate
 
 
 class _E(BaseEvent):

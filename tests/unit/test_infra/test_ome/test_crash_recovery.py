@@ -5,11 +5,11 @@ from pathlib import Path
 
 import pytest
 
-from cortistrate.component.utils.datetime import get_now_with_timezone, to_iso_format
-from cortistrate.infra.ome._background.crash_recovery import scan_and_resume
-from cortistrate.infra.ome._stores.run_record import RunRecordStore
-from cortistrate.infra.ome._stores.storage import OMEStorage
-from cortistrate.infra.ome.records import RunStatus
+from corti.component.utils.datetime import get_now_with_timezone, to_iso_format
+from corti.infra.ome._background.crash_recovery import scan_and_resume
+from corti.infra.ome._stores.run_record import RunRecordStore
+from corti.infra.ome._stores.storage import OMEStorage
+from corti.infra.ome.records import RunStatus
 
 
 @pytest.fixture

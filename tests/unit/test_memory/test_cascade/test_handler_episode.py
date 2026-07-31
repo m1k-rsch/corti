@@ -15,12 +15,12 @@ from typing import Any
 
 import pytest
 
-from cortistrate.component.embedding import EmbeddingProvider
-from cortistrate.component.tokenizer import Tokenizer
-from cortistrate.core.persistence import MemoryRoot
-from cortistrate.infra.persistence.markdown import EpisodeWriter
-from cortistrate.memory.cascade.handlers import HandlerDeps
-from cortistrate.memory.cascade.handlers.episode import EpisodeHandler
+from corti.component.embedding import EmbeddingProvider
+from corti.component.tokenizer import Tokenizer
+from corti.core.persistence import MemoryRoot
+from corti.infra.persistence.markdown import EpisodeWriter
+from corti.memory.cascade.handlers import HandlerDeps
+from corti.memory.cascade.handlers.episode import EpisodeHandler
 
 
 class _StubTokenizer(Tokenizer):
@@ -97,7 +97,7 @@ def fake_repo(monkeypatch: pytest.MonkeyPatch) -> _FakeEpisodeRepo:
     ClassVar resolved at class-definition time; patching the module
     attribute would no longer reach the handler's call sites.
     """
-    from cortistrate.memory.cascade.handlers.episode import EpisodeHandler
+    from corti.memory.cascade.handlers.episode import EpisodeHandler
 
     repo = _FakeEpisodeRepo()
     monkeypatch.setattr(EpisodeHandler, "db_repo", repo)

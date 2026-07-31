@@ -7,14 +7,14 @@ from pathlib import Path
 import pytest
 from fastapi import FastAPI
 
-from cortistrate.entrypoints.api.lifespans import SqliteLifespanProvider
-from cortistrate.infra.persistence.sqlite import sqlite_manager
+from corti.entrypoints.api.lifespans import SqliteLifespanProvider
+from corti.infra.persistence.sqlite import sqlite_manager
 
 
 @pytest.fixture(autouse=True)
 async def _reset(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """Redirect both managers at an isolated memory-root."""
-    monkeypatch.setenv("CORTISTRATE_ROOT", str(tmp_path))
+    monkeypatch.setenv("CORTI_ROOT", str(tmp_path))
     sqlite_manager._engine = None
     sqlite_manager._session_factory = None
     yield

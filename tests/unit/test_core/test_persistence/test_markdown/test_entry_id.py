@@ -6,7 +6,7 @@ import datetime as dt
 
 import pytest
 
-from cortistrate.core.persistence import EntryId
+from corti.core.persistence import EntryId
 
 # ── format ───────────────────────────────────────────────────────────────
 

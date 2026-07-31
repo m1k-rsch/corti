@@ -42,7 +42,7 @@ build/
 *.egg-info
 
 # Runtime data (never bake into image)
-.cortistrate*
+.corti*
 
 # Misc
 CLAUDE.md

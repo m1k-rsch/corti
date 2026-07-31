@@ -6,7 +6,7 @@ from typing import ClassVar, Literal
 
 import pytest
 
-from cortistrate.core.persistence import (
+from corti.core.persistence import (
     AgentScopedFrontmatter,
     BaseFrontmatter,
     DailyLogPathMixin,

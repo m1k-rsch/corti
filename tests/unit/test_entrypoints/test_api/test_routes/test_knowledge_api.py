@@ -19,9 +19,9 @@ from unittest.mock import AsyncMock, MagicMock, patch
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from cortistrate.config import load_settings
-from cortistrate.entrypoints.api.app import create_app
-from cortistrate.service import (
+from corti.config import load_settings
+from corti.entrypoints.api.app import create_app
+from corti.service import (
     DocumentDetail,
     DocumentListResult,
     DocumentNotFoundError,
@@ -30,11 +30,11 @@ from cortistrate.service import (
     TopicOverview,
 )
 
-knowledge_service_mod = import_module("cortistrate.service.knowledge")
+knowledge_service_mod = import_module("corti.service.knowledge")
 
 # The route module binds service functions at import time, so patches
 # must target the name in the route module's namespace.
-_ROUTE_MOD = "cortistrate.entrypoints.api.routes.knowledge"
+_ROUTE_MOD = "corti.entrypoints.api.routes.knowledge"
 
 
 @pytest.fixture
@@ -43,7 +43,7 @@ async def client(
     monkeypatch: pytest.MonkeyPatch,
 ) -> AsyncIterator[AsyncClient]:
     """FastAPI app with no lifespan; resets knowledge singletons per test."""
-    monkeypatch.setenv("CORTISTRATE_ROOT", str(tmp_path))
+    monkeypatch.setenv("CORTI_ROOT", str(tmp_path))
     load_settings.cache_clear()
 
     for attr in ("_embedding", "_reranker"):
@@ -221,7 +221,7 @@ async def test_get_categories_returns_taxonomy(
     tmp_path: Path,
 ) -> None:
     """Returns category list with document counts."""
-    from cortistrate.service import CategoryOverview
+    from corti.service import CategoryOverview
 
     overviews = [
         CategoryOverview(
@@ -315,8 +315,8 @@ def test_reject_oversized_upload() -> None:
     """Uploads above max_upload_bytes are rejected; smaller/unknown pass."""
     from types import SimpleNamespace
 
-    from cortistrate.core.errors import InvalidInputError
-    from cortistrate.entrypoints.api.routes.knowledge import _reject_oversized_upload
+    from corti.core.errors import InvalidInputError
+    from corti.entrypoints.api.routes.knowledge import _reject_oversized_upload
 
     over_limit = SimpleNamespace(size=load_settings().knowledge.max_upload_bytes + 1)
     with pytest.raises(InvalidInputError, match="exceeds"):
@@ -333,7 +333,7 @@ async def test_delete_document_returns_204_when_not_found(
     client: AsyncClient,
 ) -> None:
     """Idempotent delete: nonexistent doc returns 204."""
-    from cortistrate.service import DeleteResult
+    from corti.service import DeleteResult
 
     result = DeleteResult(doc_id="d_111111111111", deleted_topics=0)
     with patch(
@@ -348,7 +348,7 @@ async def test_delete_document_returns_204_when_not_found(
 
 async def test_delete_document_returns_envelope(client: AsyncClient) -> None:
     """Successful delete with topics returns envelope."""
-    from cortistrate.service import DeleteResult
+    from corti.service import DeleteResult
 
     result = DeleteResult(doc_id="d_aabbccddee01", deleted_topics=3)
     with patch(
@@ -400,7 +400,7 @@ async def test_put_document_404_when_not_found(client: AsyncClient) -> None:
 
 async def test_patch_document_success(client: AsyncClient) -> None:
     """Successful patch returns updated fields."""
-    from cortistrate.service import PatchResult
+    from corti.service import PatchResult
 
     result = PatchResult(
         doc_id="d_aabbccddee01", updated_fields=["title"], updated_at=_NOW

@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from cortistrate.memory.cascade.registry import KIND_REGISTRY, match_kind
+from corti.memory.cascade.registry import KIND_REGISTRY, match_kind
 
 
 class TestKnowledgeKindRegistration:

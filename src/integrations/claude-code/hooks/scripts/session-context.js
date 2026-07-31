@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Cortistrate SessionStart Hook
+ * Corti SessionStart Hook
  * Retrieves recent memories and displays last session summary
  * No AI summarization - uses local data only
  */
@@ -11,7 +11,7 @@ const nodeVersion = process.versions?.node;
 if (!nodeVersion) {
   console.error(JSON.stringify({
     continue: true,
-    systemMessage: '⚠️ Cortistrate: Node.js environment not detected. Please install Node.js 18+ to use Cortistrate.'
+    systemMessage: '⚠️ Corti: Node.js environment not detected. Please install Node.js 18+ to use Corti.'
   }));
   process.exit(0);
 }
@@ -20,7 +20,7 @@ const [major] = nodeVersion.split('.').map(Number);
 if (major < 18) {
   console.error(JSON.stringify({
     continue: true,
-    systemMessage: `⚠️ Cortistrate: Node.js ${nodeVersion} is too old. Please upgrade to Node.js 18+.`
+    systemMessage: `⚠️ Corti: Node.js ${nodeVersion} is too old. Please upgrade to Node.js 18+.`
   }));
   process.exit(0);
 }
@@ -28,7 +28,7 @@ if (major < 18) {
 import { readFileSync, existsSync } from 'fs';
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
-import { getMemories, transformGetMemoriesResults } from './utils/cortistrate-api.js';
+import { getMemories, transformGetMemoriesResults } from './utils/corti-api.js';
 import { getConfig } from './utils/config.js';
 import { debug, setDebugPrefix } from './utils/debug.js';
 
@@ -100,14 +100,14 @@ async function main() {
   } catch (parseError) {
     console.log(JSON.stringify({
       continue: true,
-      systemMessage: `⚠️ Cortistrate: Failed to parse hook input - ${parseError.message}`
+      systemMessage: `⚠️ Corti: Failed to parse hook input - ${parseError.message}`
     }));
     return;
   }
 
   // Set cwd from hook input
   if (hookInput.cwd) {
-    process.env.CORTISTRATE_CWD = hookInput.cwd;
+    process.env.CORTI_CWD = hookInput.cwd;
   }
 
   const config = getConfig();
@@ -118,7 +118,7 @@ async function main() {
   }
 
   try {
-    // Fetch recent memories from local Cortistrate OSS
+    // Fetch recent memories from local Corti OSS
     const response = await getMemories({ pageSize: PAGE_SIZE });
     if (!response.ok) {
       debug('getMemories error:', response.error);
@@ -167,7 +167,7 @@ async function main() {
         ? lastSession.summary.substring(0, 40) + '...'
         : lastSession.summary;
       const timeAgo = formatRelativeTime(lastSession.timestamp);
-      displayOutput = `💡 Cortistrate: Last (${timeAgo}, ${lastSession.turnCount} turns): "${truncatedSummary}"`;
+      displayOutput = `💡 Corti: Last (${timeAgo}, ${lastSession.turnCount} turns): "${truncatedSummary}"`;
 
       // Add memory preview if available
       if (recentMemories.length > 0) {
@@ -183,9 +183,9 @@ async function main() {
         const subj = m.subject || '';
         return subj.length > 20 ? subj.substring(0, 20) + '..' : subj;
       }).join(', ');
-      displayOutput = `💡 Cortistrate: ${recentMemories.length} memories: ${memorySubjects}`;
+      displayOutput = `💡 Corti: ${recentMemories.length} memories: ${memorySubjects}`;
     } else {
-      displayOutput = `💡 Cortistrate: Ready`;
+      displayOutput = `💡 Corti: Ready`;
     }
 
     // Output: display to user and add to context
@@ -204,15 +204,15 @@ async function main() {
     };
 
     // Provide user-friendly error messages
-    let userMessage = '⚠️ Cortistrate: ';
+    let userMessage = '⚠️ Corti: ';
     if (error.code === 'ENOTFOUND' || error.code === 'ECONNREFUSED') {
-      userMessage += `Network error - cannot reach Cortistrate server. Check your internet connection.`;
+      userMessage += `Network error - cannot reach Corti server. Check your internet connection.`;
     } else if (error.code === 'ETIMEDOUT') {
-      userMessage += `Request timeout - Cortistrate server is slow or unreachable.`;
+      userMessage += `Request timeout - Corti server is slow or unreachable.`;
     } else if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
-      userMessage += `Authentication failed. Check your CORTISTRATE_API_KEY in .env file.`;
+      userMessage += `Authentication failed. Check your CORTI_API_KEY in .env file.`;
     } else if (error.message?.includes('404')) {
-      userMessage += `API endpoint not found. Check CORTISTRATE_BASE_URL in .env file.`;
+      userMessage += `API endpoint not found. Check CORTI_BASE_URL in .env file.`;
     } else if (error.message?.includes('ENOENT')) {
       userMessage += `File not found: ${error.path || 'unknown'}`;
     } else {
@@ -228,7 +228,7 @@ async function main() {
 
 // Top-level error handler for uncaught exceptions during module load
 process.on('uncaughtException', (error) => {
-  let userMessage = '⚠️ Cortistrate SessionStart failed: ';
+  let userMessage = '⚠️ Corti SessionStart failed: ';
 
   if (error.code === 'ERR_MODULE_NOT_FOUND') {
     const moduleName = error.message.match(/Cannot find package '([^']+)'/)?.[1] || 'unknown';

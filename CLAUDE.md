@@ -1,4 +1,4 @@
-# Cortistrate — md-first Memory Extraction Framework
+# Corti — md-first Memory Extraction Framework
 
 This is a Python framework for md-first memory extraction (lightweight; single-user or small-team).
 
@@ -41,7 +41,7 @@ Detailed: [docs/architecture.md](docs/architecture.md).
 - **Workflows** as slash commands in [.claude/skills/](.claude/skills/) — `/commit`, `/new-branch`, `/pr`
 - **Project-level decisions** in [docs/](docs/) (low-frequency, human-judgment-required)
 - **Language policy**: the project targets a global audience — docs and code are English; CJK appears only in test fixtures and locale-suffixed mirrors. Scanned by `make check-cjk`.
-- **Datetime discipline**: never call `datetime.now()` / `time.time()` directly — use `cortistrate.component.utils.datetime`. Enforced by `make check-datetime`.
+- **Datetime discipline**: never call `datetime.now()` / `time.time()` directly — use `corti.component.utils.datetime`. Enforced by `make check-datetime`.
 
 Contributor engineering reference — build, test, CI gates, branch & commit conventions: [docs/engineering.md](docs/engineering.md).
 
@@ -58,7 +58,7 @@ for the full branch workflow.
 
 When refreshing this repository from an internal source archive, preserve
 GitHub-only contributor and automation files. Do not overwrite `CLAUDE.md`,
-`.claude/skills/*`, `CONTRIBUTING.md`, or `.github/*` workflow/template files
+`.claude/skills/*`, `legal/CONTRIBUTING.md`, or `.github/*` workflow/template files
 without checking [docs/github-sync.md](docs/github-sync.md).
 
 ## Storage three-piece set
@@ -67,15 +67,15 @@ without checking [docs/github-sync.md](docs/github-sync.md).
 Markdown (truth)  +  SQLite (state)  +  Postgres (vector + BM25 + scalar)
 ```
 
-- Memory root: `~/.cortistrate/{agents,users,knowledge}/` (md files = single source of truth)
-- System DB: `~/.cortistrate/.index/sqlite/system.db` (state + audit + queue + metadata)
-- Index: `~/.cortistrate/.index/pg/` (rebuildable from md)
+- Memory root: `~/.corti/{agents,users,knowledge}/` (md files = single source of truth)
+- System DB: `~/.corti/.index/sqlite/system.db` (state + audit + queue + metadata)
+- Index: `~/.corti/.index/pg/` (rebuildable from md)
 
 Selection rationale: [docs/architecture.md](docs/architecture.md).
 
 ## Source layout
 
-**src layout** (`src/cortistrate/<...>`): standard PyPA project structure — code lives under `src/` so the working tree is not on the import path until installed, preventing accidental imports of in-development modules.
+**src layout** (`src/corti/<...>`): standard PyPA project structure — code lives under `src/` so the working tree is not on the import path until installed, preventing accidental imports of in-development modules.
 
 Algorithm assets (prompts, extractors) are vendored under `src/everalgo/` — originally from the [EverAlgo](https://github.com/EverMind-AI/EverAlgo) library by EverMind AI (Apache-2.0).
 

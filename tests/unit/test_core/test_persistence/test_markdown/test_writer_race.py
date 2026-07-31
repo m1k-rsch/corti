@@ -23,8 +23,8 @@ from pathlib import Path
 
 import pytest
 
-from cortistrate.core.persistence import EntryId, MarkdownWriter, MemoryRoot
-from cortistrate.infra.persistence.markdown.writers.atomic_fact_writer import (
+from corti.core.persistence import EntryId, MarkdownWriter, MemoryRoot
+from corti.infra.persistence.markdown.writers.atomic_fact_writer import (
     AtomicFactWriter,
 )
 

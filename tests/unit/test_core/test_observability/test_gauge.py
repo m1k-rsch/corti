@@ -7,7 +7,7 @@ from collections.abc import Iterator
 import pytest
 from prometheus_client import CollectorRegistry
 
-from cortistrate.core.observability.metrics import (
+from corti.core.observability.metrics import (
     Gauge,
     reset_metrics_registry,
     set_metrics_registry,
@@ -61,14 +61,14 @@ def test_namespace_subsystem_unit_render_in_metric_name() -> None:
     g = Gauge(
         name="depth",
         description="d",
-        namespace="cortistrate",
+        namespace="corti",
         subsystem="cascade",
         unit="rows",
     )
     g.set(7)
     # Underlying name should include all parts.
     full_name = g._gauge._name  # type: ignore[attr-defined]
-    assert "cortistrate" in full_name
+    assert "corti" in full_name
     assert "cascade" in full_name
     assert "depth" in full_name
     assert "rows" in full_name

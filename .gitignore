@@ -271,9 +271,12 @@ benchmark_checkpoints/
 # .env pattern but listed explicitly for discoverability.
 benchmarks/.env
 
-# Local cortistrate runtime data (memory root, indexes, OME state)
-.cortistrate*/
-cortistrate-src/
+# Local corti runtime data (memory root, indexes, OME state)
+.corti*/
+corti-src/
 
 # PyPI packaging workspace (staging copy, not source-of-truth)
 .pypi-packaging/
+
+# Scratch directory — throwaway scripts, design drafts, experiments
+.scratch/

@@ -23,14 +23,13 @@ from pathlib import Path
 from unittest.mock import AsyncMock
 
 import pytest
-from everalgo.types import KnowledgeMemory, ParsedContent
 from sqlmodel import SQLModel
 
-from cortistrate.component.embedding import EmbeddingProvider
-from cortistrate.component.rerank import RerankResult
-from cortistrate.component.tokenizer import build_tokenizer
-from cortistrate.core.persistence import MemoryRoot
-from cortistrate.infra.persistence.sqlite import (
+from corti.component.embedding import EmbeddingProvider
+from corti.component.rerank import RerankResult
+from corti.component.tokenizer import build_tokenizer
+from corti.core.persistence import MemoryRoot
+from corti.infra.persistence.sqlite import (
     DocumentUpsertPayload,
     dispose_engine,
     get_engine,
@@ -38,8 +37,8 @@ from cortistrate.infra.persistence.sqlite import (
     knowledge_topic_sqlite_repo,
     md_change_state_repo,
 )
-from cortistrate.memory.cascade import CascadeConfig, CascadeOrchestrator
-from cortistrate.service.knowledge import (
+from corti.memory.cascade import CascadeConfig, CascadeOrchestrator
+from corti.service.knowledge import (
     ExtractionEmptyError,
     create_document,
     delete_document,
@@ -47,6 +46,7 @@ from cortistrate.service.knowledge import (
     replace_document,
     search_knowledge,
 )
+from everalgo.types import KnowledgeMemory, ParsedContent
 from tests.helpers.knowledge_md import find_doc_dir, read_document_md, read_topic_mds
 
 # ---------------------------------------------------------------------------
@@ -147,7 +147,7 @@ def _make_memories(
 @pytest.fixture(autouse=True)
 def _reset_knowledge_embedding_singleton() -> None:
     """Reset the lazy embedding and reranker singletons in service.knowledge."""
-    import cortistrate.service.knowledge as _kmod
+    import corti.service.knowledge as _kmod
 
     for attr in ("_embedding", "_reranker"):
         setattr(_kmod, attr, None)
@@ -161,10 +161,10 @@ async def cascade_runtime(
     monkeypatch: pytest.MonkeyPatch,
 ) -> AsyncIterator[MemoryRoot]:
     """Boot sqlite + Postgres against a tmp memory_root; dispose at teardown."""
-    monkeypatch.setenv("CORTISTRATE_ROOT", str(tmp_path))
-    monkeypatch.setenv("CORTISTRATE_EMBEDDING__MODEL", "stub-model")
-    monkeypatch.setenv("CORTISTRATE_EMBEDDING__BASE_URL", "http://stub.invalid/v1")
-    monkeypatch.setenv("CORTISTRATE_EMBEDDING__API_KEY", "stub-key")
+    monkeypatch.setenv("CORTI_ROOT", str(tmp_path))
+    monkeypatch.setenv("CORTI_EMBEDDING__MODEL", "stub-model")
+    monkeypatch.setenv("CORTI_EMBEDDING__BASE_URL", "http://stub.invalid/v1")
+    monkeypatch.setenv("CORTI_EMBEDDING__API_KEY", "stub-key")
 
     await dispose_engine()
 
@@ -352,7 +352,7 @@ async def test_search_finds_ingested_topic(
     cascade_runtime: MemoryRoot,
 ) -> None:
     """Keyword search finds topics after cascade indexing."""
-    import cortistrate.service.knowledge as _kmod
+    import corti.service.knowledge as _kmod
 
     memory_root = cascade_runtime
     embedder = _StubEmbedder()
@@ -390,7 +390,7 @@ async def test_search_include_content(
     cascade_runtime: MemoryRoot,
 ) -> None:
     """include_content flag controls whether content is populated."""
-    import cortistrate.service.knowledge as _kmod
+    import corti.service.knowledge as _kmod
 
     memory_root = cascade_runtime
     embedder = _StubEmbedder()
@@ -437,7 +437,7 @@ async def test_search_score_threshold_filters(
     cascade_runtime: MemoryRoot,
 ) -> None:
     """score_threshold filters out low-scoring results."""
-    import cortistrate.service.knowledge as _kmod
+    import corti.service.knowledge as _kmod
 
     memory_root = cascade_runtime
     embedder = _StubEmbedder()
@@ -479,7 +479,7 @@ async def test_search_app_project_isolation(
     cascade_runtime: MemoryRoot,
 ) -> None:
     """Documents in different app/project scopes are isolated in search."""
-    import cortistrate.service.knowledge as _kmod
+    import corti.service.knowledge as _kmod
 
     memory_root = cascade_runtime
     embedder = _StubEmbedder()
@@ -913,7 +913,7 @@ async def test_get_nonexistent_document_raises(
     cascade_runtime: MemoryRoot,
 ) -> None:
     """get_document for a missing doc_id raises DocumentNotFoundError."""
-    from cortistrate.service.knowledge import DocumentNotFoundError, get_document
+    from corti.service.knowledge import DocumentNotFoundError, get_document
 
     with pytest.raises(DocumentNotFoundError):
         await get_document(
@@ -927,7 +927,7 @@ async def test_search_empty_query_returns_empty(
     cascade_runtime: MemoryRoot,
 ) -> None:
     """An empty query string returns empty results (no crash)."""
-    import cortistrate.service.knowledge as _kmod
+    import corti.service.knowledge as _kmod
 
     _kmod._embedding = _StubEmbedder()
     _kmod._embedding_resolved = True
@@ -947,7 +947,7 @@ async def test_patch_nonexistent_raises(
     cascade_runtime: MemoryRoot,
 ) -> None:
     """Patching a non-existent document raises DocumentNotFoundError."""
-    from cortistrate.service.knowledge import DocumentNotFoundError
+    from corti.service.knowledge import DocumentNotFoundError
 
     with pytest.raises(DocumentNotFoundError):
         await patch_document(

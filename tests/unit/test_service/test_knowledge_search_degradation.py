@@ -11,14 +11,14 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from cortistrate.core.errors import ConfigurationError
+from corti.core.errors import ConfigurationError
 
-_MOD = "cortistrate.service.knowledge"
+_MOD = "corti.service.knowledge"
 
 
 async def test_search_without_embedding_raises() -> None:
     """Search without an embedding provider raises ConfigurationError."""
-    from cortistrate.service.knowledge import search_knowledge
+    from corti.service.knowledge import search_knowledge
 
     with (
         patch(f"{_MOD}._get_embedding", return_value=None),
@@ -29,7 +29,7 @@ async def test_search_without_embedding_raises() -> None:
 
 async def test_search_without_reranker_raises() -> None:
     """Search without a reranker raises ConfigurationError."""
-    from cortistrate.service.knowledge import search_knowledge
+    from corti.service.knowledge import search_knowledge
 
     mock_embedder = AsyncMock()
     mock_embedder.embed = AsyncMock(return_value=[0.1] * 1024)

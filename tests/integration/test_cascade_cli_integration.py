@@ -1,4 +1,4 @@
-"""Integration test for ``cortistrate cascade`` CLI commands.
+"""Integration test for ``corti cascade`` CLI commands.
 
 Drives the actual Typer commands against a real sqlite + Postgres under a
 tmp memory root. Validates the in-process orchestration that
@@ -22,10 +22,10 @@ from pathlib import Path
 import pytest
 from typer.testing import CliRunner
 
-from cortistrate.component.embedding import EmbeddingProvider
-from cortistrate.config import load_settings
-from cortistrate.entrypoints.cli.commands import cascade as cascade_mod
-from cortistrate.infra.persistence.sqlite import dispose_engine
+from corti.component.embedding import EmbeddingProvider
+from corti.config import load_settings
+from corti.entrypoints.cli.commands import cascade as cascade_mod
+from corti.infra.persistence.sqlite import dispose_engine
 
 
 class _StubEmbedder(EmbeddingProvider):
@@ -41,10 +41,10 @@ class _StubEmbedder(EmbeddingProvider):
 @pytest.fixture
 def cli_runtime(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Iterator[Path]:
     """Tmp memory root + clean singletons; CLI bootstraps the schema itself."""
-    monkeypatch.setenv("CORTISTRATE_ROOT", str(tmp_path))
-    monkeypatch.setenv("CORTISTRATE_EMBEDDING__MODEL", "stub-model")
-    monkeypatch.setenv("CORTISTRATE_EMBEDDING__BASE_URL", "http://stub.invalid/v1")
-    monkeypatch.setenv("CORTISTRATE_EMBEDDING__API_KEY", "stub-key")
+    monkeypatch.setenv("CORTI_ROOT", str(tmp_path))
+    monkeypatch.setenv("CORTI_EMBEDDING__MODEL", "stub-model")
+    monkeypatch.setenv("CORTI_EMBEDDING__BASE_URL", "http://stub.invalid/v1")
+    monkeypatch.setenv("CORTI_EMBEDDING__API_KEY", "stub-key")
     load_settings.cache_clear()
     (tmp_path / "ome.toml").write_text("# test\n")
 
@@ -94,9 +94,9 @@ def test_sync_on_empty_queue_with_stub_embedder(
     # CLI builds the embedder via build_embedding_provider() which would
     # try to connect; replace the orchestrator builder with one wired to
     # the stub embedder.
-    from cortistrate.component.tokenizer import build_tokenizer
-    from cortistrate.core.persistence import MemoryRoot
-    from cortistrate.memory.cascade import CascadeOrchestrator
+    from corti.component.tokenizer import build_tokenizer
+    from corti.core.persistence import MemoryRoot
+    from corti.memory.cascade import CascadeOrchestrator
 
     def fake_build_orchestrator() -> CascadeOrchestrator:
         root = MemoryRoot.default()
@@ -140,9 +140,9 @@ def test_sync_with_unmatched_path(
     cli_runtime: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     """A path under the root but matching no cascade kind exits 1 with a hint."""
-    from cortistrate.component.tokenizer import build_tokenizer
-    from cortistrate.core.persistence import MemoryRoot
-    from cortistrate.memory.cascade import CascadeOrchestrator
+    from corti.component.tokenizer import build_tokenizer
+    from corti.core.persistence import MemoryRoot
+    from corti.memory.cascade import CascadeOrchestrator
 
     def fake_build_orchestrator() -> CascadeOrchestrator:
         return CascadeOrchestrator(
@@ -171,7 +171,7 @@ def test_status_handles_pending_rows(cli_runtime: Path) -> None:
     async def seed() -> None:
         # Bring the runtime up like the CLI does, seed, then dispose.
         async with cascade_mod._runtime():
-            from cortistrate.infra.persistence.sqlite import md_change_state_repo
+            from corti.infra.persistence.sqlite import md_change_state_repo
 
             await md_change_state_repo.force_enqueue(
                 "users/u1/episodes/episode-2026-01-01.md", "episode"

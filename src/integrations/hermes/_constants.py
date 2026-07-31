@@ -24,12 +24,12 @@ _DEFAULT_APP_ID = "default"
 _DEFAULT_PROJECT_ID = "default"
 _DEFAULT_API_URL = "http://127.0.0.1:5473"
 
-# ── Cortistrate scope-id validation ─────────────────────────────────────────────────
+# ── Corti scope-id validation ─────────────────────────────────────────────────
 
 _SCOPE_ID_MIN_LEN = 1
 _SCOPE_ID_MAX_LEN = 128
 # Note: docs/api.md §ScopeId lists ^[a-zA-Z0-9_.-]+$, but the server-side
-# PathSafeId validator in src/cortistrate/entrypoints/api/routes/memorize.py also
+# PathSafeId validator in src/corti/entrypoints/api/routes/memorize.py also
 # accepts '@' and '+'. We match the server so valid ids are not rejected.
 _SCOPE_ID_CHARSET = r"^[a-zA-Z0-9_.@+-]+$"
 _SCOPE_TRAVERSAL_TOKENS: Set[str] = frozenset({".", ".."})
@@ -37,7 +37,7 @@ _SCOPE_TRAVERSAL_TOKENS: Set[str] = frozenset({".", ".."})
 # ── Search defaults ──────────────────────────────────────────────────────────
 
 _DEFAULT_SEARCH_METHOD = "hybrid"
-# Default for the agent-facing tool only. Cortistrate API default is -1.
+# Default for the agent-facing tool only. Corti API default is -1.
 _DEFAULT_TOOL_SEARCH_TOP_K = 5
 
 # ── Tool names ─────────────────────────────────────────────────────────────────
@@ -49,5 +49,5 @@ TOOL_FLUSH = "mem_flush"
 
 # ── Memory-write mirroring scope ───────────────────────────────────────────────
 
-# Hermes `target` values that should be mirrored into Cortistrate's user track.
+# Hermes `target` values that should be mirrored into Corti's user track.
 _MIRROR_TARGETS: Set[str] = frozenset({"user"})

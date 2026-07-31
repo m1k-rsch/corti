@@ -5,7 +5,7 @@ from __future__ import annotations
 import datetime
 from pathlib import Path
 
-from cortistrate.core.persistence import MarkdownReader
+from corti.core.persistence import MarkdownReader
 
 
 def test_parse_text_with_frontmatter_and_entries() -> None:

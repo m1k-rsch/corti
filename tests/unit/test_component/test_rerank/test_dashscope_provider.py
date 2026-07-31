@@ -8,7 +8,7 @@ from collections.abc import Callable
 import httpx
 import pytest
 
-from cortistrate.component.rerank import DashScopeRerankProvider, RerankError
+from corti.component.rerank import DashScopeRerankProvider, RerankError
 
 
 def _patch_httpx(
@@ -16,7 +16,7 @@ def _patch_httpx(
     handler: Callable[[httpx.Request], httpx.Response],
 ) -> None:
     transport = httpx.MockTransport(handler)
-    import cortistrate.component.rerank.dashscope_provider as mod
+    import corti.component.rerank.dashscope_provider as mod
 
     real_cls = httpx.AsyncClient
 

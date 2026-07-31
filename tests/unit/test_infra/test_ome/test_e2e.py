@@ -10,7 +10,7 @@ import asyncio
 
 import pytest
 
-from cortistrate.infra.ome import (
+from corti.infra.ome import (
     BaseEvent,
     Counter,
     Cron,
@@ -19,8 +19,8 @@ from cortistrate.infra.ome import (
     StrategyContext,
     offline_strategy,
 )
-from cortistrate.infra.ome.engine import _cron_entry
-from cortistrate.infra.ome.testing import StrategyTestHarness
+from corti.infra.ome.engine import _cron_entry
+from corti.infra.ome.testing import StrategyTestHarness
 
 
 class MemCellSaved(BaseEvent):

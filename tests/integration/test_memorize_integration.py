@@ -27,13 +27,13 @@ from unittest.mock import AsyncMock
 
 import pytest
 import pytest_asyncio
+from sqlmodel import SQLModel
+
+from corti.core.persistence import MemoryRoot
+from corti.service.memorize import MemorizeResult, memorize
 from everalgo.llm.types import ChatMessage as LLMChatMessage
 from everalgo.llm.types import ChatResponse
 from everalgo.testing.fake_llm import FakeLLMClient
-from sqlmodel import SQLModel
-
-from cortistrate.core.persistence import MemoryRoot
-from cortistrate.service.memorize import MemorizeResult, memorize
 
 # ---------------------------------------------------------------------------
 # Canned LLM responses
@@ -112,10 +112,10 @@ async def memorize_env(
     (tmp_path / ".index" / "sqlite").mkdir(parents=True, exist_ok=True)
     (tmp_path / "ome.toml").write_text("# test\n")
 
-    svc = importlib.import_module("cortistrate.service.memorize")
-    af_mod = importlib.import_module("cortistrate.memory.strategies.extract_atomic_facts")
-    fs_mod = importlib.import_module("cortistrate.memory.strategies.extract_foresight")
-    client_mod = importlib.import_module("cortistrate.component.llm.client")
+    svc = importlib.import_module("corti.service.memorize")
+    af_mod = importlib.import_module("corti.memory.strategies.extract_atomic_facts")
+    fs_mod = importlib.import_module("corti.memory.strategies.extract_foresight")
+    client_mod = importlib.import_module("corti.component.llm.client")
 
     # Reset singletons.
     for attr in (
@@ -141,16 +141,16 @@ async def memorize_env(
     ) -> None:
         # Provide a non-None API key + base_url so get_llm_client doesn't
         # raise; we replace the cached singleton with our fake right after.
-        monkeypatch.setenv("CORTISTRATE_MEMORIZE__MODE", mode)
-        monkeypatch.setenv("CORTISTRATE_LLM__API_KEY", "fake-key")
-        monkeypatch.setenv("CORTISTRATE_LLM__BASE_URL", "https://fake.example.com")
+        monkeypatch.setenv("CORTI_MEMORIZE__MODE", mode)
+        monkeypatch.setenv("CORTI_LLM__API_KEY", "fake-key")
+        monkeypatch.setenv("CORTI_LLM__BASE_URL", "https://fake.example.com")
         monkeypatch.setenv(
-            "CORTISTRATE_BOUNDARY_DETECTION__HARD_TOKEN_LIMIT", str(hard_token_limit)
+            "CORTI_BOUNDARY_DETECTION__HARD_TOKEN_LIMIT", str(hard_token_limit)
         )
         monkeypatch.setenv(
-            "CORTISTRATE_BOUNDARY_DETECTION__HARD_MSG_LIMIT", str(hard_msg_limit)
+            "CORTI_BOUNDARY_DETECTION__HARD_MSG_LIMIT", str(hard_msg_limit)
         )
-        from cortistrate.config import load_settings
+        from corti.config import load_settings
 
         load_settings.cache_clear()
 
@@ -159,7 +159,7 @@ async def memorize_env(
         monkeypatch.setattr(client_mod, "_llm_client", fake_llm)
 
         # Build sqlite schema.
-        from cortistrate.infra.persistence.sqlite import dispose_engine, get_engine
+        from corti.infra.persistence.sqlite import dispose_engine, get_engine
 
         db_engine = get_engine()
         async with db_engine.begin() as conn:

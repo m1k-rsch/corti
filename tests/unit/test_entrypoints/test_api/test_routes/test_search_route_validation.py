@@ -15,10 +15,10 @@ from pathlib import Path
 import pytest
 from httpx import ASGITransport, AsyncClient
 
-from cortistrate.config import load_settings
-from cortistrate.entrypoints.api.app import create_app
+from corti.config import load_settings
+from corti.entrypoints.api.app import create_app
 
-search_service_mod = import_module("cortistrate.service.search")
+search_service_mod = import_module("corti.service.search")
 
 
 @pytest.fixture
@@ -27,7 +27,7 @@ async def client(
     monkeypatch: pytest.MonkeyPatch,
 ) -> AsyncIterator[AsyncClient]:
     """FastAPI app with no lifespan; resets search singletons per test."""
-    monkeypatch.setenv("CORTISTRATE_ROOT", str(tmp_path))
+    monkeypatch.setenv("CORTI_ROOT", str(tmp_path))
     load_settings.cache_clear()
 
     for attr in ("_manager", "_embedding", "_reranker", "_llm_client"):

@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from cortistrate.memory.cascade import KIND_REGISTRY, match_kind
+from corti.memory.cascade import KIND_REGISTRY, match_kind
 
 
 @pytest.mark.parametrize(

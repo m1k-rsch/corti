@@ -25,14 +25,14 @@ import warnings
 
 import pytest
 
-from cortistrate.component.tokenizer import build_tokenizer
+from corti.component.tokenizer import build_tokenizer
 
 
 def _make_tokenizer(**kwargs):
     """Import JiebaTokenizer at call time, suppressing jieba's warnings."""
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", "invalid escape sequence", DeprecationWarning)
-        from cortistrate.component.tokenizer.jieba_provider import JiebaTokenizer
+        from corti.component.tokenizer.jieba_provider import JiebaTokenizer
 
     return JiebaTokenizer(**kwargs)
 
@@ -125,6 +125,6 @@ def test_build_tokenizer_returns_jieba_default() -> None:
     """Factory exposes the same JiebaTokenizer the cascade handler uses."""
     with warnings.catch_warnings():
         warnings.filterwarnings("ignore", "invalid escape sequence", DeprecationWarning)
-        from cortistrate.component.tokenizer.jieba_provider import JiebaTokenizer
+        from corti.component.tokenizer.jieba_provider import JiebaTokenizer
 
     assert isinstance(build_tokenizer(), JiebaTokenizer)

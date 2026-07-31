@@ -9,7 +9,7 @@ from pathlib import Path
 import anyio
 import pytest
 
-from cortistrate.core.persistence import LockError, MemoryRoot, memory_root_lock
+from corti.core.persistence import LockError, MemoryRoot, memory_root_lock
 
 
 async def test_lock_creates_anchor_file(tmp_path: Path) -> None:

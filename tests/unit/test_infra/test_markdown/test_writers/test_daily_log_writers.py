@@ -15,8 +15,8 @@ from pathlib import Path
 
 import pytest
 
-from cortistrate.core.persistence import MarkdownReader, MemoryRoot
-from cortistrate.infra.persistence.markdown import (
+from corti.core.persistence import MarkdownReader, MemoryRoot
+from corti.infra.persistence.markdown import (
     AtomicFactReader,
     AtomicFactWriter,
     ForesightReader,
@@ -158,10 +158,10 @@ async def test_atomic_fact_writer_output_feeds_handler(
     memory_root: MemoryRoot,
 ) -> None:
     """The writer's md is exactly what AtomicFactHandler expects to read."""
-    from cortistrate.component.embedding import EmbeddingProvider
-    from cortistrate.component.tokenizer import Tokenizer
-    from cortistrate.memory.cascade.handlers import AtomicFactHandler, HandlerDeps
-    from cortistrate.memory.cascade.handlers._daily_log_base import ParsedEntry
+    from corti.component.embedding import EmbeddingProvider
+    from corti.component.tokenizer import Tokenizer
+    from corti.memory.cascade.handlers import AtomicFactHandler, HandlerDeps
+    from corti.memory.cascade.handlers._daily_log_base import ParsedEntry
 
     class _T(Tokenizer):
         def tokenize(self, t):  # type: ignore[no-untyped-def]
@@ -225,7 +225,7 @@ async def test_atomic_fact_frontmatter_last_appended_at_carries_display_tz_offse
     Markdown frontmatter is a display-side artefact (users read the file
     directly), so ``last_appended_at`` must use
     :func:`get_now_with_timezone` not :func:`get_utc_now`. Pins that
-    contract end-to-end: configure ``CORTISTRATE_MEMORY__TIMEZONE=Asia/Shanghai``,
+    contract end-to-end: configure ``CORTI_MEMORY__TIMEZONE=Asia/Shanghai``,
     write an entry, read the .md file, assert the literal string ends
     with ``+08:00``.
 
@@ -234,10 +234,10 @@ async def test_atomic_fact_frontmatter_last_appended_at_carries_display_tz_offse
     affect the other, but pinning each rules out per-subclass shadowing
     of ``_frontmatter_updates``.
     """
-    from cortistrate.component.utils import datetime as _dt_module
-    from cortistrate.config import load_settings
+    from corti.component.utils import datetime as _dt_module
+    from corti.config import load_settings
 
-    monkeypatch.setenv("CORTISTRATE_MEMORY__TIMEZONE", "Asia/Shanghai")
+    monkeypatch.setenv("CORTI_MEMORY__TIMEZONE", "Asia/Shanghai")
     load_settings.cache_clear()
     _dt_module._display_tz.cache_clear()
 

@@ -1,5 +1,5 @@
 {
-  "name": "cortistrate",
+  "name": "corti",
   "owner": {
     "name": "mark1kwok",
     "url": "https://github.com/mark1kwok"
@@ -8,15 +8,15 @@
   "version": "0.1.0",
   "plugins": [
     {
-      "name": "cortistrate",
+      "name": "corti",
       "source": "./src/integrations/claude-code",
-      "description": "Persistent cross-session memory for Claude Code — automatic capture, semantic recall, and context injection powered by a local Cortistrate server.",
+      "description": "Persistent cross-session memory for Claude Code — automatic capture, semantic recall, and context injection powered by a local Corti server.",
       "version": "0.1.0",
       "author": {
         "name": "mark1kwok"
       },
       "category": "memory",
-      "tags": ["memory", "persistent-context", "agent-memory", "cortistrate"]
+      "tags": ["memory", "persistent-context", "agent-memory", "corti"]
     }
   ]
 }

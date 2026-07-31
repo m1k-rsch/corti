@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 import structlog
 
-from cortistrate.core.observability.logging.factory import configure_logging, get_logger
+from corti.core.observability.logging.factory import configure_logging, get_logger
 
 
 def test_get_logger_returns_structlog_instance() -> None:
@@ -39,7 +39,7 @@ def test_configure_logging_emits_through_structlog(
     capsys: pytest.CaptureFixture[str],
 ) -> None:
     configure_logging(level="INFO")
-    logger = get_logger("cortistrate.test")
+    logger = get_logger("corti.test")
     logger.info("hello", k="v")
     plain = _strip_ansi(capsys.readouterr().out)
     assert "hello" in plain
@@ -52,7 +52,7 @@ def test_configure_logging_demotes_noisy_http_loggers_to_warning(
 ) -> None:
     """Third-party HTTP client loggers (httpx / httpcore / urllib3) must be
     pinned at WARNING so each successful HTTP request doesn't produce an
-    INFO line. cortistrate's own ``get_logger(...)`` calls remain unaffected.
+    INFO line. corti's own ``get_logger(...)`` calls remain unaffected.
     """
     import logging
 
@@ -75,7 +75,7 @@ def test_configure_logging_routes_stdlib_loggers_through_same_formatter(
 ) -> None:
     """stdlib ``logging.getLogger(...)`` output must share the structlog
     ProcessorFormatter so uvicorn / fastapi / third-party libs render with
-    the same ``[level] event`` shape as cortistrate's own structlog calls.
+    the same ``[level] event`` shape as corti's own structlog calls.
 
     This is the user-visible half of the foreign-log-integration setup —
     without it, uvicorn's default ``LOGGING_CONFIG`` would (a) reinstall
@@ -102,8 +102,8 @@ def test_get_logger_with_same_name_returns_equivalent(
 ) -> None:
     """structlog caches bound loggers per name when cache_logger_on_first_use=True."""
     configure_logging()
-    a = get_logger("cortistrate.cache.test")
-    b = get_logger("cortistrate.cache.test")
+    a = get_logger("corti.cache.test")
+    b = get_logger("corti.cache.test")
     # Both should behave equivalently; identity is not guaranteed by structlog
     # API, but both must satisfy the same protocol surface.
     assert isinstance(a, structlog.stdlib.BoundLogger | structlog.BoundLoggerBase) or (

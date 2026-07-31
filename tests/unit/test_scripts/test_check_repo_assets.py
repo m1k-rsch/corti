@@ -27,7 +27,7 @@ def test_clean_source_and_docs_paths_are_allowed() -> None:
         [
             "README.md",
             "docs/engineering.md",
-            "src/cortistrate/__init__.py",
+            "src/corti/__init__.py",
             "use-cases/claude-code-plugin/dashboard/dashboard.html",
         ]
     )

@@ -1,8 +1,8 @@
 /**
- * Configuration loader for Cortistrate OSS plugin
+ * Configuration loader for Corti OSS plugin
  * Reads settings from .env file and environment variables
  * 
- * Unlike the cloud plugin, this connects to a LOCAL Cortistrate server.
+ * Unlike the cloud plugin, this connects to a LOCAL Corti server.
  * No API key needed - localhost is trusted.
  * 
  * Scoping (matches backfill + Hermes config):
@@ -42,13 +42,13 @@ const DEFAULT_USER_ID = 'default';
 const DEFAULT_AGENT_ID = 'pc-claude-code';
 
 export function getConfig() {
-  const baseUrl = process.env.CORTISTRATE_BASE_URL || DEFAULT_BASE_URL;
+  const baseUrl = process.env.CORTI_BASE_URL || DEFAULT_BASE_URL;
   return {
     baseUrl,
-    appId: process.env.CORTISTRATE_APP_ID || DEFAULT_APP_ID,
-    projectId: process.env.CORTISTRATE_PROJECT_ID || DEFAULT_PROJECT_ID,
-    userId: process.env.CORTISTRATE_USER_ID || DEFAULT_USER_ID,
-    agentId: process.env.CORTISTRATE_AGENT_ID || DEFAULT_AGENT_ID,
+    appId: process.env.CORTI_APP_ID || DEFAULT_APP_ID,
+    projectId: process.env.CORTI_PROJECT_ID || DEFAULT_PROJECT_ID,
+    userId: process.env.CORTI_USER_ID || DEFAULT_USER_ID,
+    agentId: process.env.CORTI_AGENT_ID || DEFAULT_AGENT_ID,
     // Always "configured" for local OSS - no API key needed
     isConfigured: true,
   };

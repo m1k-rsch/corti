@@ -1,22 +1,22 @@
-# Example user-level config — copy to ~/.cortistrate/config.toml.
+# Example user-level config — copy to ~/.corti/config.toml.
 #
-#     cp config.example.toml ~/.cortistrate/config.toml
-#     $EDITOR ~/.cortistrate/config.toml   # fill in api_key / base_url
+#     cp config.example.toml ~/.corti/config.toml
+#     $EDITOR ~/.corti/config.toml   # fill in api_key / base_url
 #
 # Override priority (low → high):
 #
-#     src/cortistrate/config/default.toml
-#       < ~/.cortistrate/config.toml          (THIS FILE)
+#     src/corti/config/default.toml
+#       < ~/.corti/config.toml          (THIS FILE)
 #       < .env in the working directory
-#       < CORTISTRATE_<SECTION>__<KEY> process envs
+#       < CORTI_<SECTION>__<KEY> process envs
 #       < programmatic init args
 #
-# The path is configurable: set CORTISTRATE_CONFIG_FILE=/path/to/your.toml to
+# The path is configurable: set CORTI_CONFIG_FILE=/path/to/your.toml to
 # point at any location. Missing file = silently skipped (no error).
 #
 # Comment out anything you do not need — only the fields you set here
 # override the shipped defaults; everything else falls back to
-# src/cortistrate/config/default.toml.
+# src/corti/config/default.toml.
 
 # ── LLM ───────────────────────────────────────────────
 # OpenAI-protocol chat-completions endpoint used by the algo extractors.
@@ -48,7 +48,7 @@ max_concurrent  = 5
 
 # ── Other tunables you may want to override here ──────
 # [memory]
-# root     = "~/.cortistrate"
+# root     = "~/.corti"
 # timezone = "Asia/Shanghai"
 #
 # [sqlite]

@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from fastapi import FastAPI
 
-from cortistrate.core.lifespan import LifespanProvider
-from cortistrate.core.lifespan.factory import build_lifespan
+from corti.core.lifespan import LifespanProvider
+from corti.core.lifespan.factory import build_lifespan
 
 
 class _RecordingProvider(LifespanProvider):

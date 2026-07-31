@@ -3,7 +3,7 @@
 Cache invalidation:
     ``load_settings`` (and the timezone helper that reads it) are
     ``functools.cache``-d for hot paths in production. Tests that
-    monkeypatch ``CORTISTRATE_*`` env vars must see fresh settings on each
+    monkeypatch ``CORTI_*`` env vars must see fresh settings on each
     function — clear both caches around every test to keep results
     deterministic regardless of declaration order.
 
@@ -30,8 +30,8 @@ _LONG_CONV_PATH = _FIXTURE_DIR / "long_conversation_locomo_caroline_melanie.json
 def _reset_settings_cache() -> Iterator[None]:
     import structlog
 
-    from cortistrate.component.utils import datetime as dt_module
-    from cortistrate.config import load_settings
+    from corti.component.utils import datetime as dt_module
+    from corti.config import load_settings
 
     # ``configure_logging`` (called by some e2e fixtures / the CLI entry)
     # sets ``cache_logger_on_first_use=True``; once a logger is cached,

@@ -17,8 +17,12 @@ from typing import TYPE_CHECKING, Any, cast
 
 from asgiref.sync import async_to_sync
 
-from everalgo.agent_memory.prompts.skill_failure import AGENT_SKILL_FAILURE_EXTRACT_PROMPT
-from everalgo.agent_memory.prompts.skill_success import AGENT_SKILL_SUCCESS_EXTRACT_PROMPT
+from everalgo.agent_memory.prompts.skill_failure import (
+    AGENT_SKILL_FAILURE_EXTRACT_PROMPT,
+)
+from everalgo.agent_memory.prompts.skill_success import (
+    AGENT_SKILL_SUCCESS_EXTRACT_PROMPT,
+)
 from everalgo.agent_memory.skill_ops import (
     _apply_add,
     _apply_update,
@@ -73,7 +77,7 @@ class AgentSkillExtractor:
     def __init__(self, *, llm: LLMClient) -> None:
         self._llm = llm
 
-    async def aextract(  # noqa: C901
+    async def aextract(
         self,
         case: AgentCase,
         *,
@@ -249,7 +253,7 @@ async def _call_llm_for_skill_extract(llm: LLMClient, rendered: str) -> dict[str
     if "operations" not in data:
         raise ValueError(f"Skill extract response missing 'operations' key: {list(data.keys())!r}")
     if not isinstance(data["operations"], list):
-        raise ValueError(f"operations must be a list, got {type(data['operations']).__name__}: {data!r}")  # noqa: TRY004
+        raise ValueError(f"operations must be a list, got {type(data['operations']).__name__}: {data!r}")
     return data
 
 

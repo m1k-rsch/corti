@@ -1,4 +1,4 @@
-"""Unit tests for the pure helpers in :mod:`cortistrate.service._boundary`.
+"""Unit tests for the pure helpers in :mod:`corti.service._boundary`.
 
 Covers the mapping + filter functions that don't touch sqlite — fast,
 deterministic, no fixture overhead. The full ``prepare_cells`` flow is
@@ -10,10 +10,9 @@ from __future__ import annotations
 import datetime as _dt
 
 import pytest
-from everalgo.types import ChatMessage, ToolCallRequest, ToolCallResult
 
-from cortistrate.memory import CanonicalMessage, ToolCall
-from cortistrate.service._boundary import (
+from corti.memory import CanonicalMessage, ToolCall
+from corti.service._boundary import (
     _filter_for_mode,
     _merge_dedupe_sort,
     _slice_tail,
@@ -21,6 +20,7 @@ from cortistrate.service._boundary import (
     _to_conversation_item,
     _unique_all_senders,
 )
+from everalgo.types import ChatMessage, ToolCallRequest, ToolCallResult
 
 
 def _msg(

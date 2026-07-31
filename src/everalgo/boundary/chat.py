@@ -12,7 +12,10 @@ from dataclasses import dataclass
 from typing import TYPE_CHECKING, Any, NamedTuple, cast
 
 from everalgo._tokenize import count_tokens
-from everalgo.boundary.prompts.en.chat import BATCH_BOUNDARY_DETECT_PROMPT_EN, STEP_BOUNDARY_DETECT_PROMPT_EN
+from everalgo.boundary.prompts.en.chat import (
+    BATCH_BOUNDARY_DETECT_PROMPT_EN,
+    STEP_BOUNDARY_DETECT_PROMPT_EN,
+)
 from everalgo.llm.format import format_message_timestamp
 from everalgo.llm.types import ChatMessage as LLMChatMessage
 from everalgo.prompts import render_prompt
@@ -298,7 +301,7 @@ async def _call_llm_for_batch_boundary(llm: LLMClient, rendered: str, num_messag
     data = json.loads(match.group())
     raw_boundaries = data.get("boundaries", [])
     if not isinstance(raw_boundaries, list):
-        raise ValueError(f"boundaries must be a list, got {type(raw_boundaries).__name__}")  # noqa: TRY004
+        raise ValueError(f"boundaries must be a list, got {type(raw_boundaries).__name__}")
     coerced: list[int] = []
     for i, item in enumerate(cast("list[Any]", raw_boundaries)):  # type: ignore[redundant-cast]
         if item is None:

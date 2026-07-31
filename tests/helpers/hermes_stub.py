@@ -1,7 +1,7 @@
-"""Minimal Hermes-runtime stubs for testing the Cortistrate plugin in isolation.
+"""Minimal Hermes-runtime stubs for testing the Corti plugin in isolation.
 
-The Cortistrate test suite cannot import the real ``agent.memory_provider`` because
-Hermes is not a dependency of Cortistrate. Tests inject this module via
+The Corti test suite cannot import the real ``agent.memory_provider`` because
+Hermes is not a dependency of Corti. Tests inject this module via
 ``sys.modules`` so plugin imports resolve to these stubs.
 """
 
@@ -63,7 +63,7 @@ def atomic_json_write(
 
 
 class MemoryProvider(ABC):
-    """Minimal ABC matching the methods the Cortistrate plugin calls/implements."""
+    """Minimal ABC matching the methods the Corti plugin calls/implements."""
 
     @property
     @abstractmethod

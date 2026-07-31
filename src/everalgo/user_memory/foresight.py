@@ -105,7 +105,7 @@ async def _call_llm_for_foresight(
         raise ValueError(f"foresights key missing from LLM response: {data!r}")
     items = data["foresights"]
     if not isinstance(items, list):
-        raise ValueError(f"foresights must be a list, got {type(items).__name__}: {items!r}")  # noqa: TRY004
+        raise ValueError(f"foresights must be a list, got {type(items).__name__}: {items!r}")
     return cast("list[dict[str, Any]]", items)
 
 

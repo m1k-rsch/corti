@@ -7,7 +7,7 @@ tests can only mock:
 1. ``type="html"`` + base64 + ``ext="html"`` — the normal HTML-file call.
 2. ``type="html"`` + ``https`` uri — everalgo fetches the page and
    dispatches by the response Content-Type.
-3. ``type="html"`` + ``file://`` uri — Cortistrate reads the file locally and
+3. ``type="html"`` + ``file://`` uri — Corti reads the file locally and
    hands everalgo hydrated bytes (the library never touches the fs).
 
 Real multimodal LLM (creds via ``.env``) + real public internet, so the
@@ -35,7 +35,7 @@ pytestmark = pytest.mark.live_llm
 
 async def _buffer_text(session_id: str) -> str:
     """Concatenated derived ``text`` of all buffer rows for a session."""
-    from cortistrate.infra.persistence.sqlite import get_engine
+    from corti.infra.persistence.sqlite import get_engine
 
     async with get_engine().connect() as conn:
         rows = (
@@ -114,7 +114,7 @@ async def test_add_html_file_uri_parsed_into_buffer(
 ) -> None:
     """A file:// html asset is read locally (hydrated) + parsed into buffer.
 
-    Exercises Cortistrate-side file:// support: the parser receives bytes, never
+    Exercises Corti-side file:// support: the parser receives bytes, never
     the path. Default allowlist is empty (local-first) so the temp file reads.
     """
     doc = tmp_path / "release.html"

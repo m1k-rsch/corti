@@ -13,7 +13,7 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from cortistrate.entrypoints.api.routes.memorize import (
+from corti.entrypoints.api.routes.memorize import (
     MemorizeAddRequest,
     MessageItemDTO,
 )

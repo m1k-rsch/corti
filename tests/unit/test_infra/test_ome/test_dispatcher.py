@@ -5,15 +5,15 @@ from typing import Any
 
 import pytest
 
-from cortistrate.infra.ome._dispatch.dispatcher import EventDispatcher
-from cortistrate.infra.ome._dispatch.registry import StrategyRegistry
-from cortistrate.infra.ome._stores.counter import CounterStore
-from cortistrate.infra.ome._stores.storage import OMEStorage
-from cortistrate.infra.ome.context import StrategyContext
-from cortistrate.infra.ome.decorator import offline_strategy
-from cortistrate.infra.ome.events import BaseEvent, CronTick
-from cortistrate.infra.ome.gates import Counter
-from cortistrate.infra.ome.triggers import Cron, Immediate
+from corti.infra.ome._dispatch.dispatcher import EventDispatcher
+from corti.infra.ome._dispatch.registry import StrategyRegistry
+from corti.infra.ome._stores.counter import CounterStore
+from corti.infra.ome._stores.storage import OMEStorage
+from corti.infra.ome.context import StrategyContext
+from corti.infra.ome.decorator import offline_strategy
+from corti.infra.ome.events import BaseEvent, CronTick
+from corti.infra.ome.gates import Counter
+from corti.infra.ome.triggers import Cron, Immediate
 
 
 class _E(BaseEvent):

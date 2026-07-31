@@ -1,7 +1,7 @@
 """Concurrent /add on one session must not lose messages (regression).
 
 White-box integration test for the per-session lock added in
-``cortistrate.service._session_lock``.
+``corti.service._session_lock``.
 
 Bug class
 ---------
@@ -39,14 +39,14 @@ from unittest.mock import AsyncMock
 
 import pytest
 import pytest_asyncio
-from everalgo.llm.types import ChatMessage as LLMChatMessage
-from everalgo.llm.types import ChatResponse
-from everalgo.testing.fake_llm import FakeLLMClient
 from sqlalchemy import text
 from sqlmodel import SQLModel
 
-from cortistrate.core.persistence import MemoryRoot
-from cortistrate.service.memorize import memorize
+from corti.core.persistence import MemoryRoot
+from corti.service.memorize import memorize
+from everalgo.llm.types import ChatMessage as LLMChatMessage
+from everalgo.llm.types import ChatResponse
+from everalgo.testing.fake_llm import FakeLLMClient
 
 # ---------------------------------------------------------------------------
 # Fake LLM that splits each call into one memcell + 0-tail (force extract)
@@ -97,11 +97,11 @@ async def memorize_env_locked(
     (tmp_path / ".index" / "sqlite").mkdir(parents=True, exist_ok=True)
     (tmp_path / "ome.toml").write_text("# test\n")
 
-    svc = importlib.import_module("cortistrate.service.memorize")
-    af_mod = importlib.import_module("cortistrate.memory.strategies.extract_atomic_facts")
-    fs_mod = importlib.import_module("cortistrate.memory.strategies.extract_foresight")
-    client_mod = importlib.import_module("cortistrate.component.llm.client")
-    lock_mod = importlib.import_module("cortistrate.service._session_lock")
+    svc = importlib.import_module("corti.service.memorize")
+    af_mod = importlib.import_module("corti.memory.strategies.extract_atomic_facts")
+    fs_mod = importlib.import_module("corti.memory.strategies.extract_foresight")
+    client_mod = importlib.import_module("corti.component.llm.client")
+    lock_mod = importlib.import_module("corti.service._session_lock")
 
     # Reset memorize singletons + session lock registry.
     for attr in (
@@ -120,16 +120,16 @@ async def memorize_env_locked(
     started: dict[str, Any] = {"engine": None}
 
     async def _setup(*, fake_llm: FakeLLMClient) -> None:
-        monkeypatch.setenv("CORTISTRATE_MEMORIZE__MODE", "chat")
-        monkeypatch.setenv("CORTISTRATE_LLM__API_KEY", "fake-key")
-        monkeypatch.setenv("CORTISTRATE_LLM__BASE_URL", "https://fake.example.com")
-        from cortistrate.config import load_settings
+        monkeypatch.setenv("CORTI_MEMORIZE__MODE", "chat")
+        monkeypatch.setenv("CORTI_LLM__API_KEY", "fake-key")
+        monkeypatch.setenv("CORTI_LLM__BASE_URL", "https://fake.example.com")
+        from corti.config import load_settings
 
         load_settings.cache_clear()
 
         monkeypatch.setattr(client_mod, "_llm_client", fake_llm)
 
-        from cortistrate.infra.persistence.sqlite import get_engine
+        from corti.infra.persistence.sqlite import get_engine
 
         db_engine = get_engine()
         async with db_engine.begin() as conn:
@@ -158,7 +158,7 @@ async def memorize_env_locked(
 
     if started["engine"] is not None:
         await started["engine"].stop()
-    from cortistrate.infra.persistence.sqlite import dispose_engine
+    from corti.infra.persistence.sqlite import dispose_engine
 
     await dispose_engine()
 
@@ -178,7 +178,7 @@ def _msg(idx: int, sender: str, ts: int) -> dict[str, Any]:
 
 
 async def _collect_buffer_message_ids(session_id: str) -> set[str]:
-    from cortistrate.infra.persistence.sqlite import get_engine
+    from corti.infra.persistence.sqlite import get_engine
 
     eng = get_engine()
     async with eng.connect() as conn:
@@ -190,7 +190,7 @@ async def _collect_buffer_message_ids(session_id: str) -> set[str]:
 
 
 async def _collect_memcell_message_ids(session_id: str) -> set[str]:
-    from cortistrate.infra.persistence.sqlite import get_engine
+    from corti.infra.persistence.sqlite import get_engine
 
     eng = get_engine()
     async with eng.connect() as conn:

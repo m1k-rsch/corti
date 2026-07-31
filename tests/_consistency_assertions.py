@@ -41,20 +41,18 @@ import logging
 from pathlib import Path
 from typing import Any
 
-import anyio
-
-from cortistrate.core.persistence import MarkdownReader
-from cortistrate.core.persistence.markdown.entries import StructuredEntry
-from cortistrate.memory.cascade.handlers._common import content_sha256
-from cortistrate.memory.cascade.handlers._daily_log_base import BaseDailyLogHandler
-from cortistrate.memory.cascade.handlers.user_profile import UserProfileHandler
-from cortistrate.memory.cascade.registry import KIND_REGISTRY, KindSpec
+from corti.core.persistence import MarkdownReader
+from corti.core.persistence.markdown.entries import StructuredEntry
+from corti.memory.cascade.handlers._common import content_sha256
+from corti.memory.cascade.handlers._daily_log_base import BaseDailyLogHandler
+from corti.memory.cascade.handlers.user_profile import UserProfileHandler
+from corti.memory.cascade.registry import KIND_REGISTRY, KindSpec
 
 # stdlib logging (not structlog) so pytest --log-cli-level=INFO picks
 # this up live without -s. Project rule 18 (use get_logger) covers src/
 # code; tests are infrastructure and may use stdlib logging directly
 # when it integrates with the test harness.
-logger = logging.getLogger("cortistrate.tests.consistency")
+logger = logging.getLogger("corti.tests.consistency")
 
 
 @dataclasses.dataclass(frozen=True)
@@ -92,7 +90,7 @@ async def assert_md_lance_strict_consistent(
 
     Args:
         memory_root: Absolute path to the memory root directory
-            (e.g. the value of ``CORTISTRATE_ROOT`` /
+            (e.g. the value of ``CORTI_ROOT`` /
             ``MemoryRoot.root``).
         expect_at_least: Optional ``{kind_name: min_md_files}`` map.
             Raises ``AssertionError`` if a listed kind has fewer md

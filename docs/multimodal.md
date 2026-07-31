@@ -1,6 +1,6 @@
 # Multimodal Memory
 
-Cortistrate turns non-text content — images, PDFs, audio, office documents,
+Corti turns non-text content — images, PDFs, audio, office documents,
 HTML, email — into the **same structured, searchable memory** as plain
 text. You attach the asset to a message at ingest time; a vision/audio
 capable LLM parses it into text, and from there it flows through the
@@ -67,7 +67,7 @@ Multimodal parsing lives behind an optional dependency group so the base
 install stays lean:
 
 ```bash
-uv pip install 'cortistrate[multimodal]'    # or: pip install 'cortistrate[multimodal]'
+uv pip install 'corti[multimodal]'    # or: pip install 'corti[multimodal]'
 ```
 
 This pulls in `everalgo-parser[svg]` — the `[svg]` bundle adds `cairosvg`
@@ -91,9 +91,9 @@ audio / HTML / email parsing is unaffected.
 
 ### Configure the multimodal LLM
 
-The parser uses its own LLM section (`[multimodal]` in `cortistrate.toml`),
+The parser uses its own LLM section (`[multimodal]` in `corti.toml`),
 independent from `[llm]`. The model must accept OpenAI `image_url`
-parts. Fill in three fields in `cortistrate.toml`:
+parts. Fill in three fields in `corti.toml`:
 
 ```toml
 [multimodal]
@@ -229,15 +229,15 @@ optional allowlist:
 Guardrails (a violation surfaces as `415`):
 
 - the resolved path (symlinks followed) must be an existing regular file;
-- size ≤ `CORTISTRATE_MULTIMODAL__FILE_URI_MAX_BYTES` (default 50 MiB);
-- if `CORTISTRATE_MULTIMODAL__FILE_URI_ALLOW_DIRS` is set, the path must lie
+- size ≤ `CORTI_MULTIMODAL__FILE_URI_MAX_BYTES` (default 50 MiB);
+- if `CORTI_MULTIMODAL__FILE_URI_ALLOW_DIRS` is set, the path must lie
   within one of the listed roots (unset = any readable file, the
   permissive default — confine this when exposing the API beyond
   loopback).
 
 ### Calling from Python (plain HTTP)
 
-There is no Cortistrate Python client; call the HTTP API directly with any
+There is no Corti Python client; call the HTTP API directly with any
 HTTP library:
 
 ```python
@@ -264,8 +264,8 @@ httpx.post(
 
 ## Configuration reference
 
-All fields live under `[multimodal]` in `cortistrate.toml`. Each can also
-be overridden via `CORTISTRATE_MULTIMODAL__<FIELD>` env vars (useful for
+All fields live under `[multimodal]` in `corti.toml`. Each can also
+be overridden via `CORTI_MULTIMODAL__<FIELD>` env vars (useful for
 containers and CI).
 
 | Field | Default | Meaning |
@@ -297,7 +297,7 @@ transient errors, retrying will not help — admin action is required:
 
 | Condition | HTTP | `error.code` |
 |---|---|---|
-| `cortistrate[multimodal]` extra not installed | `503` | `CAPABILITY_UNAVAILABLE` |
+| `corti[multimodal]` extra not installed | `503` | `CAPABILITY_UNAVAILABLE` |
 | Office document but no LibreOffice (`soffice`) on host | `503` | `CAPABILITY_UNAVAILABLE` |
 
 **Transient LLM errors** — the multimodal LLM call failed. These

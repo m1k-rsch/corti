@@ -7,8 +7,8 @@ import os
 
 import pytest
 
-from cortistrate.component.utils import datetime as dt_module
-from cortistrate.component.utils.datetime import (
+from corti.component.utils import datetime as dt_module
+from corti.component.utils.datetime import (
     UtcDatetime,
     ensure_utc,
     from_iso_format,
@@ -21,14 +21,14 @@ from cortistrate.component.utils.datetime import (
     to_timestamp_ms,
     today_with_timezone,
 )
-from cortistrate.config import load_settings
+from corti.config import load_settings
 
 
 @pytest.fixture(autouse=True)
 def _isolate_tz(monkeypatch: pytest.MonkeyPatch) -> None:
     """Reset env + caches so each test gets a fresh default-tz resolution."""
     for key in list(os.environ):
-        if key.startswith("CORTISTRATE_"):
+        if key.startswith("CORTI_"):
             monkeypatch.delenv(key, raising=False)
     load_settings.cache_clear()
     dt_module._display_tz.cache_clear()
@@ -88,8 +88,8 @@ def test_display_tz_defaults_to_utc() -> None:
 def test_display_tz_uses_settings_env_override(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """``CORTISTRATE_MEMORY__TIMEZONE`` env var overrides via Settings."""
-    monkeypatch.setenv("CORTISTRATE_MEMORY__TIMEZONE", "Asia/Shanghai")
+    """``CORTI_MEMORY__TIMEZONE`` env var overrides via Settings."""
+    monkeypatch.setenv("CORTI_MEMORY__TIMEZONE", "Asia/Shanghai")
     load_settings.cache_clear()
     dt_module._display_tz.cache_clear()
     now = get_now_with_timezone()
@@ -116,7 +116,7 @@ def test_today_with_timezone_respects_settings_tz(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Different TZ may yield a different bucket for the same UTC instant."""
-    monkeypatch.setenv("CORTISTRATE_MEMORY__TIMEZONE", "Asia/Shanghai")
+    monkeypatch.setenv("CORTI_MEMORY__TIMEZONE", "Asia/Shanghai")
     load_settings.cache_clear()
     dt_module._display_tz.cache_clear()
     today = today_with_timezone()
@@ -224,8 +224,8 @@ def test_to_date_str_passes_through_none() -> None:
 def test_get_utc_now_is_always_utc_regardless_of_display_setting(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """get_utc_now() must ignore CORTISTRATE_MEMORY__TIMEZONE — storage stays UTC."""
-    monkeypatch.setenv("CORTISTRATE_MEMORY__TIMEZONE", "Asia/Shanghai")
+    """get_utc_now() must ignore CORTI_MEMORY__TIMEZONE — storage stays UTC."""
+    monkeypatch.setenv("CORTI_MEMORY__TIMEZONE", "Asia/Shanghai")
     load_settings.cache_clear()
     dt_module._display_tz.cache_clear()
     now = get_utc_now()
@@ -246,7 +246,7 @@ def test_ensure_utc_treats_naive_input_as_utc(
     reinterpreted as Shanghai 14:00 → UTC 06:00; it must stay UTC
     ``14:00`` so the round trip is invariant.
     """
-    monkeypatch.setenv("CORTISTRATE_MEMORY__TIMEZONE", "Asia/Shanghai")
+    monkeypatch.setenv("CORTI_MEMORY__TIMEZONE", "Asia/Shanghai")
     load_settings.cache_clear()
     dt_module._display_tz.cache_clear()
     out = ensure_utc(dt.datetime(2026, 5, 29, 14))
@@ -268,7 +268,7 @@ def test_to_display_tz_converts_to_settings_tz(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """UTC ``06:00`` rendered with display tz = Shanghai becomes 14:00 + 08:00."""
-    monkeypatch.setenv("CORTISTRATE_MEMORY__TIMEZONE", "Asia/Shanghai")
+    monkeypatch.setenv("CORTI_MEMORY__TIMEZONE", "Asia/Shanghai")
     load_settings.cache_clear()
     dt_module._display_tz.cache_clear()
     utc = dt.datetime(2026, 5, 29, 6, tzinfo=dt.UTC)
@@ -281,7 +281,7 @@ def test_to_display_tz_attaches_to_naive_input(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Naive input is treated as already display-tz local — attach + return."""
-    monkeypatch.setenv("CORTISTRATE_MEMORY__TIMEZONE", "Asia/Shanghai")
+    monkeypatch.setenv("CORTI_MEMORY__TIMEZONE", "Asia/Shanghai")
     load_settings.cache_clear()
     dt_module._display_tz.cache_clear()
     out = to_display_tz(dt.datetime(2026, 5, 29, 14))
@@ -298,7 +298,7 @@ def test_utc_datetime_annotated_normalises_on_validation(
     class _Row(BaseModel):
         ts: UtcDatetime
 
-    monkeypatch.setenv("CORTISTRATE_MEMORY__TIMEZONE", "Asia/Shanghai")
+    monkeypatch.setenv("CORTI_MEMORY__TIMEZONE", "Asia/Shanghai")
     load_settings.cache_clear()
     dt_module._display_tz.cache_clear()
 
@@ -325,7 +325,7 @@ def test_storage_round_trip_preserves_utc_instant(
     The UTC instant must be preserved end-to-end regardless of display tz
     — this is the bug the two-zone discipline prevents.
     """
-    monkeypatch.setenv("CORTISTRATE_MEMORY__TIMEZONE", "Asia/Shanghai")
+    monkeypatch.setenv("CORTI_MEMORY__TIMEZONE", "Asia/Shanghai")
     load_settings.cache_clear()
     dt_module._display_tz.cache_clear()
 
@@ -345,7 +345,7 @@ def test_to_display_tz_round_trip_idempotent_under_repeated_render(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """to_display_tz ∘ to_display_tz == to_display_tz (no drift on re-render)."""
-    monkeypatch.setenv("CORTISTRATE_MEMORY__TIMEZONE", "Asia/Shanghai")
+    monkeypatch.setenv("CORTI_MEMORY__TIMEZONE", "Asia/Shanghai")
     load_settings.cache_clear()
     dt_module._display_tz.cache_clear()
     utc = dt.datetime(2026, 5, 29, 6, tzinfo=dt.UTC)
@@ -424,13 +424,13 @@ def test_sqlite_round_trip_under_shanghai_display_tz(
     import asyncio
     import json as _json
 
-    monkeypatch.setenv("CORTISTRATE_ROOT", str(tmp_path))
-    monkeypatch.setenv("CORTISTRATE_MEMORY__TIMEZONE", "Asia/Shanghai")
+    monkeypatch.setenv("CORTI_ROOT", str(tmp_path))
+    monkeypatch.setenv("CORTI_MEMORY__TIMEZONE", "Asia/Shanghai")
     load_settings.cache_clear()
     dt_module._display_tz.cache_clear()
 
-    from cortistrate.core.persistence.sqlite import SQLModel as _SQLModel
-    from cortistrate.infra.persistence.sqlite import (
+    from corti.core.persistence.sqlite import SQLModel as _SQLModel
+    from corti.infra.persistence.sqlite import (
         UnprocessedBuffer,
         sqlite_manager,
         unprocessed_buffer_repo,
@@ -470,7 +470,7 @@ def test_sqlite_round_trip_under_shanghai_display_tz(
 
 
 def test_to_display_tz_under_default_settings_returns_z_suffix() -> None:
-    """Default ``CORTISTRATE_MEMORY__TIMEZONE=UTC`` → rendered offset is ``Z``."""
+    """Default ``CORTI_MEMORY__TIMEZONE=UTC`` → rendered offset is ``Z``."""
     from pydantic import BaseModel
 
     class _Row(BaseModel):
@@ -491,7 +491,7 @@ def test_sorting_multiple_datetimes_consistent_after_tz_switch(
     bijection); sort by UTC then render must agree with sort by display-tz.
     """
     instants = [dt.datetime(2026, 5, 29, h, tzinfo=dt.UTC) for h in (8, 1, 14, 0, 23)]
-    monkeypatch.setenv("CORTISTRATE_MEMORY__TIMEZONE", "Asia/Shanghai")
+    monkeypatch.setenv("CORTI_MEMORY__TIMEZONE", "Asia/Shanghai")
     load_settings.cache_clear()
     dt_module._display_tz.cache_clear()
 
@@ -516,13 +516,13 @@ def test_reverse_tz_switch_utc_to_shanghai_no_drift(
     import asyncio
     import json as _json
 
-    monkeypatch.setenv("CORTISTRATE_ROOT", str(tmp_path))
-    monkeypatch.setenv("CORTISTRATE_MEMORY__TIMEZONE", "UTC")
+    monkeypatch.setenv("CORTI_ROOT", str(tmp_path))
+    monkeypatch.setenv("CORTI_MEMORY__TIMEZONE", "UTC")
     load_settings.cache_clear()
     dt_module._display_tz.cache_clear()
 
-    from cortistrate.core.persistence.sqlite import SQLModel as _SQLModel
-    from cortistrate.infra.persistence.sqlite import (
+    from corti.core.persistence.sqlite import SQLModel as _SQLModel
+    from corti.infra.persistence.sqlite import (
         UnprocessedBuffer,
         sqlite_manager,
         unprocessed_buffer_repo,
@@ -552,7 +552,7 @@ def test_reverse_tz_switch_utc_to_shanghai_no_drift(
     asyncio.run(_write_under_utc())
 
     # Switch display tz to Shanghai, reset DB engine cache, read back.
-    monkeypatch.setenv("CORTISTRATE_MEMORY__TIMEZONE", "Asia/Shanghai")
+    monkeypatch.setenv("CORTI_MEMORY__TIMEZONE", "Asia/Shanghai")
     load_settings.cache_clear()
     dt_module._display_tz.cache_clear()
     sqlite_manager._engine = None
@@ -596,7 +596,7 @@ def test_sqlite_before_insert_event_normalises_aware_non_utc_to_utc(
     ``SQLModel(table=True)`` classes skip Pydantic ``AfterValidator``,
     so the :data:`UtcDatetime` annotation by itself is **inert** at
     construction. The mapper event registered in
-    :mod:`cortistrate.core.persistence.sqlite.base` is what guarantees the
+    :mod:`corti.core.persistence.sqlite.base` is what guarantees the
     on-disk SQLite text is UTC bytes, not display-tz bytes.
 
     Test path: write a row whose ``timestamp`` is aware Shanghai 14:00,
@@ -606,8 +606,8 @@ def test_sqlite_before_insert_event_normalises_aware_non_utc_to_utc(
     import asyncio
     import json as _json
 
-    monkeypatch.setenv("CORTISTRATE_ROOT", str(tmp_path))
-    monkeypatch.setenv("CORTISTRATE_MEMORY__TIMEZONE", "Asia/Shanghai")
+    monkeypatch.setenv("CORTI_ROOT", str(tmp_path))
+    monkeypatch.setenv("CORTI_MEMORY__TIMEZONE", "Asia/Shanghai")
     load_settings.cache_clear()
     dt_module._display_tz.cache_clear()
 
@@ -615,9 +615,9 @@ def test_sqlite_before_insert_event_normalises_aware_non_utc_to_utc(
 
     from sqlalchemy import text as _sql_text
 
-    from cortistrate.core.persistence.sqlite import SQLModel as _SQLModel
-    from cortistrate.core.persistence.sqlite import session_scope
-    from cortistrate.infra.persistence.sqlite import (
+    from corti.core.persistence.sqlite import SQLModel as _SQLModel
+    from corti.core.persistence.sqlite import session_scope
+    from corti.infra.persistence.sqlite import (
         UnprocessedBuffer,
         get_session_factory,
         sqlite_manager,
@@ -720,16 +720,16 @@ def test_sqlite_load_hook_attaches_utc_on_all_base_table_subclasses(
     import asyncio
     import json as _json
 
-    monkeypatch.setenv("CORTISTRATE_ROOT", str(tmp_path))
-    monkeypatch.setenv("CORTISTRATE_MEMORY__TIMEZONE", "Asia/Shanghai")
+    monkeypatch.setenv("CORTI_ROOT", str(tmp_path))
+    monkeypatch.setenv("CORTI_MEMORY__TIMEZONE", "Asia/Shanghai")
     load_settings.cache_clear()
     dt_module._display_tz.cache_clear()
 
     from sqlmodel import select
 
-    from cortistrate.core.persistence.sqlite import SQLModel as _SQLModel
-    from cortistrate.core.persistence.sqlite import session_scope
-    from cortistrate.infra.persistence.sqlite import (
+    from corti.core.persistence.sqlite import SQLModel as _SQLModel
+    from corti.core.persistence.sqlite import session_scope
+    from corti.infra.persistence.sqlite import (
         ConversationStatus,
         MdChangeState,
         Memcell,
@@ -845,12 +845,12 @@ def test_sqlite_load_hook_attaches_utc_on_all_base_table_subclasses(
 
 def _build_engine_for_test(monkeypatch, tmp_path, tz: str = "Asia/Shanghai"):
     """Common setup: tmp memory root + tz + fresh engine."""
-    monkeypatch.setenv("CORTISTRATE_ROOT", str(tmp_path))
-    monkeypatch.setenv("CORTISTRATE_MEMORY__TIMEZONE", tz)
+    monkeypatch.setenv("CORTI_ROOT", str(tmp_path))
+    monkeypatch.setenv("CORTI_MEMORY__TIMEZONE", tz)
     load_settings.cache_clear()
     dt_module._display_tz.cache_clear()
 
-    from cortistrate.infra.persistence.sqlite import sqlite_manager
+    from corti.infra.persistence.sqlite import sqlite_manager
 
     sqlite_manager._engine = None
     sqlite_manager._session_factory = None
@@ -858,7 +858,7 @@ def _build_engine_for_test(monkeypatch, tmp_path, tz: str = "Asia/Shanghai"):
 
 
 async def _create_schema(sqlite_manager) -> None:
-    from cortistrate.core.persistence.sqlite import SQLModel as _SQLModel
+    from corti.core.persistence.sqlite import SQLModel as _SQLModel
 
     engine = sqlite_manager.get_engine()
     async with engine.begin() as conn:
@@ -881,8 +881,8 @@ def test_typedec_covers_orm_session_add(
     import asyncio
     from zoneinfo import ZoneInfo
 
-    from cortistrate.core.persistence.sqlite import session_scope
-    from cortistrate.infra.persistence.sqlite import MdChangeState, get_session_factory
+    from corti.core.persistence.sqlite import session_scope
+    from corti.infra.persistence.sqlite import MdChangeState, get_session_factory
 
     sm = _build_engine_for_test(monkeypatch, tmp_path)
     aware_sh = dt.datetime(2026, 5, 29, 14, tzinfo=ZoneInfo("Asia/Shanghai"))
@@ -920,8 +920,8 @@ def test_typedec_covers_core_insert_values(
 
     from sqlalchemy import insert
 
-    from cortistrate.core.persistence.sqlite import session_scope
-    from cortistrate.infra.persistence.sqlite import MdChangeState, get_session_factory
+    from corti.core.persistence.sqlite import session_scope
+    from corti.infra.persistence.sqlite import MdChangeState, get_session_factory
 
     sm = _build_engine_for_test(monkeypatch, tmp_path)
     aware_sh = dt.datetime(2026, 5, 29, 14, tzinfo=ZoneInfo("Asia/Shanghai"))
@@ -961,8 +961,8 @@ def test_typedec_covers_core_update_values(
 
     from sqlalchemy import update
 
-    from cortistrate.core.persistence.sqlite import session_scope
-    from cortistrate.infra.persistence.sqlite import MdChangeState, get_session_factory
+    from corti.core.persistence.sqlite import session_scope
+    from corti.infra.persistence.sqlite import MdChangeState, get_session_factory
 
     sm = _build_engine_for_test(monkeypatch, tmp_path)
     aware_sh = dt.datetime(2026, 5, 29, 14, tzinfo=ZoneInfo("Asia/Shanghai"))
@@ -1005,8 +1005,8 @@ def test_typedec_aware_utc_input_is_idempotent(
     """Gap a: aware UTC input round-trips unchanged."""
     import asyncio
 
-    from cortistrate.core.persistence.sqlite import session_scope
-    from cortistrate.infra.persistence.sqlite import MdChangeState, get_session_factory
+    from corti.core.persistence.sqlite import session_scope
+    from corti.infra.persistence.sqlite import MdChangeState, get_session_factory
 
     sm = _build_engine_for_test(monkeypatch, tmp_path)
     aware_utc = dt.datetime(2026, 5, 29, 6, tzinfo=dt.UTC)
@@ -1057,8 +1057,8 @@ def test_typedec_naive_input_treated_as_utc(
     """
     import asyncio
 
-    from cortistrate.core.persistence.sqlite import session_scope
-    from cortistrate.infra.persistence.sqlite import MdChangeState, get_session_factory
+    from corti.core.persistence.sqlite import session_scope
+    from corti.infra.persistence.sqlite import MdChangeState, get_session_factory
 
     sm = _build_engine_for_test(monkeypatch, tmp_path)
     naive = dt.datetime(2026, 5, 29, 14)  # no tzinfo
@@ -1097,8 +1097,8 @@ def test_typedec_microsecond_precision_preserved(
 
     from sqlmodel import select
 
-    from cortistrate.core.persistence.sqlite import session_scope
-    from cortistrate.infra.persistence.sqlite import MdChangeState, get_session_factory
+    from corti.core.persistence.sqlite import session_scope
+    from corti.infra.persistence.sqlite import MdChangeState, get_session_factory
 
     sm = _build_engine_for_test(monkeypatch, tmp_path, tz="UTC")
     with_micros = dt.datetime(2026, 5, 29, 6, 0, 0, 123_456, tzinfo=dt.UTC)
@@ -1138,8 +1138,8 @@ def test_typedec_extreme_dates_round_trip(
 
     from sqlmodel import select
 
-    from cortistrate.core.persistence.sqlite import session_scope
-    from cortistrate.infra.persistence.sqlite import MdChangeState, get_session_factory
+    from corti.core.persistence.sqlite import session_scope
+    from corti.infra.persistence.sqlite import MdChangeState, get_session_factory
 
     sm = _build_engine_for_test(monkeypatch, tmp_path, tz="UTC")
     epoch_start = dt.datetime(1970, 1, 1, 0, 0, 0, tzinfo=dt.UTC)
@@ -1201,8 +1201,8 @@ def test_typedec_dst_boundary_round_trip(
 
     from sqlmodel import select
 
-    from cortistrate.core.persistence.sqlite import session_scope
-    from cortistrate.infra.persistence.sqlite import MdChangeState, get_session_factory
+    from corti.core.persistence.sqlite import session_scope
+    from corti.infra.persistence.sqlite import MdChangeState, get_session_factory
 
     sm = _build_engine_for_test(monkeypatch, tmp_path, tz="Asia/Shanghai")
     # US DST starts 2026-03-08 (2am local → 3am local). Pick an instant

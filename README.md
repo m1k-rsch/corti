@@ -8,7 +8,7 @@
 
 ---
 
-CortiStrate (cortistrate): persistent, self-evolving memory layer for AI agents. Decouples runtime state from static weights. Stores state as diffable Markdown. Rebuilds high-performance Postgres/SQLite vector/BM25 indexes. Fully self-hosted.
+CortiStrate (corti): persistent, self-evolving memory layer for AI agents. Decouples runtime state from static weights. Stores state as diffable Markdown. Rebuilds high-performance Postgres/SQLite vector/BM25 indexes. Fully self-hosted.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -44,7 +44,7 @@ CortiStrate (cortistrate): persistent, self-evolving memory layer for AI agents.
 * **Flexible Sharing & Isolation**:
   * Multi-dimensional namespace isolation across 5 axes: `app_id`, `user_id`, `agent_id`, `project_id`, `session_id`.
   * Namespace mapping: identical setting values across axes ➔ memory sharing; distinct setting values ➔ absolute memory isolation.
-* **Markdown Source of Truth** — Human-readable, diffable, Git-versioned `.md` files (`~/.cortistrate/`). Rebuilds 100% from flat files.
+* **Markdown Source of Truth** — Human-readable, diffable, Git-versioned `.md` files (`~/.corti/`). Rebuilds 100% from flat files.
 * **Sub-Second Cascade Watcher** — Direct edits (VS Code, Obsidian, Neovim) ➔ automatic SQLite metadata & Postgres vector synchronization.
 * **Self-Evolving Offline Memory Engine (OME)** — Background reflection loops compress raw conversation logs into atomic facts and dynamic profiles.
 * **Hybrid Postgres / PGLite Vector Search** — Merges `pgvector` semantic similarity, BM25 keyword matching, and scalar SQL filters in single-query execution.
@@ -74,7 +74,7 @@ Three-piece embedded engine. Markdown = Single Source of Truth. SQLite + Postgre
 
 ### Path Namespace Mapping:
 ```
-~/.cortistrate/                                ← Memory Root (CORTISTRATE_ROOT)
+~/.corti/                                ← Memory Root (CORTI_ROOT)
 ├── <app_id>/                                  ← App isolation boundary
 │   └── <project_id>/                          ← Project isolation boundary
 │       ├── users/
@@ -120,21 +120,20 @@ Three-piece embedded engine. Markdown = Single Source of Truth. SQLite + Postgre
 ### 1. One-Command Install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/mark1kwok/cortistrate/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/m1k-rsch/corti/main/install.sh | bash
 ```
 
-What this does: checks Docker → pulls the pre-built image from Docker Hub → seeds `~/.cortistrate/` with default config → auto-installs agent plugins (Hermes, Claude Code) if detected.
+What this does: checks Docker → pulls the pre-built image from Docker Hub → seeds `~/.corti/` with default config → auto-installs agent plugins (Hermes, Claude Code) if detected.
 
 **Requirements**: Docker 24+.
 
 ### 2. Start the Server
 
 ```bash
-docker run -d --name cortistrate \
+docker run -d --name corti \
   -p 5473:5473 \
-  -v ~/.cortistrate:/home/app/.cortistrate \
-  mark1kwok/cortistrate:latest
-
+  -v ~/.corti:/home/app/.corti \
+  mark1kwok/corti:latest
 # Verify
 curl http://localhost:5473/health
 # → {"status":"ok"}
@@ -162,14 +161,14 @@ curl -s -X POST http://localhost:5473/api/v1/memory/search \
 
 The install script (`install.sh`) handles everything automatically:
 
-1. **Docker pull** — fetches pre-built `mark1kwok/cortistrate:latest` from Docker Hub (no clone, no build)
-2. **Data seeding** — extracts default config from the image into `~/.cortistrate/cortistrate.toml`
+1. **Docker pull** — fetches pre-built `mark1kwok/corti:latest` from Docker Hub (no clone, no build)
+2. **Data seeding** — extracts default config from the image into `~/.corti/corti.toml`
 3. **Agent plugin installation** — extracts plugin source from the image into the agent's local plugins directory:
 
 | Agent | Target | Source |
 |---|---|---|
-| Hermes Agent | `~/.hermes/plugins/cortistrate/` | `src/integrations/hermes/` |
-| Claude Code | `~/.claude/skills/cortistrate/` | `src/integrations/claude-code/` |
+| Hermes Agent | `~/.hermes/plugins/corti/` | `src/integrations/hermes/` |
+| Claude Code | `~/.claude/skills/corti/` | `src/integrations/claude-code/` |
 
 Plugins are **copied** (not symlinked), so they survive repo updates and work independently.
 
@@ -179,17 +178,17 @@ If you already pulled the image but skipped plugin detection, or want to reinsta
 
 ```bash
 # Hermes
-docker create --name cortistrate-tmp mark1kwok/cortistrate:latest
-docker cp cortistrate-tmp:/opt/cortistrate/integrations/hermes ~/.hermes/plugins/
-mv ~/.hermes/plugins/hermes ~/.hermes/plugins/cortistrate
-docker rm cortistrate-tmp
+docker create --name corti-tmp mark1kwok/corti:latest
+docker cp corti-tmp:/opt/corti/integrations/hermes ~/.hermes/plugins/
+mv ~/.hermes/plugins/hermes ~/.hermes/plugins/corti
+docker rm corti-tmp
 
 # Claude Code — dropped into ~/.claude/skills/ for auto-discovery
 # (hooks/hooks.json + MCP auto-loaded on next session, zero CLI)
-docker create --name cortistrate-tmp mark1kwok/cortistrate:latest
-docker cp cortistrate-tmp:/opt/cortistrate/integrations/claude-code ~/.claude/skills/
-mv ~/.claude/skills/claude-code ~/.claude/skills/cortistrate
-docker rm cortistrate-tmp
+docker create --name corti-tmp mark1kwok/corti:latest
+docker cp corti-tmp:/opt/corti/integrations/claude-code ~/.claude/skills/
+mv ~/.claude/skills/claude-code ~/.claude/skills/corti
+docker rm corti-tmp
 ```
 
 ---
@@ -274,4 +273,4 @@ CortiStrate originally borrowed code structures and core concepts from the upstr
 
 ## 📄 License
 
-[Apache-2.0 License](LICENSE).
+[Apache-2.0 License](legal/LICENSE).

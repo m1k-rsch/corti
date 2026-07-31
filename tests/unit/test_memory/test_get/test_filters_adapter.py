@@ -1,7 +1,7 @@
 """Tests for ``memory.get.filters_adapter.compile_filters_for_get``.
 
 The adapter is a thin wrapper around
-:func:`cortistrate.memory.search.compile_filters` — these tests pin the
+:func:`corti.memory.search.compile_filters` — these tests pin the
 behaviour /get callers depend on:
 
 * base clause shape (``owner_id = '...' AND owner_type = '...'``)
@@ -19,8 +19,8 @@ from __future__ import annotations
 
 import pytest
 
-from cortistrate.memory.get.filters_adapter import compile_filters_for_get
-from cortistrate.memory.search import FilterError, FilterNode
+from corti.memory.get.filters_adapter import compile_filters_for_get
+from corti.memory.search import FilterError, FilterNode
 
 
 def test_no_filters_emits_base_clause() -> None:

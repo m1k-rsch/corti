@@ -13,7 +13,7 @@ from pathlib import Path
 
 import pytest
 
-from cortistrate.memory.search.recall import ProfileRecaller
+from corti.memory.search.recall import ProfileRecaller
 
 
 def _profile_row(
@@ -39,7 +39,7 @@ def _profile_row(
 
 @pytest.fixture(autouse=True)
 async def _reset(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setenv("CORTISTRATE_ROOT", str(tmp_path))
+    monkeypatch.setenv("CORTI_ROOT", str(tmp_path))
     yield
 
 

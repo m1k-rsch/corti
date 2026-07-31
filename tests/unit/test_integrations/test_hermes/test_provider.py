@@ -1,7 +1,7 @@
 """Contract tests for ``integrations/hermes/__init__.py`` (the provider).
 
-Pins the ``CortistrateMemoryProvider`` lifecycle / tools / circuit-breaker
-behaviour against a fake Cortistrate client. Hermes-only symbols
+Pins the ``CortiMemoryProvider`` lifecycle / tools / circuit-breaker
+behaviour against a fake Corti client. Hermes-only symbols
 (``agent.memory_provider``, ``hermes_constants``, ``tools.registry``,
 ``utils``) are injected via ``sys.modules`` (see ``tests.helpers.
 hermes_stub``) so the plugin bundle imports cleanly without a Hermes
@@ -101,11 +101,11 @@ def _empty_get_data() -> dict[str, Any]:
     }
 
 
-class FakeCortistrateClient:
-    """Recording stand-in for ``CortistrateApiClient``.
+class FakeCortiClient:
+    """Recording stand-in for ``CortiApiClient``.
 
     All methods return canned dicts; ``raise_on`` maps a method name to an
-    error code that the method should raise as ``CortistrateClientError``.
+    error code that the method should raise as ``CortiClientError``.
     """
 
     def __init__(
@@ -133,9 +133,9 @@ class FakeCortistrateClient:
     def _maybe_raise(self, method: str) -> None:
         code = self._raise_on.get(method)
         if code is not None:
-            from integrations.hermes._types import CortistrateClientError
+            from integrations.hermes._types import CortiClientError
 
-            raise CortistrateClientError("boom", code=code)
+            raise CortiClientError("boom", code=code)
 
     def add_messages(
         self,
@@ -238,20 +238,20 @@ def plugin(_hermes_stubs):
 def make_provider(plugin, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """Return a factory that builds an initialised provider + fake client."""
     monkeypatch.setenv("HERMES_HOME", str(tmp_path))
-    monkeypatch.delenv("CORTISTRATE_API_URL", raising=False)
-    monkeypatch.delenv("CORTISTRATE_USER_ID", raising=False)
-    monkeypatch.delenv("CORTISTRATE_AGENT_ID", raising=False)
-    monkeypatch.delenv("CORTISTRATE_MODE", raising=False)
+    monkeypatch.delenv("CORTI_API_URL", raising=False)
+    monkeypatch.delenv("CORTI_USER_ID", raising=False)
+    monkeypatch.delenv("CORTI_AGENT_ID", raising=False)
+    monkeypatch.delenv("CORTI_MODE", raising=False)
 
     def _make(
         *,
-        fake: FakeCortistrateClient | None = None,
+        fake: FakeCortiClient | None = None,
         config: dict[str, Any] | None = None,
         **init_kwargs: Any,
     ):
         if config is not None:
-            (tmp_path / "cortistrate.json").write_text(json.dumps(config))
-        prov = plugin.CortistrateMemoryProvider()
+            (tmp_path / "corti.json").write_text(json.dumps(config))
+        prov = plugin.CortiMemoryProvider()
         prov.initialize("sess-1", **init_kwargs)
         if fake is not None:
             prov._client = fake
@@ -265,7 +265,7 @@ def make_provider(plugin, tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
 
 def test_name_and_availability(make_provider, plugin):
     prov = make_provider()
-    assert prov.name == "cortistrate"
+    assert prov.name == "corti"
     # Defaults carry a non-empty api_url → is_available() is True.
     assert prov.is_available() is True
 
@@ -282,7 +282,7 @@ def test_is_available_false_when_unconfigured(
 
 
 def test_initialize_builds_state_from_config_and_kwargs(make_provider):
-    fake = FakeCortistrateClient()
+    fake = FakeCortiClient()
     prov = make_provider(
         fake=fake,
         config={
@@ -309,7 +309,7 @@ def test_initialize_bad_url_leaves_client_none(
     def _boom(_url: str):
         raise ValueError("bad url")
 
-    monkeypatch.setattr(plugin, "CortistrateApiClient", _boom)
+    monkeypatch.setattr(plugin, "CortiApiClient", _boom)
     prov = make_provider()
     assert prov._client is None
     assert "bad url" in prov._init_error
@@ -319,24 +319,24 @@ def test_initialize_bad_url_leaves_client_none(
 
 
 def test_prefetch_cache_hit_returns_formatted_context(make_provider):
-    fake = FakeCortistrateClient(search_data=_search_data_with_episode())
+    fake = FakeCortiClient(search_data=_search_data_with_episode())
     prov = make_provider(fake=fake)
     # Prime the cache: simulate a completed prefetch for this query.
     prov._prefetch_query = "tea"
-    prov._prefetch_result = "## Cortistrate Memory\ncached"
+    prov._prefetch_result = "## Corti Memory\ncached"
     prov._prefetch_done = True
     out = prov.prefetch("tea")
-    assert out == "## Cortistrate Memory\ncached"
+    assert out == "## Corti Memory\ncached"
     # The worker must not have been started (cache hit).
     assert not any(c[0] == "search" for c in fake.calls)
     prov.shutdown()
 
 
 def test_prefetch_first_turn_starts_worker_and_joins(make_provider):
-    fake = FakeCortistrateClient(search_data=_search_data_with_episode())
+    fake = FakeCortiClient(search_data=_search_data_with_episode())
     prov = make_provider(fake=fake)
     out = prov.prefetch("tea")
-    assert "tea" in out.lower() or "cortistrate" in out.lower()
+    assert "tea" in out.lower() or "corti" in out.lower()
     assert any(c[0] == "search" for c in fake.calls)
     # The prefetch thread has been joined by prefetch() itself.
     assert prov._prefetch_thread is not None
@@ -345,14 +345,14 @@ def test_prefetch_first_turn_starts_worker_and_joins(make_provider):
 
 
 def test_prefetch_empty_results_returns_empty_string(make_provider):
-    fake = FakeCortistrateClient(search_data=_empty_search_data())
+    fake = FakeCortiClient(search_data=_empty_search_data())
     prov = make_provider(fake=fake)
     assert prov.prefetch("nothing") == ""
     prov.shutdown()
 
 
 def test_prefetch_breaker_open_returns_empty(make_provider):
-    fake = FakeCortistrateClient(search_data=_search_data_with_episode())
+    fake = FakeCortiClient(search_data=_search_data_with_episode())
     prov = make_provider(fake=fake)
     prov._consecutive_failures = 5
     prov._breaker_open_until = _now_plus(1000.0)
@@ -367,7 +367,7 @@ def test_prefetch_breaker_open_returns_empty(make_provider):
 def test_sync_turn_enqueues_user_then_assistant_with_adjacent_timestamps(
     make_provider,
 ):
-    fake = FakeCortistrateClient()
+    fake = FakeCortiClient()
     prov = make_provider(fake=fake)
     prov.sync_turn("hello", "hi there")
     thread = prov._sync_thread
@@ -384,7 +384,7 @@ def test_sync_turn_enqueues_user_then_assistant_with_adjacent_timestamps(
 
 
 def test_sync_turn_joins_previous_thread(make_provider):
-    fake = FakeCortistrateClient()
+    fake = FakeCortiClient()
     prov = make_provider(fake=fake)
     prov.sync_turn("first", "a1")
     prov.sync_turn("second", "a2")
@@ -397,7 +397,7 @@ def test_sync_turn_joins_previous_thread(make_provider):
 
 
 def test_sync_turn_skips_when_breaker_open(make_provider):
-    fake = FakeCortistrateClient()
+    fake = FakeCortiClient()
     prov = make_provider(fake=fake)
     prov._consecutive_failures = 5
     prov._breaker_open_until = _now_plus(1000.0)
@@ -411,7 +411,7 @@ def test_sync_turn_skips_when_breaker_open(make_provider):
 
 
 def test_on_session_end_flushes_and_closes_client(make_provider):
-    fake = FakeCortistrateClient()
+    fake = FakeCortiClient()
     prov = make_provider(fake=fake)
     prov.sync_turn("hi", "hello")
     prov.on_session_end([])
@@ -424,7 +424,7 @@ def test_on_session_end_flushes_and_closes_client(make_provider):
 
 
 def test_on_memory_write_mirrors_add_user(make_provider):
-    fake = FakeCortistrateClient()
+    fake = FakeCortiClient()
     prov = make_provider(fake=fake)
     prov.on_memory_write("add", "user", "Alice likes tea.")
     mirror = prov._mirror_thread
@@ -438,7 +438,7 @@ def test_on_memory_write_mirrors_add_user(make_provider):
 
 
 def test_on_memory_write_skips_memory_target(make_provider):
-    fake = FakeCortistrateClient()
+    fake = FakeCortiClient()
     prov = make_provider(fake=fake)
     prov.on_memory_write("add", "memory", "ignored")
     assert prov._mirror_thread is None
@@ -447,7 +447,7 @@ def test_on_memory_write_skips_memory_target(make_provider):
 
 
 def test_on_memory_write_remove_is_noop(make_provider):
-    fake = FakeCortistrateClient()
+    fake = FakeCortiClient()
     prov = make_provider(fake=fake)
     prov.on_memory_write("remove", "user", "x")
     assert prov._mirror_thread is None
@@ -459,9 +459,9 @@ def test_on_memory_write_remove_is_noop(make_provider):
 
 
 def test_handle_tool_call_search_happy_path(make_provider):
-    fake = FakeCortistrateClient(search_data=_search_data_with_episode())
+    fake = FakeCortiClient(search_data=_search_data_with_episode())
     prov = make_provider(fake=fake)
-    out = prov.handle_tool_call("cortistrate_search", {"query": "tea"})
+    out = prov.handle_tool_call("corti_search", {"query": "tea"})
     payload = json.loads(out)
     assert "results" in payload
     assert payload["count"] == 1
@@ -470,9 +470,9 @@ def test_handle_tool_call_search_happy_path(make_provider):
 
 
 def test_handle_tool_call_list_happy_path(make_provider):
-    fake = FakeCortistrateClient()
+    fake = FakeCortiClient()
     prov = make_provider(fake=fake)
-    out = prov.handle_tool_call("cortistrate_list", {"memory_type": "episode"})
+    out = prov.handle_tool_call("corti_list", {"memory_type": "episode"})
     payload = json.loads(out)
     assert "results" in payload
     assert any(c[0] == "get" for c in fake.calls)
@@ -480,9 +480,9 @@ def test_handle_tool_call_list_happy_path(make_provider):
 
 
 def test_handle_tool_call_add_happy_path(make_provider):
-    fake = FakeCortistrateClient()
+    fake = FakeCortiClient()
     prov = make_provider(fake=fake)
-    out = prov.handle_tool_call("cortistrate_add", {"content": "a fact"})
+    out = prov.handle_tool_call("corti_add", {"content": "a fact"})
     payload = json.loads(out)
     assert payload["result"] == "Fact stored."
     assert any(c[0] == "add_messages" for c in fake.calls)
@@ -491,34 +491,34 @@ def test_handle_tool_call_add_happy_path(make_provider):
 
 
 def test_handle_tool_call_flush_happy_path(make_provider):
-    fake = FakeCortistrateClient(flush_response={"status": "extracted"})
+    fake = FakeCortiClient(flush_response={"status": "extracted"})
     prov = make_provider(fake=fake)
-    out = prov.handle_tool_call("cortistrate_flush", {})
+    out = prov.handle_tool_call("corti_flush", {})
     payload = json.loads(out)
     assert payload["status"] == "extracted"
     prov.shutdown()
 
 
 def test_handle_tool_call_search_missing_query_returns_error(make_provider):
-    fake = FakeCortistrateClient()
+    fake = FakeCortiClient()
     prov = make_provider(fake=fake)
-    out = prov.handle_tool_call("cortistrate_search", {})
+    out = prov.handle_tool_call("corti_search", {})
     assert "error" in json.loads(out)
     prov.shutdown()
 
 
 def test_handle_tool_call_add_missing_content_returns_error(make_provider):
-    fake = FakeCortistrateClient()
+    fake = FakeCortiClient()
     prov = make_provider(fake=fake)
-    out = prov.handle_tool_call("cortistrate_add", {})
+    out = prov.handle_tool_call("corti_add", {})
     assert "error" in json.loads(out)
     prov.shutdown()
 
 
 def test_handle_tool_call_unknown_tool_returns_error(make_provider):
-    fake = FakeCortistrateClient()
+    fake = FakeCortiClient()
     prov = make_provider(fake=fake)
-    out = prov.handle_tool_call("cortistrate_bogus", {})
+    out = prov.handle_tool_call("corti_bogus", {})
     assert "error" in json.loads(out)
     prov.shutdown()
 
@@ -527,14 +527,14 @@ def test_handle_tool_call_backend_down_returns_error(make_provider):
     prov = make_provider()
     prov._client = None
     prov._init_error = "init failed"
-    out = prov.handle_tool_call("cortistrate_search", {"query": "x"})
+    out = prov.handle_tool_call("corti_search", {"query": "x"})
     assert "error" in json.loads(out)
 
 
 def test_handle_tool_call_list_transient_failure_trips_breaker(make_provider):
-    fake = FakeCortistrateClient(raise_on={"get": "EXTERNAL_SERVICE_UNAVAILABLE"})
+    fake = FakeCortiClient(raise_on={"get": "EXTERNAL_SERVICE_UNAVAILABLE"})
     prov = make_provider(fake=fake)
-    out = prov.handle_tool_call("cortistrate_list", {"memory_type": "episode"})
+    out = prov.handle_tool_call("corti_list", {"memory_type": "episode"})
     payload = json.loads(out)
     assert "error" in payload
     assert prov._consecutive_failures == 1
@@ -542,9 +542,9 @@ def test_handle_tool_call_list_transient_failure_trips_breaker(make_provider):
 
 
 def test_handle_tool_call_flush_transient_failure_trips_breaker(make_provider):
-    fake = FakeCortistrateClient(raise_on={"flush_session": "INTERNAL_ERROR"})
+    fake = FakeCortiClient(raise_on={"flush_session": "INTERNAL_ERROR"})
     prov = make_provider(fake=fake)
-    out = prov.handle_tool_call("cortistrate_flush", {})
+    out = prov.handle_tool_call("corti_flush", {})
     payload = json.loads(out)
     assert "error" in payload
     assert prov._consecutive_failures == 1
@@ -559,7 +559,7 @@ def test_get_tool_schemas_openai_shape(make_provider):
     schemas = prov.get_tool_schemas()
     assert len(schemas) == 4
     names = {s["name"] for s in schemas}
-    assert names == {"cortistrate_search", "cortistrate_list", "cortistrate_add", "cortistrate_flush"}
+    assert names == {"corti_search", "corti_list", "corti_add", "corti_flush"}
     for schema in schemas:
         assert schema["parameters"]["type"] == "object"
         assert "properties" in schema["parameters"]
@@ -567,11 +567,11 @@ def test_get_tool_schemas_openai_shape(make_provider):
     prov.shutdown()
 
 
-def test_system_prompt_block_mentions_cortistrate_search(make_provider):
+def test_system_prompt_block_mentions_corti_search(make_provider):
     prov = make_provider()
     block = prov.system_prompt_block()
-    assert "cortistrate" in block.lower()
-    assert "cortistrate_search" in block
+    assert "corti" in block.lower()
+    assert "corti_search" in block
     prov.shutdown()
 
 
@@ -587,7 +587,7 @@ def test_breaker_opens_after_five_transient_failures(make_provider, plugin):
 
 
 def test_breaker_skips_calls_when_open(make_provider):
-    fake = FakeCortistrateClient()
+    fake = FakeCortiClient()
     prov = make_provider(fake=fake)
     prov._consecutive_failures = 5
     prov._breaker_open_until = _now_plus(1000.0)
@@ -597,7 +597,7 @@ def test_breaker_skips_calls_when_open(make_provider):
 
 
 def test_breaker_recovers_after_cooldown(make_provider):
-    fake = FakeCortistrateClient()
+    fake = FakeCortiClient()
     prov = make_provider(fake=fake)
     prov._consecutive_failures = 5
     prov._breaker_open_until = _now_minus(1.0)  # cooldown elapsed
@@ -613,7 +613,7 @@ def test_breaker_recovers_after_cooldown(make_provider):
 
 def test_invalid_input_does_not_trip_breaker(make_provider, plugin):
 
-    fake = FakeCortistrateClient(raise_on={"add_messages": "INVALID_INPUT"})
+    fake = FakeCortiClient(raise_on={"add_messages": "INVALID_INPUT"})
     prov = make_provider(fake=fake)
     prov.sync_turn("x", "y")
     thread = prov._sync_thread
@@ -626,24 +626,24 @@ def test_invalid_input_does_not_trip_breaker(make_provider, plugin):
 
 
 def test_is_transient_classification(plugin):
-    assert plugin.CortistrateMemoryProvider._is_transient("INTERNAL_ERROR") is True
-    assert plugin.CortistrateMemoryProvider._is_transient("CLIENT_CLOSED") is True
-    assert plugin.CortistrateMemoryProvider._is_transient("INVALID_INPUT") is False
+    assert plugin.CortiMemoryProvider._is_transient("INTERNAL_ERROR") is True
+    assert plugin.CortiMemoryProvider._is_transient("CLIENT_CLOSED") is True
+    assert plugin.CortiMemoryProvider._is_transient("INVALID_INPUT") is False
 
 
 # ── backup_paths ────────────────────────────────────────────────────────────
 
 
-def test_backup_paths_returns_cortistrate_root_when_present(
+def test_backup_paths_returns_corti_root_when_present(
     make_provider, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ):
     import pathlib
 
-    cortistrate_dir = tmp_path / ".cortistrate"
-    cortistrate_dir.mkdir()
+    corti_dir = tmp_path / ".corti"
+    corti_dir.mkdir()
     monkeypatch.setattr(pathlib.Path, "home", lambda: tmp_path)
     prov = make_provider()
-    assert prov.backup_paths() == [str(cortistrate_dir)]
+    assert prov.backup_paths() == [str(corti_dir)]
     prov.shutdown()
 
 
@@ -662,7 +662,7 @@ def test_backup_paths_empty_when_absent(
 
 
 def test_shutdown_joins_threads_and_closes_client(make_provider):
-    fake = FakeCortistrateClient(search_data=_search_data_with_episode())
+    fake = FakeCortiClient(search_data=_search_data_with_episode())
     prov = make_provider(fake=fake)
     prov.sync_turn("hi", "hello")
     prov.prefetch("tea")
@@ -690,7 +690,7 @@ def test_get_config_schema_has_seven_entries(make_provider):
 def test_save_config_writes_mode_0600(make_provider, tmp_path: Path):
     prov = make_provider()
     prov.save_config({"api_url": "http://x"}, str(tmp_path))
-    path = tmp_path / "cortistrate.json"
+    path = tmp_path / "corti.json"
     assert path.exists()
     data = json.loads(path.read_text(encoding="utf-8"))
     assert data["api_url"] == "http://x"

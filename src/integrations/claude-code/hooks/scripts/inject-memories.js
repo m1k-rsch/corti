@@ -9,14 +9,14 @@
  * Flow:
  * 1. Read prompt from stdin
  * 2. Skip if prompt is too short or API not configured
- * 3. Search Cortistrate OSS for relevant memories
+ * 3. Search Corti OSS for relevant memories
  * 4. Optionally filter with Claude SDK
  * 5. Display summary to user (via systemMessage)
  * 6. Inject context for Claude (via additionalContext)
  */
 
 import { getConfig } from './utils/config.js';
-import { searchMemories, transformSearchResults } from './utils/cortistrate-api.js';
+import { searchMemories, transformSearchResults } from './utils/corti-api.js';
 import { formatRelativeTime } from './utils/mock-store.js';
 import { debug, setDebugPrefix } from './utils/debug.js';
 
@@ -69,7 +69,7 @@ async function main() {
 
     // Set cwd from hook input for config.getGroupId()
     if (data.cwd) {
-      process.env.CORTISTRATE_CWD = data.cwd;
+      process.env.CORTI_CWD = data.cwd;
     }
 
     // Skip short prompts silently
@@ -86,7 +86,7 @@ async function main() {
       process.exit(0);
     }
 
-    // Search memories from local Cortistrate OSS
+    // Search memories from local Corti OSS
     let memories = [];
     try {
       debug('searching memories for prompt:', prompt.slice(0, 100) + (prompt.length > 100 ? '...' : ''));

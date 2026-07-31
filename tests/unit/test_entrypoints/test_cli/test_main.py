@@ -4,13 +4,13 @@ from __future__ import annotations
 
 from typer.testing import CliRunner
 
-from cortistrate.entrypoints.cli.main import app
+from corti.entrypoints.cli.main import app
 
 
 def test_help_exits_zero() -> None:
     result = CliRunner().invoke(app, ["--help"])
     assert result.exit_code == 0
-    assert "cortistrate" in result.stdout
+    assert "corti" in result.stdout
     assert "server" in result.stdout
     assert "cascade" in result.stdout
     assert "config" in result.stdout

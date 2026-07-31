@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
-# cortistrate — one-command Docker install (pull pre-built image)
-# Usage: curl -fsSL https://raw.githubusercontent.com/mark1kwok/cortistrate/main/install.sh | bash
+# corti — one-command Docker install (pull pre-built image)
+# Usage: curl -fsSL https://raw.githubusercontent.com/m1k-rsch/corti/main/install.sh | bash
 set -euo pipefail
 
-IMAGE="mark1kwok/cortistrate:latest"
+IMAGE="mark1kwok/corti:latest"
 
 # ── Colors ────────────────────────────────────────────────────────────────
 if [ -t 1 ]; then
@@ -24,7 +24,7 @@ print_banner() {
    ╚═════╝ ╚═════╝ ╚═╝  ╚═╝   ╚═╝   ╚═╝
 
 BANNER
-    printf "  ${BOLD}Cortistrate${NC} — ${GREEN}Multi-agent memory for AI swarms${NC}\n"
+    printf "  ${BOLD}Corti${NC} — ${GREEN}Multi-agent memory for AI swarms${NC}\n"
     echo ""
 }
 
@@ -72,18 +72,18 @@ docker pull "$IMAGE"
 # ── Step 3: Seed data directory ───────────────────────────────────────────
 section "Step 3: Data Directory"
 
-DATA_DIR="${CORTISTRATE_ROOT:-$HOME/.cortistrate}"
+DATA_DIR="${CORTI_ROOT:-$HOME/.corti}"
 
-if [ -d "$DATA_DIR" ] && [ -f "$DATA_DIR/cortistrate.toml" ]; then
-    info "Config already exists: $DATA_DIR/cortistrate.toml"
+if [ -d "$DATA_DIR" ] && [ -f "$DATA_DIR/corti.toml" ]; then
+    info "Config already exists: $DATA_DIR/corti.toml"
 else
     info "Seeding data directory at $DATA_DIR"
     mkdir -p "$DATA_DIR/.index/sqlite" "$DATA_DIR/.index/pg" "$DATA_DIR/.tmp"
 
     # Extract default configs from the Docker image.
     CID=$(docker create "$IMAGE")
-    docker cp "$CID:/opt/cortistrate/config/default.toml" "$DATA_DIR/cortistrate.toml"
-    docker cp "$CID:/opt/cortistrate/config/default_ome.toml" "$DATA_DIR/ome.toml"
+    docker cp "$CID:/opt/corti/config/default.toml" "$DATA_DIR/corti.toml"
+    docker cp "$CID:/opt/corti/config/default_ome.toml" "$DATA_DIR/ome.toml"
     docker rm "$CID" >/dev/null
 fi
 
@@ -94,7 +94,7 @@ CID=$(docker create "$IMAGE")
 
 # ── 4a: Hermes ──────────────────────────────────────────────────────────────
 HERMES_PLUGIN_DIR="$HOME/.hermes/plugins"
-HERMES_TARGET="$HERMES_PLUGIN_DIR/cortistrate"
+HERMES_TARGET="$HERMES_PLUGIN_DIR/corti"
 
 if command -v hermes &>/dev/null; then
     info "Hermes detected"
@@ -107,26 +107,26 @@ if command -v hermes &>/dev/null; then
         echo "  Remove it manually if you want a fresh install: rm -rf $HERMES_TARGET"
     else
         mkdir -p "$HERMES_PLUGIN_DIR"
-        docker cp "$CID:/opt/cortistrate/integrations/hermes" "$HERMES_PLUGIN_DIR/"
+        docker cp "$CID:/opt/corti/integrations/hermes" "$HERMES_PLUGIN_DIR/"
         mv "$HERMES_PLUGIN_DIR/hermes" "$HERMES_TARGET"
         info "Hermes plugin installed: $HERMES_TARGET"
     fi
     # Auto-enable the plugin + set memory provider so it's active immediately.
-    if hermes plugins list 2>/dev/null | grep -q cortistrate; then
-        hermes plugins enable cortistrate 2>/dev/null || true
+    if hermes plugins list 2>/dev/null | grep -q corti; then
+        hermes plugins enable corti 2>/dev/null || true
     fi
     # Also set the memory provider (belt-and-suspenders — some Hermes versions
     # require this even after plugin enable).
-    if hermes config get memory.provider 2>/dev/null | grep -q cortistrate; then
-        info "Hermes plugin enabled — memory.provider=cortistrate"
+    if hermes config get memory.provider 2>/dev/null | grep -q corti; then
+        info "Hermes plugin enabled — memory.provider=corti"
     else
-        hermes config set memory.provider cortistrate 2>/dev/null && \
-            info "Hermes plugin enabled — memory.provider=cortistrate" || \
-            warn "Could not set memory.provider. Run: hermes config set memory.provider cortistrate"
+        hermes config set memory.provider corti 2>/dev/null && \
+            info "Hermes plugin enabled — memory.provider=corti" || \
+            warn "Could not set memory.provider. Run: hermes config set memory.provider corti"
     fi
 else
     info "Hermes not detected — skipping plugin install"
-    echo "  Install Hermes: https://github.com/mark1kwok/hermes"
+    echo "  Install Hermes: https://github.com/m1k-rsch/hermes"
 fi
 
 # ── 4b: Claude Code ─────────────────────────────────────────────────────────
@@ -134,7 +134,7 @@ fi
 # .claude-plugin/plugin.json is loaded as a plugin on the next session with
 # zero CLI commands.  hooks/hooks.json and MCP are auto-discovered.
 CLAUDE_SKILLS_DIR="$HOME/.claude/skills"
-CLAUDE_TARGET="$CLAUDE_SKILLS_DIR/cortistrate"
+CLAUDE_TARGET="$CLAUDE_SKILLS_DIR/corti"
 
 if command -v claude &>/dev/null; then
     info "Claude Code detected"
@@ -147,7 +147,7 @@ if command -v claude &>/dev/null; then
         echo "  Remove it manually if you want a fresh install: rm -rf $CLAUDE_TARGET"
     else
         mkdir -p "$CLAUDE_SKILLS_DIR"
-        docker cp "$CID:/opt/cortistrate/integrations/claude-code" "$CLAUDE_SKILLS_DIR/"
+        docker cp "$CID:/opt/corti/integrations/claude-code" "$CLAUDE_SKILLS_DIR/"
         mv "$CLAUDE_SKILLS_DIR/claude-code" "$CLAUDE_TARGET"
         info "Claude Code plugin installed: $CLAUDE_TARGET"
         info "Hooks + MCP auto-discovered on next session — no manual steps needed"
@@ -162,7 +162,7 @@ docker rm "$CID" >/dev/null
 # ── Step 5: Default endpoints ─────────────────────────────────────────────
 section "Step 5: Default Endpoints"
 
-echo -e "  ${CYAN}Cortistrate ships with free default endpoints — no API key required:${NC}"
+echo -e "  ${CYAN}Corti ships with free default endpoints — no API key required:${NC}"
 echo ""
 echo -e "  ${BOLD}LLM:${NC}       ${GREEN}Pollinations.ai${NC} (openai-fast, GPT-OSS 20B)"
 echo "           https://text.pollinations.ai/openai"
@@ -176,18 +176,18 @@ echo ""
 echo -e "  ${YELLOW}╔══════════════════════════════════════════════════════════╗${NC}"
 echo -e "  ${YELLOW}║${NC}  ${BOLD}For production / higher quality, replace the defaults.${NC}  ${YELLOW}║${NC}"
 echo -e "  ${YELLOW}║${NC}                                                          ${YELLOW}║${NC}"
-echo -e "  ${YELLOW}║${NC}  Edit: ${BOLD}${CYAN}\$EDITOR $DATA_DIR/cortistrate.toml${NC}               ${YELLOW}║${NC}"
+echo -e "  ${YELLOW}║${NC}  Edit: ${BOLD}${CYAN}\$EDITOR $DATA_DIR/corti.toml${NC}               ${YELLOW}║${NC}"
 echo -e "  ${YELLOW}║${NC}  Sections: [llm]  [embedding]  [rerank]                    ${YELLOW}║${NC}"
 echo -e "  ${YELLOW}║${NC}                                                          ${YELLOW}║${NC}"
 echo -e "  ${YELLOW}║${NC}  ${RED}⚠ After editing, restart the container:${NC}                ${YELLOW}║${NC}"
-echo -e "  ${YELLOW}║${NC}    ${BOLD}docker restart cortistrate${NC}                             ${YELLOW}║${NC}"
+echo -e "  ${YELLOW}║${NC}    ${BOLD}docker restart corti${NC}                             ${YELLOW}║${NC}"
 echo -e "  ${YELLOW}╚══════════════════════════════════════════════════════════╝${NC}"
 echo ""
 
 # ── Step 6: Auto-start ────────────────────────────────────────────────────
 section "Step 6: Start Server"
 
-CONTAINER_NAME="cortistrate"
+CONTAINER_NAME="corti"
 
 # Check if a container with this name already exists (running or stopped).
 if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -qx "$CONTAINER_NAME"; then
@@ -200,10 +200,10 @@ if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -qx "$CONTAINER_NAME"; 
         echo "  docker start $CONTAINER_NAME     # to resume"
     fi
 else
-    info "Starting Cortistrate server..."
+    info "Starting Corti server..."
     docker run -d --name "$CONTAINER_NAME" \
         -p 5473:5473 \
-        -v "$DATA_DIR:/home/app/.cortistrate" \
+        -v "$DATA_DIR:/home/app/.corti" \
         "$IMAGE" >/dev/null
 
     # Quick health check
@@ -219,7 +219,7 @@ fi
 echo ""
 echo -e "  ${BOLD}Check:${NC}     curl http://localhost:5473/health"
 echo -e "  ${BOLD}Logs:${NC}      docker logs -f $CONTAINER_NAME"
-echo -e "  ${BOLD}Restart:${NC}   docker restart $CONTAINER_NAME   ${CYAN}# after editing cortistrate.toml${NC}"
-echo -e "  ${BOLD}Update:${NC}    docker pull $IMAGE && docker rm -f $CONTAINER_NAME && docker run -d --name $CONTAINER_NAME -p 5473:5473 -v $DATA_DIR:/home/app/.cortistrate $IMAGE"
+echo -e "  ${BOLD}Restart:${NC}   docker restart $CONTAINER_NAME   ${CYAN}# after editing corti.toml${NC}"
+echo -e "  ${BOLD}Update:${NC}    docker pull $IMAGE && docker rm -f $CONTAINER_NAME && docker run -d --name $CONTAINER_NAME -p 5473:5473 -v $DATA_DIR:/home/app/.corti $IMAGE"
 echo -e "  ${BOLD}Docs:${NC}     https://cortistrate.dev/docs"
 echo ""

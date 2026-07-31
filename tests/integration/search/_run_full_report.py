@@ -4,7 +4,7 @@ Run with::
 
     PYTHONPATH=src python tests/integration/search/_run_full_report.py
 
-Writes a fresh ``~/.cortistrate-report-corpus/`` memory_root, runs a small
+Writes a fresh ``~/.corti-report-corpus/`` memory_root, runs a small
 synthetic 16-message conversation between two new users (``u_diana`` +
 ``u_ethan``) through ``/add`` + ``/flush``, waits for cascade drain, then
 runs a curated set of search probes and dumps a structured markdown
@@ -24,7 +24,7 @@ from pathlib import Path
 import httpx
 from dotenv import load_dotenv
 
-# Load .env BEFORE any cortistrate import so settings are correct.
+# Load .env BEFORE any corti import so settings are correct.
 _PROJECT_ROOT = Path(__file__).resolve().parents[3]
 load_dotenv(_PROJECT_ROOT / ".env", override=False)
 
@@ -32,7 +32,7 @@ load_dotenv(_PROJECT_ROOT / ".env", override=False)
 # ── Corpus location ────────────────────────────────────────────────────
 
 
-CORPUS_ROOT = Path.home() / ".cortistrate-report-corpus"
+CORPUS_ROOT = Path.home() / ".corti-report-corpus"
 REPORT_PATH = _PROJECT_ROOT / "tests/integration/search/SEARCH_REPORT.md"
 SESSION_ID = "report_session_diana_ethan"
 
@@ -352,7 +352,7 @@ async def wait_cascade(
        polls (separated by 1s sleep). This guards against a transient
        empty queue while a strategy is still mid-write.
     """
-    from cortistrate.infra.persistence.sqlite import md_change_state_repo
+    from corti.infra.persistence.sqlite import md_change_state_repo
 
     consecutive_zero = 0
     async with asyncio.timeout(deadline_seconds):
@@ -596,16 +596,16 @@ async def main() -> None:
     if CORPUS_ROOT.exists():
         shutil.rmtree(CORPUS_ROOT)
     CORPUS_ROOT.mkdir(parents=True)
-    os.environ["CORTISTRATE_ROOT"] = str(CORPUS_ROOT)
+    os.environ["CORTI_ROOT"] = str(CORPUS_ROOT)
 
     # Reset cached singletons so they pick up the new env.
-    from cortistrate.config import load_settings
+    from corti.config import load_settings
 
     load_settings.cache_clear()
 
     print(f"[1/6] fresh corpus at {CORPUS_ROOT}")
 
-    from cortistrate.entrypoints.api.app import create_app
+    from corti.entrypoints.api.app import create_app
 
     app = create_app()
     transport = httpx.ASGITransport(app=app)

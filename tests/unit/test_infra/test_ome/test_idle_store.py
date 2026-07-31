@@ -5,9 +5,9 @@ from pathlib import Path
 
 import pytest
 
-from cortistrate.component.utils.datetime import get_now_with_timezone
-from cortistrate.infra.ome._stores.idle import IdleStore
-from cortistrate.infra.ome._stores.storage import OMEStorage
+from corti.component.utils.datetime import get_now_with_timezone
+from corti.infra.ome._stores.idle import IdleStore
+from corti.infra.ome._stores.storage import OMEStorage
 
 
 @pytest.fixture

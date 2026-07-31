@@ -22,7 +22,7 @@ the kind actually needs:
 | Structured state, ACID transactions, joins, predicates | | ✅ | |
 | Vector / BM25 / hybrid retrieval | | | ✅ |
 
-Common combinations seen in Cortistrate:
+Common combinations seen in Corti:
 
 | Combo | Example | Rationale |
 |---|---|---|
@@ -39,7 +39,7 @@ human-readable form (pure system state).
 
 ## 2. Pick the markdown storage strategy (if md is in your combo)
 
-Three strategies — declared in the Cortistrate Markdown First spec:
+Three strategies — declared in the Corti Markdown First spec:
 
 | Strategy | Filename | Mutation | Examples |
 |---|---|---|---|
@@ -67,7 +67,7 @@ from __future__ import annotations
 import datetime as _dt
 from typing import ClassVar, Literal
 
-from cortistrate.core.persistence.markdown import UserScopedFrontmatter
+from corti.core.persistence.markdown import UserScopedFrontmatter
 
 
 class UserEpisodeDailyFrontmatter(UserScopedFrontmatter):
@@ -103,7 +103,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from cortistrate.core.persistence import MarkdownReader
+from corti.core.persistence import MarkdownReader
 
 from ..mds import UserEpisodeDailyFrontmatter
 from .base import BaseDailyWriter
@@ -129,7 +129,7 @@ from .episode import UserEpisodeAppender as UserEpisodeAppender
 ### Done — usage
 
 ```python
-from cortistrate.infra.persistence.markdown.writers import UserEpisodeAppender
+from corti.infra.persistence.markdown.writers import UserEpisodeAppender
 
 appender = UserEpisodeAppender(memory_root)
 eid = appender.append("u_jason", "I went to the doctor today.")
@@ -146,7 +146,7 @@ Skip this section if the kind doesn't need structured state beyond markdown.
 ### 4.1 Schema — `infra/persistence/sqlite/tables/<name>.py`
 
 ```python
-from cortistrate.core.persistence.sqlite import BaseTable, Field
+from corti.core.persistence.sqlite import BaseTable, Field
 
 
 class EpisodeState(BaseTable, table=True):
@@ -171,7 +171,7 @@ from .episode import EpisodeState as EpisodeState
 ```python
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
-from cortistrate.core.persistence.sqlite import RepoBase
+from corti.core.persistence.sqlite import RepoBase
 
 from ..sqlite_manager import get_session_factory
 from ..tables import EpisodeState
@@ -202,7 +202,7 @@ Skip this section if the kind doesn't need vector / BM25 / hybrid retrieval.
 ### 5.1 Schema — `infra/persistence/lancedb/tables/<name>.py`
 
 ```python
-from cortistrate.core.persistence.lancedb import BaseLanceTable, Vector
+from corti.core.persistence.lancedb import BaseLanceTable, Vector
 
 
 class EpisodeIndex(BaseLanceTable):
@@ -225,7 +225,7 @@ from .episode import EpisodeIndex as EpisodeIndex
 ```python
 from lancedb import AsyncTable
 
-from cortistrate.core.persistence.lancedb import LanceRepoBase
+from corti.core.persistence.lancedb import LanceRepoBase
 
 from ..lancedb_manager import get_table
 from ..tables import EpisodeIndex
@@ -298,7 +298,7 @@ Tests by layer:
 | Skipped one of the four files (schema / writer / table / repo) | One side silently absent | Re-export both/all from each `__init__.py` |
 | `Vector(N)` mismatched with embedding dim | LanceDB raises on insert | Make `N` exactly match the model output |
 | Imported `MemoryLayout` from a writer (infra) | `import-linter` fails (`infra → memory` reverse dep) | Use `MemoryRoot` (in core) and let the schema's ClassVars drive paths |
-| Hand-rolling `datetime.now()` instead of `today_with_timezone()` | Day-boundary drift across timezones | Always go through `cortistrate.component.utils.datetime` |
+| Hand-rolling `datetime.now()` instead of `today_with_timezone()` | Day-boundary drift across timezones | Always go through `corti.component.utils.datetime` |
 
 ## Background
 

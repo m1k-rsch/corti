@@ -12,7 +12,10 @@ from everalgo.llm.format import format_natural_language_time
 from everalgo.llm.types import ChatMessage as LLMChatMessage
 from everalgo.prompts import render_prompt
 from everalgo.types import Episode
-from everalgo.user_memory.prompts.en.reflect import REFLECT_EPISODE_PROMPT, REFLECT_EPISODE_UPDATE_PROMPT
+from everalgo.user_memory.prompts.en.reflect import (
+    REFLECT_EPISODE_PROMPT,
+    REFLECT_EPISODE_UPDATE_PROMPT,
+)
 
 if TYPE_CHECKING:
     from collections.abc import Sequence

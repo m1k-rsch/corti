@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Check md ↔ Postgres consistency for an cortistrate corpus.
+"""Check md ↔ Postgres consistency for an corti corpus.
 
 Three checks per kind:
   1. id set equality              — md entry ids == Postgres row entry_ids
@@ -9,7 +9,7 @@ Three checks per kind:
                                     from 1 with no gap and no dupe
 
 Two modes:
-  --mode lifespan (default)   Full strict check through the cortistrate app
+  --mode lifespan (default)   Full strict check through the corti app
                               lifespan stack (sqlite + postgres + cascade +
                               ome). Safe ONLY on an idle corpus (no live
                               server writing). Covers every kind in
@@ -21,11 +21,11 @@ Two modes:
                               atomic_fact / foresight).
 
 Examples:
-  scripts/check_consistency.py ~/.cortistrate-locomo-all-kv-fast
-  scripts/check_consistency.py ~/.cortistrate-locomo-all-kv-fast --mode readonly
-  scripts/check_consistency.py ~/.cortistrate-locomo-all-kv-fast --owners joanna,nate
+  scripts/check_consistency.py ~/.corti-locomo-all-kv-fast
+  scripts/check_consistency.py ~/.corti-locomo-all-kv-fast --mode readonly
+  scripts/check_consistency.py ~/.corti-locomo-all-kv-fast --owners joanna,nate
 """
-# This script must mutate sys.path before importing cortistrate/tests, and
+# This script must mutate sys.path before importing corti/tests, and
 # uses synchronous pathlib because it's a one-shot CLI, not server code.
 # ruff: noqa: E402, ASYNC240
 
@@ -82,7 +82,7 @@ class MonotonicityReport:
 
 async def _scan_monotonicity(corpus: Path) -> list[MonotonicityReport]:
     """Walk all daily-log md files; report id-counter monotonicity per file."""
-    from cortistrate.core.persistence import MarkdownReader
+    from corti.core.persistence import MarkdownReader
 
     daily_dirs = ("/episodes/", "/.atomic_facts/", "/.foresights/")
     reports: list[MonotonicityReport] = []
@@ -159,12 +159,12 @@ def _print_monotonicity(reports: list[MonotonicityReport]) -> int:
 
 async def run_lifespan_mode(corpus: Path) -> int:
     """Full strict check via app lifespan; covers every kind in KIND_REGISTRY."""
-    os.environ["CORTISTRATE_ROOT"] = str(corpus)
-    from cortistrate.config import load_settings
+    os.environ["CORTI_ROOT"] = str(corpus)
+    from corti.config import load_settings
 
     load_settings.cache_clear()
 
-    from cortistrate.entrypoints.api.app import create_app
+    from corti.entrypoints.api.app import create_app
     from tests._consistency_assertions import assert_md_pg_strict_consistent
 
     app = create_app()
@@ -214,10 +214,10 @@ async def run_readonly_mode(corpus: Path, owners_filter: list[str] | None) -> in
     """
     import postgres
 
-    from cortistrate.core.persistence import MarkdownReader
-    from cortistrate.memory.cascade.handlers.atomic_fact import AtomicFactHandler
-    from cortistrate.memory.cascade.handlers.episode import EpisodeHandler
-    from cortistrate.memory.cascade.handlers.foresight import ForesightHandler
+    from corti.core.persistence import MarkdownReader
+    from corti.memory.cascade.handlers.atomic_fact import AtomicFactHandler
+    from corti.memory.cascade.handlers.episode import EpisodeHandler
+    from corti.memory.cascade.handlers.foresight import ForesightHandler
     from tests._consistency_assertions import _daily_log_sha_for_entry
 
     db = postgres.connect(str(corpus / ".index" / "postgres"))
@@ -310,7 +310,7 @@ def _parse_args() -> argparse.Namespace:
     p = argparse.ArgumentParser(
         description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    p.add_argument("corpus", help="memory root (e.g. ~/.cortistrate-locomo-all-kv-fast)")
+    p.add_argument("corpus", help="memory root (e.g. ~/.corti-locomo-all-kv-fast)")
     p.add_argument(
         "--mode",
         choices=("lifespan", "readonly"),

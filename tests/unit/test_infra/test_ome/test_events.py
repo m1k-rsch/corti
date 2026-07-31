@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from cortistrate.infra.ome.events import BaseEvent, CronTick, IdleTick, ManualTick
+from corti.infra.ome.events import BaseEvent, CronTick, IdleTick, ManualTick
 
 
 class _DemoEvent(BaseEvent):

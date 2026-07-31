@@ -18,19 +18,19 @@ from pathlib import Path
 
 import numpy as np
 import pytest
-from everalgo.clustering import Cluster as AlgoCluster
 from sqlmodel import SQLModel
 
-from cortistrate.config import SqliteSettings
-from cortistrate.core.persistence import (
+from corti.config import SqliteSettings
+from corti.core.persistence import (
     MemoryRoot,
     create_session_factory,
     create_system_engine,
 )
-from cortistrate.infra.persistence.sqlite.repos.cluster import (
+from corti.infra.persistence.sqlite.repos.cluster import (
     _ClusterRepo,
     mint_cluster_id,
 )
+from everalgo.clustering import Cluster as AlgoCluster
 
 
 @pytest.fixture

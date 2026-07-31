@@ -22,9 +22,9 @@ from pathlib import Path
 
 import pytest
 
-from cortistrate.component.tokenizer import Tokenizer
-from cortistrate.memory.search.recall import AtomicFactRecaller
-from cortistrate.memory.search.recall.base import RecallerDeps
+from corti.component.tokenizer import Tokenizer
+from corti.memory.search.recall import AtomicFactRecaller
+from corti.memory.search.recall.base import RecallerDeps
 
 
 class _WhitespaceTokenizer(Tokenizer):
@@ -66,7 +66,7 @@ def _fact_row(
 @pytest.fixture(autouse=True)
 async def _reset(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
     """Isolate Postgres to a tmp memory root per test."""
-    monkeypatch.setenv("CORTISTRATE_ROOT", str(tmp_path))
+    monkeypatch.setenv("CORTI_ROOT", str(tmp_path))
     yield
 
 

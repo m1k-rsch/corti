@@ -297,7 +297,7 @@ wheels = [
 ]
 
 [[package]]
-name = "cortistrate"
+name = "corti"
 version = "0.1.0"
 source = { editable = "." }
 dependencies = [

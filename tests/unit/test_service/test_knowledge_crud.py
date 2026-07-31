@@ -15,13 +15,13 @@ from unittest.mock import AsyncMock, patch
 
 import pytest
 
-from cortistrate.component.utils.datetime import get_utc_now
-from cortistrate.infra.persistence.sqlite.repos.knowledge import DocumentListPage
-from cortistrate.infra.persistence.sqlite.tables.knowledge import (
+from corti.component.utils.datetime import get_utc_now
+from corti.infra.persistence.sqlite.repos.knowledge import DocumentListPage
+from corti.infra.persistence.sqlite.tables.knowledge import (
     KnowledgeDocumentRow,
     KnowledgeTopicRow,
 )
-from cortistrate.service.knowledge import (
+from corti.service.knowledge import (
     DeleteResult,
     DocumentDetail,
     DocumentListResult,
@@ -36,7 +36,7 @@ from cortistrate.service.knowledge import (
     patch_document,
 )
 
-_MOD = "cortistrate.service.knowledge"
+_MOD = "corti.service.knowledge"
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 

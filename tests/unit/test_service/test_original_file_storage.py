@@ -15,9 +15,8 @@ from pathlib import Path
 from unittest.mock import AsyncMock, patch
 
 import pytest
-from everalgo.types import CategorySpec, KnowledgeMemory, ParsedContent
 
-from cortistrate.service.knowledge import (
+from corti.service.knowledge import (
     CategoryOverview,
     DocumentDetail,
     DocumentOverviewItem,
@@ -26,8 +25,9 @@ from cortistrate.service.knowledge import (
     list_categories,
     replace_document,
 )
+from everalgo.types import CategorySpec, KnowledgeMemory, ParsedContent
 
-_MOD = "cortistrate.service.knowledge"
+_MOD = "corti.service.knowledge"
 _ORIGINAL_DIR = "_original"
 
 
@@ -155,14 +155,14 @@ async def test_get_document_returns_original_file_path(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """get_document derives original_file_path from md_path + source_name."""
-    from cortistrate.component.utils.datetime import get_utc_now
-    from cortistrate.config import load_settings
-    from cortistrate.core.persistence import MemoryRoot
-    from cortistrate.infra.persistence.sqlite.tables.knowledge import (
+    from corti.component.utils.datetime import get_utc_now
+    from corti.config import load_settings
+    from corti.core.persistence import MemoryRoot
+    from corti.infra.persistence.sqlite.tables.knowledge import (
         KnowledgeDocumentRow,
     )
 
-    monkeypatch.setenv("CORTISTRATE_ROOT", str(tmp_path))
+    monkeypatch.setenv("CORTI_ROOT", str(tmp_path))
     load_settings.cache_clear()
     MemoryRoot._instance = None
 
@@ -215,14 +215,14 @@ async def test_get_document_returns_none_for_legacy_doc(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     """Legacy documents without _original/ get original_file_path=None."""
-    from cortistrate.component.utils.datetime import get_utc_now
-    from cortistrate.config import load_settings
-    from cortistrate.core.persistence import MemoryRoot
-    from cortistrate.infra.persistence.sqlite.tables.knowledge import (
+    from corti.component.utils.datetime import get_utc_now
+    from corti.config import load_settings
+    from corti.core.persistence import MemoryRoot
+    from corti.infra.persistence.sqlite.tables.knowledge import (
         KnowledgeDocumentRow,
     )
 
-    monkeypatch.setenv("CORTISTRATE_ROOT", str(tmp_path))
+    monkeypatch.setenv("CORTI_ROOT", str(tmp_path))
     load_settings.cache_clear()
     MemoryRoot._instance = None
 
@@ -267,8 +267,8 @@ async def test_replace_document_writes_new_original(
     knowledge_dir: Path,
 ) -> None:
     """replace_document writes new original file after atomic replacement."""
-    from cortistrate.component.utils.datetime import get_utc_now
-    from cortistrate.infra.persistence.sqlite.tables.knowledge import (
+    from corti.component.utils.datetime import get_utc_now
+    from corti.infra.persistence.sqlite.tables.knowledge import (
         KnowledgeDocumentRow,
     )
 
@@ -409,7 +409,7 @@ async def test_move_preserves_original(knowledge_dir: Path) -> None:
 
 def test_document_overview_item_slim_fields() -> None:
     """DocumentOverviewItem has exactly 5 fields, no summary/source/updated_at."""
-    from cortistrate.component.utils.datetime import get_utc_now
+    from corti.component.utils.datetime import get_utc_now
 
     item = DocumentOverviewItem(
         doc_id="d_abc",

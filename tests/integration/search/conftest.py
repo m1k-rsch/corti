@@ -17,7 +17,7 @@ Layout::
 
     search_client  (function-scoped)
         └── per-test ``httpx.AsyncClient`` wired to a freshly built
-            FastAPI app, ``CORTISTRATE_ROOT`` pointed at the
+            FastAPI app, ``CORTI_ROOT`` pointed at the
             session corpus. Singletons are reset so each test starts
             with cold caches and the lifespan is the only thing
             constructing them.
@@ -44,11 +44,11 @@ import pytest
 import pytest_asyncio
 from sqlalchemy import text
 
-# Set ``CORTISTRATE_REUSE_CORPUS=<path>`` to skip ingest and point the
+# Set ``CORTI_REUSE_CORPUS=<path>`` to skip ingest and point the
 # session fixture at an existing memory_root (md + Postgres already
 # populated). Search is a read-only path, so no copy is needed — the
-# fixture just sets ``CORTISTRATE_ROOT`` to that directory.
-_REUSE_ENV = "CORTISTRATE_REUSE_CORPUS"
+# fixture just sets ``CORTI_ROOT`` to that directory.
+_REUSE_ENV = "CORTI_REUSE_CORPUS"
 
 # Memorize-service module-level lazy singletons; reset between phases so
 # stale clients / engines don't leak from ingest into per-test lifespans.
@@ -85,18 +85,18 @@ def _session_monkeypatch() -> Generator[pytest.MonkeyPatch, None, None]:
 def _reset_memorize_singletons(mp: pytest.MonkeyPatch) -> None:
     """Null out memorize/strategy/LLM-client lazy singletons.
 
-    Called once before ingest (so the freshly-set ``CORTISTRATE_ROOT``
+    Called once before ingest (so the freshly-set ``CORTI_ROOT``
     actually wins) and once per test (so the session corpus's lifespan
     sees clean caches).
     """
-    from cortistrate.config import load_settings
+    from corti.config import load_settings
 
     load_settings.cache_clear()
 
-    svc = importlib.import_module("cortistrate.service.memorize")
-    client_mod = importlib.import_module("cortistrate.component.llm.client")
-    af_mod = importlib.import_module("cortistrate.memory.strategies.extract_atomic_facts")
-    fs_mod = importlib.import_module("cortistrate.memory.strategies.extract_foresight")
+    svc = importlib.import_module("corti.service.memorize")
+    client_mod = importlib.import_module("corti.component.llm.client")
+    af_mod = importlib.import_module("corti.memory.strategies.extract_atomic_facts")
+    fs_mod = importlib.import_module("corti.memory.strategies.extract_foresight")
 
     for attr in _MEMORIZE_SINGLETONS:
         mp.setattr(svc, attr, None, raising=False)
@@ -138,7 +138,7 @@ def _ingested_memory_root(
     else:
         memory_root = tmp_path_factory.mktemp("search_corpus")
 
-    _session_monkeypatch.setenv("CORTISTRATE_ROOT", str(memory_root))
+    _session_monkeypatch.setenv("CORTI_ROOT", str(memory_root))
     _reset_memorize_singletons(_session_monkeypatch)
     (memory_root / "ome.toml").write_text("# test\n")
 
@@ -155,7 +155,7 @@ def _ingested_memory_root(
 
 async def _ingest(memory_root: Path, long_conversation: dict) -> None:
     """Bring up the app once, push the LoCoMo fixture through /add+/flush."""
-    from cortistrate.entrypoints.api.app import create_app
+    from corti.entrypoints.api.app import create_app
 
     app = create_app()
     transport = httpx.ASGITransport(app=app)
@@ -164,7 +164,7 @@ async def _ingest(memory_root: Path, long_conversation: dict) -> None:
         app.router.lifespan_context(app),
         httpx.AsyncClient(transport=transport, base_url="http://test") as client,
     ):
-        session_id = long_conversation["cortistrate_session_id"]
+        session_id = long_conversation["corti_session_id"]
         for batch in long_conversation["batches"]:
             messages = [
                 {
@@ -194,7 +194,7 @@ async def _ingest(memory_root: Path, long_conversation: dict) -> None:
 
 async def _poll_cascade_drained(*, deadline_seconds: float) -> None:
     """Block until ``md_change_state.pending == 0`` or deadline."""
-    from cortistrate.infra.persistence.sqlite import md_change_state_repo
+    from corti.infra.persistence.sqlite import md_change_state_repo
 
     async with asyncio.timeout(deadline_seconds):
         while True:
@@ -218,12 +218,12 @@ async def search_client(
     manager builds a fresh embedding / rerank / LLM client per test —
     we don't want cross-test client state to mask a regression.
     """
-    monkeypatch.setenv("CORTISTRATE_ROOT", str(_ingested_memory_root))
+    monkeypatch.setenv("CORTI_ROOT", str(_ingested_memory_root))
     _reset_memorize_singletons(monkeypatch)
 
     # The search service has its own module-level singletons; reset
     # those too so re-attach is clean.
-    search_svc = importlib.import_module("cortistrate.service.search")
+    search_svc = importlib.import_module("corti.service.search")
     for attr in (
         "_manager",
         "_embedding",
@@ -241,7 +241,7 @@ async def search_client(
                 raising=False,
             )
 
-    from cortistrate.entrypoints.api.app import create_app
+    from corti.entrypoints.api.app import create_app
 
     app = create_app()
     transport = httpx.ASGITransport(app=app)
@@ -260,7 +260,7 @@ def memcell_count() -> Callable[[], Awaitable[int]]:
     """Return an async callable: ``await memcell_count() -> int``."""
 
     async def _count() -> int:
-        from cortistrate.infra.persistence.sqlite import get_engine
+        from corti.infra.persistence.sqlite import get_engine
 
         engine = get_engine()
         async with engine.connect() as conn:

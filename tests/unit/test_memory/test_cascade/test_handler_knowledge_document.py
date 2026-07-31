@@ -22,11 +22,11 @@ from pathlib import Path
 
 import pytest
 
-from cortistrate.component.embedding import EmbeddingProvider
-from cortistrate.component.tokenizer import Tokenizer
-from cortistrate.core.persistence import MemoryRoot
-from cortistrate.infra.persistence.sqlite import DocumentUpsertPayload
-from cortistrate.memory.cascade.handlers import (
+from corti.component.embedding import EmbeddingProvider
+from corti.component.tokenizer import Tokenizer
+from corti.core.persistence import MemoryRoot
+from corti.infra.persistence.sqlite import DocumentUpsertPayload
+from corti.memory.cascade.handlers import (
     HandlerDeps,
     KnowledgeDocumentHandler,
 )
@@ -87,7 +87,7 @@ def memory_root(tmp_path: Path) -> MemoryRoot:
 
 @pytest.fixture
 def fake_sqlite(monkeypatch: pytest.MonkeyPatch) -> _FakeSqliteRepo:
-    from cortistrate.memory.cascade.handlers import knowledge_document as mod
+    from corti.memory.cascade.handlers import knowledge_document as mod
 
     repo = _FakeSqliteRepo()
     monkeypatch.setattr(mod, "knowledge_document_repo", repo)

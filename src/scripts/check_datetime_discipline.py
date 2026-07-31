@@ -1,7 +1,7 @@
 """CI gate: enforce the two-zone discipline at the source-code level.
 
 Scans `src/` for code patterns that bypass
-:mod:`cortistrate.component.utils.datetime` and would silently introduce
+:mod:`corti.component.utils.datetime` and would silently introduce
 naive or local-tz datetimes. Exits non-zero on any hit.
 
 Forbidden patterns (with a small allowlist):
@@ -18,8 +18,8 @@ Forbidden patterns (with a small allowlist):
 
 Allowlist (legitimate uses):
 
-* ``src/cortistrate/component/utils/datetime.py`` — the helper module itself.
-* ``src/cortistrate/core/persistence/sqlite/base.py`` — the SQLAlchemy ``load``
+* ``src/corti/component/utils/datetime.py`` — the helper module itself.
+* ``src/corti/core/persistence/sqlite/base.py`` — the SQLAlchemy ``load``
   event listener that re-attaches UTC on hydrate.
 
 Run::
@@ -39,8 +39,8 @@ _ROOT = Path(__file__).resolve().parent.parent
 _SRC = _ROOT / "src"
 
 _ALLOWLIST: set[Path] = {
-    _ROOT / "src/cortistrate/component/utils/datetime.py",
-    _ROOT / "src/cortistrate/core/persistence/sqlite/base.py",
+    _ROOT / "src/corti/component/utils/datetime.py",
+    _ROOT / "src/corti/core/persistence/sqlite/base.py",
 }
 
 # (regex, message) pairs. Each regex must match on a single line.

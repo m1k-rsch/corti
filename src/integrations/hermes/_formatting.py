@@ -1,4 +1,4 @@
-"""Hermes-agnostic formatting helpers for the Cortistrate plugin.
+"""Hermes-agnostic formatting helpers for the Corti plugin.
 
 Turns ``SearchData`` and other API shapes into the strings the Hermes agent
 sees (prefetch block, system prompt block, tool-result JSON, mirror messages).
@@ -77,7 +77,7 @@ def format_prefetch(
     if not episodes and not profiles:
         return ""
 
-    header = "## Cortistrate Memory"
+    header = "## Corti Memory"
     sections: list[str] = [header]
 
     if profiles:
@@ -129,7 +129,7 @@ def format_system_prompt(
     episodes: list[GetEpisodeItem],
 ) -> str:
     """Build the system prompt memory block: profile + recent episode subjects."""
-    sections = ["## Cortistrate Memory"]
+    sections = ["## Corti Memory"]
     if profile is not None:
         prof = _format_profile_block(profile)
         if prof:
@@ -153,7 +153,7 @@ def format_system_prompt(
 def format_memory_write_message(
     content: str, user_id: str, timestamp_ms: int
 ) -> MessageItem:
-    """Build a user-role ``MessageItem`` for mirroring into Cortistrate."""
+    """Build a user-role ``MessageItem`` for mirroring into Corti."""
     item: MessageItem = {
         "sender_id": user_id,
         "role": "user",

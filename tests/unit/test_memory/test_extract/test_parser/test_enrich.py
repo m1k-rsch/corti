@@ -9,21 +9,20 @@ import pytest
 
 pytest.importorskip("everalgo.parser")
 
+from corti.component import parser as _parser_mod
+from corti.core.errors import UnsupportedModalityError
+from corti.memory.extract.parser import enrich_content_items
 from everalgo.llm import LLMError
 from everalgo.types import ParsedContent
 
-from cortistrate.component import parser as _parser_mod
-from cortistrate.core.errors import UnsupportedModalityError
-from cortistrate.memory.extract.parser import enrich_content_items
-
-_APARSE_FILE_TARGET = "cortistrate.component.parser.aparse_file"
+_APARSE_FILE_TARGET = "corti.component.parser.aparse_file"
 
 
 @pytest.fixture(autouse=True)
 def _ensure_parser_module_imported() -> None:
-    """Force ``cortistrate.component.parser`` into sys.modules before monkeypatch.
+    """Force ``corti.component.parser`` into sys.modules before monkeypatch.
 
-    ``enrich_content_items`` does ``from cortistrate.component.parser import
+    ``enrich_content_items`` does ``from corti.component.parser import
     aparse_file`` inside its body. If the module hasn't been imported yet
     when monkeypatch runs, the ``from`` import creates a fresh binding
     to the real function, bypassing the patch.

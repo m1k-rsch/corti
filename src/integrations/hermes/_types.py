@@ -1,8 +1,8 @@
-"""Type definitions for the Cortistrate Hermes memory-provider plugin.
+"""Type definitions for the Corti Hermes memory-provider plugin.
 
-These shapes mirror the Cortistrate HTTP API v1 contract documented in
-``Cortistrate/docs/api.md``. They are intentionally plain ``TypedDict`` / dataclass
-shapes so they can be consumed without importing anything Cortistrate-specific at
+These shapes mirror the Corti HTTP API v1 contract documented in
+``Corti/docs/api.md``. They are intentionally plain ``TypedDict`` / dataclass
+shapes so they can be consumed without importing anything Corti-specific at
 runtime (the plugin runs in the Hermes process).
 """
 
@@ -20,7 +20,7 @@ AddStatus = Literal["accumulated", "extracted"]
 
 
 class ContentItem(TypedDict):
-    """A single content block within an Cortistrate ``MessageItem.content`` list."""
+    """A single content block within an Corti ``MessageItem.content`` list."""
 
     type: Required[ContentType]
     text: NotRequired[str | None]
@@ -50,7 +50,7 @@ class MessageItem(TypedDict):
     """One turn in a ``POST /api/v1/memory/add`` request.
 
     ``content`` may be a plain string (text shorthand) or a list of content
-    blocks. All other keys match the Cortistrate v1 contract.
+    blocks. All other keys match the Corti v1 contract.
     """
 
     sender_id: Required[str]
@@ -101,7 +101,7 @@ class FlushResponse(TypedDict):
 
 SearchMethod = Literal["keyword", "vector", "hybrid", "agentic"]
 
-# The Cortistrate filter DSL is a recursive boolean tree of predicates. A precise
+# The Corti filter DSL is a recursive boolean tree of predicates. A precise
 # TypedDict is too restrictive; callers build plain dicts that match the DSL.
 FilterNode = dict[str, object]
 
@@ -109,7 +109,7 @@ FilterNode = dict[str, object]
 class SearchRequest(TypedDict):
     """``POST /api/v1/memory/search`` request body.
 
-    Cortistrate requires exactly one of ``user_id`` or ``agent_id``; type hints
+    Corti requires exactly one of ``user_id`` or ``agent_id``; type hints
     cannot express XOR, so callers must enforce it.
     """
 
@@ -198,7 +198,7 @@ SortOrder = Literal["asc", "desc"]
 class GetRequest(TypedDict):
     """``POST /api/v1/memory/get`` request body.
 
-    Cortistrate requires exactly one of ``user_id`` or ``agent_id``; type hints
+    Corti requires exactly one of ``user_id`` or ``agent_id``; type hints
     cannot express XOR, so callers must enforce it.
     """
 
@@ -269,7 +269,7 @@ class GetData(TypedDict):
 
 
 class ErrorDetail(TypedDict):
-    """Nested ``error`` object in an Cortistrate error response."""
+    """Nested ``error`` object in an Corti error response."""
 
     code: Required[str]
     message: Required[str]
@@ -278,14 +278,14 @@ class ErrorDetail(TypedDict):
 
 
 class ErrorEnvelope(TypedDict):
-    """Cortistrate non-2xx response envelope."""
+    """Corti non-2xx response envelope."""
 
     request_id: Required[str]
     error: Required[ErrorDetail]
 
 
 class SuccessEnvelope(TypedDict):
-    """Cortistrate 2xx response envelope wrapping endpoint-specific data."""
+    """Corti 2xx response envelope wrapping endpoint-specific data."""
 
     request_id: Required[str]
     data: Required[dict[str, object]]
@@ -294,8 +294,8 @@ class SuccessEnvelope(TypedDict):
 # ── Internal client exceptions ───────────────────────────────────────────────
 
 
-class CortistrateClientError(Exception):
-    """Raised when the Cortistrate server returns a non-2xx or the request fails."""
+class CortiClientError(Exception):
+    """Raised when the Corti server returns a non-2xx or the request fails."""
 
     def __init__(self, message: str, *, code: str = "") -> None:
         super().__init__(message)
@@ -307,7 +307,7 @@ class CortistrateClientError(Exception):
 
 @dataclass(frozen=True)
 class ScopeIds:
-    """Validated Cortistrate ``app_id`` / ``project_id`` pair."""
+    """Validated Corti ``app_id`` / ``project_id`` pair."""
 
     app_id: str
     project_id: str

@@ -215,7 +215,7 @@ class AgentProfileExtractor:
 # ── Gate enforcement ────────────────────────────────────────────────────────────────────────────────
 
 
-def _apply_gates(  # noqa: C901  — one branch per gate, algorithm-intrinsic
+def _apply_gates(
     raw_candidates: Sequence[Any],
     *,
     user_messages: str,
@@ -509,7 +509,7 @@ async def _call_llm_for_profile_update(llm: LLMClient, rendered: str) -> dict[st
     if "candidates" not in data:
         raise ValueError(f"Profile update response missing 'candidates' key: {list(data.keys())!r}")
     if not isinstance(data["candidates"], list):
-        raise ValueError(f"candidates must be a list, got {type(data['candidates']).__name__}")  # noqa: TRY004
+        raise ValueError(f"candidates must be a list, got {type(data['candidates']).__name__}")
     return data
 
 

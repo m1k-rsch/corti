@@ -13,22 +13,22 @@ from __future__ import annotations
 from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
-from everalgo.types import Candidate
 
-from cortistrate.component.utils.datetime import get_utc_now
-from cortistrate.core.errors import ConfigurationError
-from cortistrate.infra.persistence.sqlite.tables.knowledge import (
+from corti.component.utils.datetime import get_utc_now
+from corti.core.errors import ConfigurationError
+from corti.infra.persistence.sqlite.tables.knowledge import (
     KnowledgeDocumentRow,
 )
-from cortistrate.service.knowledge import (
+from corti.service.knowledge import (
     DocumentContext,
     SearchKnowledgeResult,
     compile_knowledge_where,
     search_knowledge,
 )
+from everalgo.types import Candidate
 
-_MOD = "cortistrate.service.knowledge"
-_CONFIG_MOD = "cortistrate.config"
+_MOD = "corti.service.knowledge"
+_CONFIG_MOD = "corti.config"
 
 # ── Helpers ──────────────────────────────────────────────────────────────────
 

@@ -23,9 +23,9 @@ from pathlib import Path
 
 import pytest
 
-from cortistrate.component.tokenizer import Tokenizer
-from cortistrate.memory.search.recall.base import RecallerDeps, build_or_query
-from cortistrate.memory.search.recall import EpisodeRecaller
+from corti.component.tokenizer import Tokenizer
+from corti.memory.search.recall import EpisodeRecaller
+from corti.memory.search.recall.base import RecallerDeps, build_or_query
 
 
 class _WhitespaceTokenizer(Tokenizer):
@@ -70,7 +70,7 @@ def _episode_row(
 
 @pytest.fixture(autouse=True)
 async def _reset(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
-    monkeypatch.setenv("CORTISTRATE_ROOT", str(tmp_path))
+    monkeypatch.setenv("CORTI_ROOT", str(tmp_path))
     yield
 
 

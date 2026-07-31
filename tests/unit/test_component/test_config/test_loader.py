@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from cortistrate.component.config import YamlConfigLoader
+from corti.component.config import YamlConfigLoader
 
 
 @pytest.fixture

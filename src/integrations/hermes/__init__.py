@@ -1,4 +1,4 @@
-"""Cortistrate memory provider for the Hermes Agent.
+"""Corti memory provider for the Hermes Agent.
 
 Wires the Phase 1 plugin modules (``_client`` / ``_config`` / ``_formatting``
 / ``_setup`` / ``_types`` / ``_constants``) into the Hermes ``MemoryProvider``
@@ -7,7 +7,7 @@ ABC. This is the only module in the bundle that imports Hermes symbols
 ``utils``); everything else is Hermes-agnostic so it can be unit-tested in
 isolation.
 
-The provider mirrors each turn into Cortistrate via a background sync thread,
+The provider mirrors each turn into Corti via a background sync thread,
 prefetches relevant memory before the agent answers, exposes four tools
 (``mem_search`` / ``mem_list`` / ``mem_add`` / ``mem_flush``),
 and trips a circuit breaker after repeated transient failures (mem0 parity).
@@ -29,7 +29,7 @@ from hermes_constants import get_hermes_home
 from tools.registry import tool_error
 from utils import atomic_json_write
 
-from ._client import CortistrateApiClient
+from ._client import CortiApiClient
 from ._config import (
     get_scope_ids,
     is_configured,
@@ -58,7 +58,7 @@ from ._formatting import (
     format_tool_result,
 )
 from ._setup import post_setup as _run_setup
-from ._types import CortistrateClientError, MessageItem, ScopeIds
+from ._types import CortiClientError, MessageItem, ScopeIds
 
 logger = logging.getLogger(__name__)
 
@@ -70,7 +70,7 @@ _TRIVIAL_PROMPT_RE = re.compile(
     re.IGNORECASE,
 )
 
-# Cortistrate error codes that warrant circuit-breaker trips (transient). Client
+# Corti error codes that warrant circuit-breaker trips (transient). Client
 # errors (INVALID_INPUT / NOT_FOUND / ...) are not transient and do not count.
 _TRANSIENT_CODES: frozenset[str] = frozenset(
     {
@@ -87,7 +87,7 @@ _TRANSIENT_CODES: frozenset[str] = frozenset(
 _SEARCH_SCHEMA: dict[str, Any] = {
     "name": TOOL_SEARCH,
     "description": (
-        "Search the Cortistrate memory store for relevant episodes, atomic "
+        "Search the Corti memory store for relevant episodes, atomic "
         "facts, and the user profile."
     ),
     "parameters": {
@@ -114,7 +114,7 @@ _SEARCH_SCHEMA: dict[str, Any] = {
 
 _LIST_SCHEMA: dict[str, Any] = {
     "name": TOOL_LIST,
-    "description": "List memories of a given type from the Cortistrate store.",
+    "description": "List memories of a given type from the Corti store.",
     "parameters": {
         "type": "object",
         "properties": {
@@ -141,7 +141,7 @@ _LIST_SCHEMA: dict[str, Any] = {
 
 _ADD_SCHEMA: dict[str, Any] = {
     "name": TOOL_ADD,
-    "description": "Store a fact in the Cortistrate memory store for the user.",
+    "description": "Store a fact in the Corti memory store for the user.",
     "parameters": {
         "type": "object",
         "properties": {
@@ -165,12 +165,12 @@ _FLUSH_SCHEMA: dict[str, Any] = {
 }
 
 
-class CortistrateMemoryProvider(MemoryProvider):
-    """Hermes ``MemoryProvider`` backed by an Cortistrate server."""
+class CortiMemoryProvider(MemoryProvider):
+    """Hermes ``MemoryProvider`` backed by an Corti server."""
 
     def __init__(self) -> None:
         self._config: dict[str, Any] | None = None
-        self._client: CortistrateApiClient | None = None
+        self._client: CortiApiClient | None = None
         self._session_id: str | None = None
         self._user_id: str | None = None
         self._agent_id: str | None = None
@@ -194,7 +194,7 @@ class CortistrateMemoryProvider(MemoryProvider):
 
     @property
     def name(self) -> str:
-        return "cortistrate"
+        return "corti"
 
     def is_available(self) -> bool:
         cfg = load_config(get_hermes_home())
@@ -210,13 +210,13 @@ class CortistrateMemoryProvider(MemoryProvider):
         self._agent_id = resolve_agent_id(self._config)
         self._scope = get_scope_ids(self._config)
         try:
-            self._client = CortistrateApiClient(
+            self._client = CortiApiClient(
                 self._config.get("api_url") or _DEFAULT_API_URL
             )
         except Exception as exc:
             self._init_error = str(exc)
             self._client = None
-            logger.warning("Cortistrate client init failed: %s", exc)
+            logger.warning("Corti client init failed: %s", exc)
         self._session_id = session_id
         if not self._atexit_registered:
             atexit.register(self._shutdown_client)
@@ -244,7 +244,7 @@ class CortistrateMemoryProvider(MemoryProvider):
             if self._consecutive_failures >= _BREAKER_THRESHOLD:
                 self._breaker_open_until = time.monotonic() + _BREAKER_COOLDOWN_SECS
                 logger.warning(
-                    "Cortistrate circuit breaker opened after %d failures",
+                    "Corti circuit breaker opened after %d failures",
                     self._consecutive_failures,
                 )
 
@@ -287,7 +287,7 @@ class CortistrateMemoryProvider(MemoryProvider):
             thread = threading.Thread(
                 target=self._sync_worker,
                 args=(sid, [user_msg, asst_msg]),
-                name="cortistrate-sync",
+                name="corti-sync",
                 daemon=True,
             )
             self._sync_thread = thread
@@ -301,12 +301,12 @@ class CortistrateMemoryProvider(MemoryProvider):
         try:
             client.add_messages(session_id, scope.app_id, scope.project_id, messages)
             self._record_success()
-        except CortistrateClientError as exc:
+        except CortiClientError as exc:
             if self._is_transient(exc.code):
                 self._record_failure()
-            logger.warning("Cortistrate sync_turn add failed: %s", exc)
+            logger.warning("Corti sync_turn add failed: %s", exc)
         except Exception:
-            logger.warning("Cortistrate sync_worker error", exc_info=True)
+            logger.warning("Corti sync_worker error", exc_info=True)
 
     # ── prefetch ──────────────────────────────────────────────────────────
 
@@ -335,7 +335,7 @@ class CortistrateMemoryProvider(MemoryProvider):
             thread = threading.Thread(
                 target=self._prefetch_worker,
                 args=(query,),
-                name="cortistrate-prefetch",
+                name="corti-prefetch",
                 daemon=True,
             )
             self._prefetch_thread = thread
@@ -363,13 +363,13 @@ class CortistrateMemoryProvider(MemoryProvider):
                     self._prefetch_result = body
                     self._prefetch_done = True
             self._record_success()
-        except CortistrateClientError as exc:
+        except CortiClientError as exc:
             if self._is_transient(exc.code):
                 self._record_failure()
             else:
-                logger.warning("Cortistrate prefetch failed: %s", exc)
+                logger.warning("Corti prefetch failed: %s", exc)
         except Exception:
-            logger.warning("Cortistrate prefetch error", exc_info=True)
+            logger.warning("Corti prefetch error", exc_info=True)
 
     def _consume_prefetch_result(self, query: str) -> str | None:
         with self._prefetch_lock:
@@ -404,10 +404,10 @@ class CortistrateMemoryProvider(MemoryProvider):
                     self._scope.app_id,
                     self._scope.project_id,
                 )
-            except CortistrateClientError as exc:
-                logger.warning("Cortistrate flush on session end failed: %s", exc)
+            except CortiClientError as exc:
+                logger.warning("Corti flush on session end failed: %s", exc)
             except Exception:
-                logger.warning("Cortistrate on_session_end error", exc_info=True)
+                logger.warning("Corti on_session_end error", exc_info=True)
         self._shutdown_client()
 
     def on_memory_write(
@@ -439,15 +439,15 @@ class CortistrateMemoryProvider(MemoryProvider):
                 client.add_messages(sid, scope.app_id, scope.project_id, [msg])
                 client.flush_session(sid, scope.app_id, scope.project_id)
                 self._record_success()
-            except CortistrateClientError as exc:
+            except CortiClientError as exc:
                 if self._is_transient(exc.code):
                     self._record_failure()
-                logger.warning("Cortistrate memory-write mirror failed: %s", exc)
+                logger.warning("Corti memory-write mirror failed: %s", exc)
             except Exception:
-                logger.warning("Cortistrate mirror error", exc_info=True)
+                logger.warning("Corti mirror error", exc_info=True)
 
         self._mirror_thread = threading.Thread(
-            target=_mirror, name="cortistrate-mirror", daemon=True
+            target=_mirror, name="corti-mirror", daemon=True
         )
         self._mirror_thread.start()
 
@@ -460,16 +460,16 @@ class CortistrateMemoryProvider(MemoryProvider):
         self, tool_name: str, args: dict[str, Any], **kwargs: Any
     ) -> str:
         if self._client is None:
-            return tool_error(f"Cortistrate backend not initialized: {self._init_error}")
+            return tool_error(f"Corti backend not initialized: {self._init_error}")
         if self._is_breaker_open():
             return tool_error(
-                "Cortistrate temporarily unavailable (circuit breaker open). "
+                "Corti temporarily unavailable (circuit breaker open). "
                 "Will retry automatically."
             )
         scope = self._scope
         client = self._client
         if scope is None:
-            return tool_error("Cortistrate scope not initialized")
+            return tool_error("Corti scope not initialized")
 
         if tool_name == TOOL_SEARCH:
             return self._tool_search(client, scope, args)
@@ -483,7 +483,7 @@ class CortistrateMemoryProvider(MemoryProvider):
 
     def _tool_search(
         self,
-        client: CortistrateApiClient,
+        client: CortiApiClient,
         scope: ScopeIds,
         args: dict[str, Any],
     ) -> str:
@@ -506,10 +506,10 @@ class CortistrateMemoryProvider(MemoryProvider):
                 method=method,
                 include_profile=True,
             )
-        except CortistrateClientError as exc:
+        except CortiClientError as exc:
             if self._is_transient(exc.code):
                 self._record_failure()
-            return tool_error(f"Cortistrate search failed: {exc}")
+            return tool_error(f"Corti search failed: {exc}")
         return format_tool_result(
             {
                 "results": data,
@@ -519,7 +519,7 @@ class CortistrateMemoryProvider(MemoryProvider):
 
     def _tool_list(
         self,
-        client: CortistrateApiClient,
+        client: CortiApiClient,
         scope: ScopeIds,
         args: dict[str, Any],
     ) -> str:
@@ -541,10 +541,10 @@ class CortistrateMemoryProvider(MemoryProvider):
                 page=page,
                 page_size=page_size,
             )
-        except CortistrateClientError as exc:
+        except CortiClientError as exc:
             if self._is_transient(exc.code):
                 self._record_failure()
-            return tool_error(f"Cortistrate list failed: {exc}")
+            return tool_error(f"Corti list failed: {exc}")
         items = data.get(f"{memory_type}s") or []
         return format_tool_result(
             {
@@ -556,7 +556,7 @@ class CortistrateMemoryProvider(MemoryProvider):
 
     def _tool_add(
         self,
-        client: CortistrateApiClient,
+        client: CortiApiClient,
         scope: ScopeIds,
         args: dict[str, Any],
     ) -> str:
@@ -569,21 +569,21 @@ class CortistrateMemoryProvider(MemoryProvider):
         try:
             client.add_messages(self._session_id, scope.app_id, scope.project_id, [msg])
             client.flush_session(self._session_id, scope.app_id, scope.project_id)
-        except CortistrateClientError as exc:
+        except CortiClientError as exc:
             if self._is_transient(exc.code):
                 self._record_failure()
-            return tool_error(f"Cortistrate add failed: {exc}")
+            return tool_error(f"Corti add failed: {exc}")
         return format_tool_result({"result": "Fact stored."})
 
-    def _tool_flush(self, client: CortistrateApiClient, scope: ScopeIds) -> str:
+    def _tool_flush(self, client: CortiApiClient, scope: ScopeIds) -> str:
         try:
             resp = client.flush_session(
                 self._session_id, scope.app_id, scope.project_id
             )
-        except CortistrateClientError as exc:
+        except CortiClientError as exc:
             if self._is_transient(exc.code):
                 self._record_failure()
-            return tool_error(f"Cortistrate flush failed: {exc}")
+            return tool_error(f"Corti flush failed: {exc}")
         return format_tool_result({"status": resp.get("status")})
 
     # ── prompt / config ───────────────────────────────────────────────────
@@ -591,7 +591,7 @@ class CortistrateMemoryProvider(MemoryProvider):
     def system_prompt_block(self) -> str:
         """Profile + recent 20 episode subjects, injected once per session.
 
-        Falls back to a static banner if the Cortistrate API is unreachable
+        Falls back to a static banner if the Corti API is unreachable
         or the provider hasn't been initialised yet.
         """
         if self._system_prompt_cached:
@@ -599,7 +599,7 @@ class CortistrateMemoryProvider(MemoryProvider):
         mode = (self._config or {}).get("mode", "oss")
         user = self._user_id or "unknown"
         banner = (
-            "## Cortistrate Memory Active\n"
+            "## Corti Memory Active\n"
             f"- Mode: {mode}\n"
             f"- User: {user}\n"
             "- Call `mem_search` before answering context-dependent "
@@ -632,7 +632,7 @@ class CortistrateMemoryProvider(MemoryProvider):
             self._system_prompt_cached = f"{body}\n\n{banner}"
             return self._system_prompt_cached
         except Exception:
-            logger.warning("Cortistrate system_prompt_block fetch failed", exc_info=True)
+            logger.warning("Corti system_prompt_block fetch failed", exc_info=True)
             self._system_prompt_cached = banner
             return banner
 
@@ -640,12 +640,12 @@ class CortistrateMemoryProvider(MemoryProvider):
         return [
             {
                 "key": "api_url",
-                "description": "Cortistrate API base URL.",
+                "description": "Corti API base URL.",
                 "default": _DEFAULT_API_URL,
             },
             {
                 "key": "mode",
-                "description": "Cortistrate deployment mode.",
+                "description": "Corti deployment mode.",
                 "choices": ["platform", "oss"],
                 "default": "oss",
             },
@@ -672,7 +672,7 @@ class CortistrateMemoryProvider(MemoryProvider):
         ]
 
     def save_config(self, values: dict[str, Any], hermes_home: str) -> None:
-        path = Path(hermes_home) / "cortistrate.json"
+        path = Path(hermes_home) / "corti.json"
         existing: dict[str, Any] = {}
         if path.exists():
             try:
@@ -688,7 +688,7 @@ class CortistrateMemoryProvider(MemoryProvider):
         _run_setup(Path(hermes_home), config, interactive=True)
 
     def backup_paths(self) -> list[str]:
-        root = Path.home() / ".cortistrate"
+        root = Path.home() / ".corti"
         return [str(root)] if root.exists() else []
 
     # ── teardown ──────────────────────────────────────────────────────────
@@ -708,5 +708,5 @@ class CortistrateMemoryProvider(MemoryProvider):
             try:
                 client.close()
             except Exception:
-                logger.warning("Error closing Cortistrate client", exc_info=True)
+                logger.warning("Error closing Corti client", exc_info=True)
         self._client = None

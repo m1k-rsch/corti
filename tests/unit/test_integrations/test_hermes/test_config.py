@@ -41,7 +41,7 @@ from hermes._constants import (
 def test_load_config_defaults_when_no_file(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    for var in ("CORTISTRATE_API_URL", "CORTISTRATE_USER_ID", "CORTISTRATE_AGENT_ID", "CORTISTRATE_MODE"):
+    for var in ("CORTI_API_URL", "CORTI_USER_ID", "CORTI_AGENT_ID", "CORTI_MODE"):
         monkeypatch.delenv(var, raising=False)
     cfg = load_config(tmp_path)
     assert cfg["api_url"] == _DEFAULT_API_URL
@@ -51,16 +51,16 @@ def test_load_config_defaults_when_no_file(
     assert cfg["app_id"] == _DEFAULT_APP_ID
     assert cfg["project_id"] == _DEFAULT_PROJECT_ID
     # Agent tracks removed from project
-    assert cfg["cortistrate_root"] is None
+    assert cfg["corti_root"] is None
 
 
 def test_load_config_env_overrides_defaults(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setenv("CORTISTRATE_API_URL", "http://env.example")
-    monkeypatch.setenv("CORTISTRATE_USER_ID", "env-user")
-    monkeypatch.setenv("CORTISTRATE_AGENT_ID", "env-agent")
-    monkeypatch.setenv("CORTISTRATE_MODE", "oss")
+    monkeypatch.setenv("CORTI_API_URL", "http://env.example")
+    monkeypatch.setenv("CORTI_USER_ID", "env-user")
+    monkeypatch.setenv("CORTI_AGENT_ID", "env-agent")
+    monkeypatch.setenv("CORTI_MODE", "oss")
     cfg = load_config(tmp_path)
     assert cfg["api_url"] == "http://env.example"
     assert cfg["user_id"] == "env-user"
@@ -71,16 +71,16 @@ def test_load_config_env_overrides_defaults(
 def test_load_config_json_wins_over_env(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setenv("CORTISTRATE_USER_ID", "env-user")
-    monkeypatch.setenv("CORTISTRATE_API_URL", "http://env.example")
-    (tmp_path / "cortistrate.json").write_text(
+    monkeypatch.setenv("CORTI_USER_ID", "env-user")
+    monkeypatch.setenv("CORTI_API_URL", "http://env.example")
+    (tmp_path / "corti.json").write_text(
         json.dumps(
             {
                 "user_id": "json-user",
                 "api_url": "http://json.example",
                 "mode": "platform",
                 "agent_track_enabled": True,  # legacy field, kept for compat
-                "cortistrate_root": "/var/cortistrate",
+                "corti_root": "/var/corti",
             }
         ),
         encoding="utf-8",
@@ -89,14 +89,14 @@ def test_load_config_json_wins_over_env(
     assert cfg["user_id"] == "json-user"
     assert cfg["api_url"] == "http://json.example"
     # Legacy field, defaults to False
-    assert cfg["cortistrate_root"] == "/var/cortistrate"
+    assert cfg["corti_root"] == "/var/corti"
 
 
 def test_load_config_skips_malformed_json(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setenv("CORTISTRATE_USER_ID", "env-user")
-    (tmp_path / "cortistrate.json").write_text("{not valid json", encoding="utf-8")
+    monkeypatch.setenv("CORTI_USER_ID", "env-user")
+    (tmp_path / "corti.json").write_text("{not valid json", encoding="utf-8")
     cfg = load_config(tmp_path)
     # Env value survives; defaults fill the rest.
     assert cfg["user_id"] == "env-user"
@@ -106,8 +106,8 @@ def test_load_config_skips_malformed_json(
 def test_load_config_skips_empty_json_values(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setenv("CORTISTRATE_USER_ID", "env-user")
-    (tmp_path / "cortistrate.json").write_text(
+    monkeypatch.setenv("CORTI_USER_ID", "env-user")
+    (tmp_path / "corti.json").write_text(
         json.dumps({"user_id": "", "api_url": None, "mode": "oss"}),
         encoding="utf-8",
     )

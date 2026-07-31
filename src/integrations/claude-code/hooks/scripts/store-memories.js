@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
 /**
- * Cortistrate OSS - Stop Hook
+ * Corti OSS - Stop Hook
  * 
  * Reads the transcript JSONL, extracts the last turn's user+assistant text,
- * sends them to local Cortistrate via /add, then triggers /flush for extraction.
+ * sends them to local Corti via /add, then triggers /flush for extraction.
  * 
  * This is the glue layer: the transcript parsing logic is inherited from
  * the official cloud plugin, but the API calls use the OSS local server.
@@ -15,12 +15,12 @@ process.on('unhandledRejection', () => process.exit(0));
 
 import { readFileSync, existsSync } from 'fs';
 import { getConfig } from './utils/config.js';
-import { addMemories, flushSession } from './utils/cortistrate-api.js';
+import { addMemories, flushSession } from './utils/corti-api.js';
 import { debug, setDebugPrefix } from './utils/debug.js';
 
 setDebugPrefix('store');
 
-const CORTISTRATE_SESSION_PREFIX = 'claude-code-live';
+const CORTI_SESSION_PREFIX = 'claude-code-live';
 
 try {
   let input = '';
@@ -146,7 +146,7 @@ try {
     assistantLen: lastAssistant?.length || 0,
   });
 
-  // ── send to Cortistrate ──────────────────────────────────────────────────────
+  // ── send to Corti ──────────────────────────────────────────────────────
   // Build message pair (same as backfill script)
 
   const messages = [];
@@ -164,8 +164,8 @@ try {
 
   // Use Claude Code session_id if available, else derive from transcript path
   const sessionId = hookInput.session_id
-    ? `${CORTISTRATE_SESSION_PREFIX}-${hookInput.session_id}`
-    : `${CORTISTRATE_SESSION_PREFIX}-${transcriptPath.split('/').pop().replace('.jsonl', '')}`;
+    ? `${CORTI_SESSION_PREFIX}-${hookInput.session_id}`
+    : `${CORTI_SESSION_PREFIX}-${transcriptPath.split('/').pop().replace('.jsonl', '')}`;
 
   const addResult = await addMemories(sessionId, messages);
 

@@ -1,4 +1,4 @@
-"""Unit tests for the pure helpers in :mod:`cortistrate.memory.cascade.watcher`.
+"""Unit tests for the pure helpers in :mod:`corti.memory.cascade.watcher`.
 
 The :class:`CascadeWatcher` itself needs a running event loop + real
 filesystem to test end-to-end (see ``tests/integration/``). The pure
@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from cortistrate.memory.cascade.watcher import _relative_to_root, _safe_mtime
+from corti.memory.cascade.watcher import _relative_to_root, _safe_mtime
 
 
 def test_relative_to_root_within(tmp_path: Path) -> None:

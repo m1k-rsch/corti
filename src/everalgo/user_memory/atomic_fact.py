@@ -14,7 +14,9 @@ from everalgo.prompts import render_prompt
 from everalgo.types import AtomicFact, MemCell
 from everalgo.user_memory._render import chat_messages, render_content
 from everalgo.user_memory.prompts.en.atomic_fact import ATOMIC_FACT_PROMPT
-from everalgo.user_memory.prompts.en.atomic_fact_from_text import ATOMIC_FACT_FROM_TEXT_PROMPT_EN
+from everalgo.user_memory.prompts.en.atomic_fact_from_text import (
+    ATOMIC_FACT_FROM_TEXT_PROMPT_EN,
+)
 
 if TYPE_CHECKING:
     from everalgo.llm.protocols import LLMClient
@@ -136,7 +138,7 @@ async def _call_llm_for_atomic_facts(llm: LLMClient, rendered: str, timestamp: i
     else:
         raise ValueError(f"event_log/atomic_facts key missing from LLM response: {data!r}")
     if not isinstance(raw_block, dict):
-        raise ValueError(  # noqa: TRY004
+        raise ValueError(
             f"event_log/atomic_facts must be a dict, got {type(raw_block).__name__}: {raw_block!r}"
         )
     block: dict[str, Any] = cast("dict[str, Any]", raw_block)
@@ -144,7 +146,7 @@ async def _call_llm_for_atomic_facts(llm: LLMClient, rendered: str, timestamp: i
         raise ValueError(f"time key missing from LLM response: {data!r}")
     raw_facts = block.get("atomic_fact", [])
     if not isinstance(raw_facts, list):
-        raise ValueError(f"atomic_fact must be a list, got {type(raw_facts).__name__}: {raw_facts!r}")  # noqa: TRY004
+        raise ValueError(f"atomic_fact must be a list, got {type(raw_facts).__name__}: {raw_facts!r}")
     # Filter out non-string and empty items (mirror _AtomicFactsBlock._filter_non_strings).
     block["atomic_fact"] = [item for item in cast("list[Any]", raw_facts) if isinstance(item, str) and item.strip()]  # type: ignore[redundant-cast]
     block["timestamp"] = timestamp

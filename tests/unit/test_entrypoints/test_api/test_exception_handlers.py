@@ -12,7 +12,7 @@ import pytest
 from fastapi import FastAPI
 from httpx import ASGITransport, AsyncClient
 
-from cortistrate.core.errors import (
+from corti.core.errors import (
     DocumentNotFoundError,
     DuplicateDocumentError,
     EmbeddingServiceError,
@@ -24,7 +24,7 @@ from cortistrate.core.errors import (
     StorageError,
     UnsupportedModalityError,
 )
-from cortistrate.entrypoints.api.exception_handlers import register_handlers
+from corti.entrypoints.api.exception_handlers import register_handlers
 
 # ---------------------------------------------------------------------------
 # Fixture: minimal app with one route per exception type

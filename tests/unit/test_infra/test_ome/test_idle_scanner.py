@@ -5,11 +5,11 @@ from pathlib import Path
 
 import pytest
 
-from cortistrate.infra.ome._background.idle_scanner import IdleScanner
-from cortistrate.infra.ome._stores.idle import IdleStore
-from cortistrate.infra.ome._stores.storage import OMEStorage
-from cortistrate.infra.ome.events import BaseEvent, IdleTick
-from cortistrate.infra.ome.triggers import Idle
+from corti.infra.ome._background.idle_scanner import IdleScanner
+from corti.infra.ome._stores.idle import IdleStore
+from corti.infra.ome._stores.storage import OMEStorage
+from corti.infra.ome.events import BaseEvent, IdleTick
+from corti.infra.ome.triggers import Idle
 
 
 class _M(BaseEvent):

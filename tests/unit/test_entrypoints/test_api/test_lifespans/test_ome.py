@@ -8,15 +8,15 @@ from pathlib import Path
 import pytest
 from fastapi import FastAPI
 
-from cortistrate.entrypoints.api.lifespans import OmeLifespanProvider
+from corti.entrypoints.api.lifespans import OmeLifespanProvider
 
 
 async def test_lifespan_starts_and_stops_engine(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from cortistrate.core.persistence import MemoryRoot
+    from corti.core.persistence import MemoryRoot
 
-    svc = importlib.import_module("cortistrate.service.memorize")
+    svc = importlib.import_module("corti.service.memorize")
 
     monkeypatch.setattr(
         MemoryRoot, "default", classmethod(lambda cls: MemoryRoot(root=tmp_path))

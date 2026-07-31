@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from cortistrate.core.persistence import find_entry, split_entries
+from corti.core.persistence import find_entry, split_entries
 
 
 def test_split_no_entries() -> None:

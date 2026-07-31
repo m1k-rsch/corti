@@ -7,7 +7,7 @@ Verifies three contracts of the metrics path:
    on a real round-trip (verified via before/after delta to avoid
    coupling to the global registry's cross-test accumulation).
 3. The ``_SKIP_PATHS`` set (``/metrics``, ``/health``) is honoured —
-   those endpoints never appear in ``cortistrate_http_requests_total``.
+   those endpoints never appear in ``corti_http_requests_total``.
 
 No lifespan / no Postgres / no LLM needed — middleware lives at the ASGI
 layer above any of that.
@@ -22,13 +22,13 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 from prometheus_client.parser import text_string_to_metric_families
 
-from cortistrate.config import load_settings
-from cortistrate.entrypoints.api.app import create_app
+from corti.config import load_settings
+from corti.entrypoints.api.app import create_app
 
 # ``prometheus_client.parser`` strips the ``_total`` counter suffix from
 # the *family* name but leaves *sample* names intact.
-_REQUESTS_FAMILY = "cortistrate_http_requests"
-_REQUESTS_TOTAL = "cortistrate_http_requests_total"
+_REQUESTS_FAMILY = "corti_http_requests"
+_REQUESTS_TOTAL = "corti_http_requests_total"
 
 
 @pytest.fixture
@@ -37,7 +37,7 @@ async def client(
     monkeypatch: pytest.MonkeyPatch,
 ) -> AsyncIterator[AsyncClient]:
     """FastAPI app with no lifespan; middleware stack is wired by ``create_app``."""
-    monkeypatch.setenv("CORTISTRATE_ROOT", str(tmp_path))
+    monkeypatch.setenv("CORTI_ROOT", str(tmp_path))
     load_settings.cache_clear()
 
     app = create_app(lifespan_providers=[])
@@ -52,7 +52,7 @@ async def client(
 
 
 def _counter_value(text: str, path: str, status: str) -> float:
-    """Sum ``cortistrate_http_requests_total`` samples matching path + status."""
+    """Sum ``corti_http_requests_total`` samples matching path + status."""
     total = 0.0
     for fam in text_string_to_metric_families(text):
         if fam.name != _REQUESTS_FAMILY:
@@ -66,7 +66,7 @@ def _counter_value(text: str, path: str, status: str) -> float:
 
 
 def _all_recorded_paths(text: str) -> set[str]:
-    """Set of ``path`` label values present in ``cortistrate_http_requests_total``."""
+    """Set of ``path`` label values present in ``corti_http_requests_total``."""
     paths: set[str] = set()
     for fam in text_string_to_metric_families(text):
         if fam.name != _REQUESTS_FAMILY:
@@ -94,7 +94,7 @@ async def test_metrics_endpoint_renders_prometheus_format(
 
 
 async def test_metrics_counter_increments_on_request(client: AsyncClient) -> None:
-    """A real route hit bumps ``cortistrate_http_requests_total`` for that label triple.
+    """A real route hit bumps ``corti_http_requests_total`` for that label triple.
 
     Uses a 422 to avoid needing Postgres — Pydantic rejects the empty
     body before the route handler runs, but the middleware still sees

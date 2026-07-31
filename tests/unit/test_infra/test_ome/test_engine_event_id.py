@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from cortistrate.infra.ome import BaseEvent, Immediate, RunStatus, offline_strategy
-from cortistrate.infra.ome.testing import StrategyTestHarness
+from corti.infra.ome import BaseEvent, Immediate, RunStatus, offline_strategy
+from corti.infra.ome.testing import StrategyTestHarness
 
 
 class _Ping(BaseEvent):

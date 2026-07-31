@@ -13,18 +13,18 @@ from unittest.mock import AsyncMock, patch
 
 import numpy as np
 import pytest
-from everalgo.clustering import Cluster
-from everalgo.rank.protocols import AgenticDecision
-from everalgo.testing.fake_llm import FakeLLMClient
-from everalgo.types import Candidate
 
-from cortistrate.component.utils.datetime import from_timestamp
-from cortistrate.memory.search.agentic import (
+from corti.component.utils.datetime import from_timestamp
+from corti.memory.search.agentic import (
     _restore_shaper_metadata,
     _to_everalgo_doc_metadata,
     search_episodes_agentic,
 )
-from cortistrate.memory.search.dto import SearchEpisodeItem
+from corti.memory.search.dto import SearchEpisodeItem
+from everalgo.clustering import Cluster
+from everalgo.rank.protocols import AgenticDecision
+from everalgo.testing.fake_llm import FakeLLMClient
+from everalgo.types import Candidate
 
 # ── Stubs ────────────────────────────────────────────────────────────────
 
@@ -216,9 +216,9 @@ async def test_agentic_search_wires_benchmark_hyperparams(
         return [0.1, 0.2, 0.3, 0.4]
 
     with (
-        patch("cortistrate.memory.search.agentic.aagentic_retrieve", fake_aagentic),
+        patch("corti.memory.search.agentic.aagentic_retrieve", fake_aagentic),
         patch(
-            "cortistrate.memory.search.agentic.cluster_repo.list_for_owner",
+            "corti.memory.search.agentic.cluster_repo.list_for_owner",
             AsyncMock(return_value=clusters),
         ),
     ):
@@ -258,10 +258,10 @@ async def test_agentic_search_loads_user_memory_clusters(
 
     with (
         patch(
-            "cortistrate.memory.search.agentic.aagentic_retrieve",
+            "corti.memory.search.agentic.aagentic_retrieve",
             AsyncMock(return_value=([], AgenticDecision(is_multi_round=False))),
         ),
-        patch("cortistrate.memory.search.agentic.cluster_repo.list_for_owner", mock_list),
+        patch("corti.memory.search.agentic.cluster_repo.list_for_owner", mock_list),
     ):
         await search_episodes_agentic(
             "q",
@@ -302,9 +302,9 @@ async def test_agentic_search_shapes_candidates_with_episode_id(
         return [0.1] * 4
 
     with (
-        patch("cortistrate.memory.search.agentic.aagentic_retrieve", fake_aagentic),
+        patch("corti.memory.search.agentic.aagentic_retrieve", fake_aagentic),
         patch(
-            "cortistrate.memory.search.agentic.cluster_repo.list_for_owner",
+            "corti.memory.search.agentic.cluster_repo.list_for_owner",
             AsyncMock(return_value=clusters),
         ),
     ):

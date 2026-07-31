@@ -47,16 +47,16 @@ Enforced via `import-linter` in CI:
 
 ```toml
 [tool.importlinter]
-root_packages = ["cortistrate"]
+root_packages = ["corti"]
 
 [[tool.importlinter.contracts]]
 name = "Layered architecture"
 type = "layers"
 layers = [
-    "cortistrate.entrypoints",
-    "cortistrate.service",
-    "cortistrate.memory",
-    "cortistrate.infra",
+    "corti.entrypoints",
+    "corti.service",
+    "corti.memory",
+    "corti.infra",
 ]
 ```
 
@@ -156,12 +156,12 @@ Three-layer prompt overlay:
 ```
 config/prompt_slots/*.yaml          (Layer 1: defaults, ships with package)
        ↓
-~/.cortistrate/prompt_slots/*.yaml       (Layer 2: app-level override)
+~/.corti/prompt_slots/*.yaml       (Layer 2: app-level override)
        ↓
 runtime override                    (Layer 3: per-call override)
 ```
 
-Extractors may accept a prompt-override parameter; Cortistrate supplies overrides for episode and boundary-detection prompts, and falls back to the algo-bundled default elsewhere — no hardcoded prompts in algorithm code.
+Extractors may accept a prompt-override parameter; Corti supplies overrides for episode and boundary-detection prompts, and falls back to the algo-bundled default elsewhere — no hardcoded prompts in algorithm code.
 
 ### `memory/reflection/`
 
@@ -190,7 +190,7 @@ Three-piece observability:
 ## Markdown layout
 
 ```
-~/.cortistrate/                                  # memory root (default; CORTISTRATE_ROOT)
+~/.corti/                                  # memory root (default; CORTI_ROOT)
 └── <app_id>/<project_id>/                  # scope ("default" → default_app/default_project)
     ├── users/<user_id>/
     │   ├── user.md                                     # profile (single-file rewrite)
@@ -228,7 +228,7 @@ everalgo is:
 - **No I/O** — does not touch md files / Postgres / SQLite
 - **No prompts inline** — extractors that accept a prompt-override parameter use the project-supplied value; others use their algo-bundled defaults
 
-This boundary lets everalgo be reused across product forms (this open-source build, Cortistrate Cloud, OpenClaw plugins, etc.).
+This boundary lets everalgo be reused across product forms (this open-source build, Corti Cloud, OpenClaw plugins, etc.).
 
 ## Error handling architecture
 

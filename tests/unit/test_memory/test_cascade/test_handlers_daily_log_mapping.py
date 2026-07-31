@@ -17,15 +17,15 @@ import datetime as _dt
 
 import pytest
 
-from cortistrate.component.embedding import EmbeddingProvider
-from cortistrate.component.tokenizer import Tokenizer
-from cortistrate.core.persistence import MemoryRoot, StructuredEntry
-from cortistrate.memory.cascade.handlers import (
+from corti.component.embedding import EmbeddingProvider
+from corti.component.tokenizer import Tokenizer
+from corti.core.persistence import MemoryRoot, StructuredEntry
+from corti.memory.cascade.handlers import (
     AtomicFactHandler,
     ForesightHandler,
     HandlerDeps,
 )
-from cortistrate.memory.cascade.handlers._daily_log_base import ParsedEntry
+from corti.memory.cascade.handlers._daily_log_base import ParsedEntry
 
 
 class _StubTokenizer(Tokenizer):

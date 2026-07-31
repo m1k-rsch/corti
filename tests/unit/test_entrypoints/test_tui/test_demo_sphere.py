@@ -1,8 +1,8 @@
-"""Cortistrate demo dot-sphere rendering contracts."""
+"""Corti demo dot-sphere rendering contracts."""
 
 from __future__ import annotations
 
-from cortistrate.entrypoints.tui.demo.widgets.sphere import (
+from corti.entrypoints.tui.demo.widgets.sphere import (
     SPHERE_STATES,
     DotSphereFrame,
     build_dot_sphere,

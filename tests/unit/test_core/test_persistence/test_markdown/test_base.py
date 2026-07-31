@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from cortistrate.core.persistence.markdown import (
+from corti.core.persistence.markdown import (
     AgentScopedFrontmatter,
     BaseFrontmatter,
     UserScopedFrontmatter,

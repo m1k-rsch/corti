@@ -5,18 +5,18 @@ from pathlib import Path
 
 import pytest
 
-from cortistrate.infra.ome.engine import OfflineEngine
+from corti.infra.ome.engine import OfflineEngine
 
-# cortistrate.service.__init__ re-exports `memorize` as a function attribute on
+# corti.service.__init__ re-exports `memorize` as a function attribute on
 # the package, which shadows the submodule when using `import ... as svc`.
 # importlib.import_module bypasses that shadowing and returns the real module.
-_svc = importlib.import_module("cortistrate.service.memorize")
+_svc = importlib.import_module("corti.service.memorize")
 
 
 async def test_get_engine_returns_singleton(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from cortistrate.core.persistence import MemoryRoot
+    from corti.core.persistence import MemoryRoot
 
     monkeypatch.setattr(
         MemoryRoot, "default", classmethod(lambda cls: MemoryRoot(root=tmp_path))
@@ -32,7 +32,7 @@ async def test_get_engine_returns_singleton(
 async def test_get_user_pipeline_injects_engine(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    from cortistrate.core.persistence import MemoryRoot
+    from corti.core.persistence import MemoryRoot
 
     monkeypatch.setattr(
         MemoryRoot, "default", classmethod(lambda cls: MemoryRoot(root=tmp_path))

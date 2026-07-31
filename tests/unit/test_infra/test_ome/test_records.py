@@ -6,8 +6,8 @@ from typing import Any
 import pytest
 from pydantic import ValidationError
 
-from cortistrate.component.utils.datetime import get_now_with_timezone, get_utc_now
-from cortistrate.infra.ome.records import RunRecord, RunStatus, StrategyRouteInfo
+from corti.component.utils.datetime import get_now_with_timezone, get_utc_now
+from corti.infra.ome.records import RunRecord, RunStatus, StrategyRouteInfo
 
 
 def _ok_kwargs(**overrides: Any) -> dict[str, Any]:

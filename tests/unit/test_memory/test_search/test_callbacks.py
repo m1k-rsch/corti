@@ -6,13 +6,13 @@ import inspect
 from typing import Any
 
 import pytest
-from everalgo.types import Candidate
 
-from cortistrate.memory.search.callbacks import (
+from corti.memory.search.callbacks import (
     _SKILL_RERANK_INSTRUCTION,
     build_rerank_fn,
     build_skill_rerank_fn,
 )
+from everalgo.types import Candidate
 
 
 class _StubReranker:

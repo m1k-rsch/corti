@@ -12,15 +12,15 @@ from typing import ClassVar, Literal
 
 import pytest
 
-from cortistrate.core.persistence import (
+from corti.core.persistence import (
     EntryId,
     MemoryRoot,
     StructuredEntry,
     UserScopedFrontmatter,
     render_structured_entry,
 )
-from cortistrate.infra.persistence.markdown.readers import BaseDailyReader
-from cortistrate.infra.persistence.markdown.writers import BaseDailyWriter
+from corti.infra.persistence.markdown.readers import BaseDailyReader
+from corti.infra.persistence.markdown.writers import BaseDailyWriter
 
 
 class _DemoFrontmatter(UserScopedFrontmatter):

@@ -1,6 +1,6 @@
 """Contract tests for ``integrations/hermes/_client.py``.
 
-Pins the synchronous ``CortistrateApiClient`` surface:
+Pins the synchronous ``CortiApiClient`` surface:
 
 - ``add_messages`` payload shape (roles / sender_ids / ms timestamps /
   content), default-scope omission of ``app_id``/``project_id``, chunking
@@ -23,9 +23,9 @@ from typing import Any
 
 import httpx
 import pytest
-from hermes._client import CortistrateApiClient
+from hermes._client import CortiApiClient
 from hermes._constants import _ADD_BATCH_SIZE
-from hermes._types import CortistrateClientError
+from hermes._types import CortiClientError
 
 
 def _ok(data: dict[str, Any]) -> httpx.Response:
@@ -54,7 +54,7 @@ def _err(
 
 @pytest.fixture
 def make_client(monkeypatch: pytest.MonkeyPatch, request: pytest.FixtureRequest):
-    """Return a factory ``(handler, **kwargs) -> CortistrateApiClient``.
+    """Return a factory ``(handler, **kwargs) -> CortiApiClient``.
 
     The factory wires the client's ``httpx.AsyncClient`` to an
     ``httpx.MockTransport`` built from ``handler`` by patching
@@ -63,17 +63,17 @@ def make_client(monkeypatch: pytest.MonkeyPatch, request: pytest.FixtureRequest)
     import hermes._client as client_mod
 
     real_async_client = client_mod.httpx.AsyncClient
-    created: list[CortistrateApiClient] = []
+    created: list[CortiApiClient] = []
 
     def factory(
         handler,
         *,
         base_url: str = "http://test.local",
         timeout: float = 5.0,
-    ) -> CortistrateApiClient:
+    ) -> CortiApiClient:
         transport = httpx.MockTransport(handler)
 
-        async def _make(self: CortistrateApiClient) -> None:
+        async def _make(self: CortiApiClient) -> None:
             self._client = real_async_client(
                 base_url=self._base_url,
                 timeout=self._timeout,
@@ -81,8 +81,8 @@ def make_client(monkeypatch: pytest.MonkeyPatch, request: pytest.FixtureRequest)
                 transport=transport,
             )
 
-        monkeypatch.setattr(client_mod.CortistrateApiClient, "_make_client", _make)
-        client = client_mod.CortistrateApiClient(base_url, timeout=timeout)
+        monkeypatch.setattr(client_mod.CortiApiClient, "_make_client", _make)
+        client = client_mod.CortiApiClient(base_url, timeout=timeout)
         created.append(client)
         return client
 
@@ -300,14 +300,14 @@ def test_get_xor_enforced(
 
 def test_error_503_external_service_unavailable(make_client) -> None:
     client = make_client(lambda r: _err(503, "EXTERNAL_SERVICE_UNAVAILABLE"))
-    with pytest.raises(CortistrateClientError) as exc:
+    with pytest.raises(CortiClientError) as exc:
         client.search("u", None, "default", "default", "q")
     assert exc.value.code == "EXTERNAL_SERVICE_UNAVAILABLE"
 
 
 def test_error_422_invalid_input(make_client) -> None:
     client = make_client(lambda r: _err(422, "INVALID_INPUT"))
-    with pytest.raises(CortistrateClientError) as exc:
+    with pytest.raises(CortiClientError) as exc:
         client.flush_session("s", "default", "default")
     assert exc.value.code == "INVALID_INPUT"
 
@@ -317,7 +317,7 @@ def test_connection_refused_maps_to_unavailable(make_client) -> None:
         raise httpx.ConnectError("connection refused")
 
     client = make_client(handler)
-    with pytest.raises(CortistrateClientError) as exc:
+    with pytest.raises(CortiClientError) as exc:
         client.search("u", None, "default", "default", "q")
     assert exc.value.code == "EXTERNAL_SERVICE_UNAVAILABLE"
 
@@ -331,7 +331,7 @@ def test_non_json_4xx_maps_to_internal_error(make_client) -> None:
         )
 
     client = make_client(handler)
-    with pytest.raises(CortistrateClientError) as exc:
+    with pytest.raises(CortiClientError) as exc:
         client.search("u", None, "default", "default", "q")
     assert exc.value.code == "INTERNAL_ERROR"
 
@@ -342,6 +342,6 @@ def test_non_json_4xx_maps_to_internal_error(make_client) -> None:
 def test_method_after_close_raises_client_closed(make_client) -> None:
     client = make_client(lambda r: _ok({}))
     client.close()
-    with pytest.raises(CortistrateClientError) as exc:
+    with pytest.raises(CortiClientError) as exc:
         client.search("u", None, "default", "default", "q")
     assert exc.value.code == "CLIENT_CLOSED"

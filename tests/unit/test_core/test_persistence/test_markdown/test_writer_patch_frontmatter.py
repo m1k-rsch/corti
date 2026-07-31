@@ -5,7 +5,7 @@ from __future__ import annotations
 import datetime as dt
 from pathlib import Path
 
-from cortistrate.core.persistence import (
+from corti.core.persistence import (
     EntryId,
     MarkdownReader,
     MarkdownWriter,

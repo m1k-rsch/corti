@@ -186,7 +186,7 @@ async def _call_llm_for_profile_init(llm: LLMClient, rendered: str) -> dict[str,
     if "explicit_info" not in data or "implicit_traits" not in data:
         raise ValueError(f"Profile init response missing required keys: {list(data.keys())!r}")
     if not isinstance(data["explicit_info"], list) or not isinstance(data["implicit_traits"], list):
-        raise ValueError(f"explicit_info and implicit_traits must be lists: {data!r}")  # noqa: TRY004
+        raise ValueError(f"explicit_info and implicit_traits must be lists: {data!r}")
     return data
 
 
@@ -199,7 +199,7 @@ async def _call_llm_for_profile_update(llm: LLMClient, rendered: str) -> dict[st
     if "operations" not in data:
         raise ValueError(f"Profile update response missing 'operations' key: {list(data.keys())!r}")
     if not isinstance(data["operations"], list):
-        raise ValueError(f"operations must be a list: {data!r}")  # noqa: TRY004
+        raise ValueError(f"operations must be a list: {data!r}")
     return data
 
 
@@ -212,7 +212,7 @@ async def _call_llm_for_profile_compact(llm: LLMClient, rendered: str) -> dict[s
     if "explicit_info" not in data or "implicit_traits" not in data:
         raise ValueError(f"Profile compact response missing required keys: {list(data.keys())!r}")
     if not isinstance(data["explicit_info"], list) or not isinstance(data["implicit_traits"], list):
-        raise ValueError(f"explicit_info and implicit_traits must be lists: {data!r}")  # noqa: TRY004
+        raise ValueError(f"explicit_info and implicit_traits must be lists: {data!r}")
     return data
 
 

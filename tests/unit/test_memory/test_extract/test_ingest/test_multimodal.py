@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from cortistrate.memory.extract.ingest.multimodal import (
+from corti.memory.extract.ingest.multimodal import (
     coerce_items,
     derive_text,
     normalise_content,

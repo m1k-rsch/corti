@@ -21,8 +21,8 @@ The ``long_conversation`` fixture (LoCoMo conv_0) lives in
 
 Conventions:
 
-- ``.env`` is loaded at import time (before any cortistrate module reads
-  settings) — overrides for ``CORTISTRATE_ROOT`` happen per-test.
+- ``.env`` is loaded at import time (before any corti module reads
+  settings) — overrides for ``CORTI_ROOT`` happen per-test.
 - This file does **not** define ``cascade_runtime`` — that name belongs
   to ``tests/integration/test_cascade_integration.py``'s local fixture.
   The pipeline test uses ``core_pipeline_runtime`` to avoid name
@@ -43,7 +43,7 @@ import pytest_asyncio
 from dotenv import load_dotenv
 from sqlalchemy import text
 
-# Load real .env creds before any cortistrate import touches load_settings().
+# Load real .env creds before any corti import touches load_settings().
 _PROJECT_ROOT = Path(__file__).resolve().parents[2]
 load_dotenv(_PROJECT_ROOT / ".env", override=False)
 
@@ -65,18 +65,18 @@ _MEMORIZE_SINGLETONS: tuple[str, ...] = (
 # survive across tests, so the second test writes its output to the
 # **first test's** tmp_path. Reset all of them per-test.
 _STRATEGY_SINGLETONS: tuple[tuple[str, tuple[str, ...]], ...] = (
-    ("cortistrate.memory.strategies.extract_atomic_facts", ("_writer",)),
-    ("cortistrate.memory.strategies.extract_foresight", ("_writer",)),
-    ("cortistrate.memory.strategies.extract_user_profile", ("_writer", "_reader")),
-    ("cortistrate.memory.strategies.extract_agent_case", ("_writer",)),
-    ("cortistrate.memory.strategies.extract_agent_skill", ("_writer",)),
+    ("corti.memory.strategies.extract_atomic_facts", ("_writer",)),
+    ("corti.memory.strategies.extract_foresight", ("_writer",)),
+    ("corti.memory.strategies.extract_user_profile", ("_writer", "_reader")),
+    ("corti.memory.strategies.extract_agent_case", ("_writer",)),
+    ("corti.memory.strategies.extract_agent_skill", ("_writer",)),
 )
 
 
 def _reset_strategy_singletons(monkeypatch: pytest.MonkeyPatch) -> None:
     """Null every strategy ``_writer`` / ``_reader`` so the next test
     rebuilds against its own ``MemoryRoot.default()`` (driven by the
-    fresh ``CORTISTRATE_ROOT`` env var set by the calling fixture).
+    fresh ``CORTI_ROOT`` env var set by the calling fixture).
     """
     for mod_name, attrs in _STRATEGY_SINGLETONS:
         mod = importlib.import_module(mod_name)
@@ -120,16 +120,16 @@ async def core_pipeline_runtime(
     """Prepare clean memory root + reset memorize singletons.
 
     Keeps real LLM / embedding settings from ``.env`` (do NOT overwrite
-    ``CORTISTRATE_LLM__*`` or ``CORTISTRATE_EMBEDDING__*``).
+    ``CORTI_LLM__*`` or ``CORTI_EMBEDDING__*``).
     """
-    monkeypatch.setenv("CORTISTRATE_ROOT", str(tmp_path))
+    monkeypatch.setenv("CORTI_ROOT", str(tmp_path))
 
-    from cortistrate.config import load_settings
+    from corti.config import load_settings
 
     load_settings.cache_clear()
 
-    svc = importlib.import_module("cortistrate.service.memorize")
-    client_mod = importlib.import_module("cortistrate.component.llm.client")
+    svc = importlib.import_module("corti.service.memorize")
+    client_mod = importlib.import_module("corti.component.llm.client")
 
     for attr in _MEMORIZE_SINGLETONS:
         monkeypatch.setattr(svc, attr, None, raising=False)
@@ -148,13 +148,13 @@ async def core_pipeline_runtime(
 async def async_client(
     core_pipeline_runtime: Path,
 ) -> AsyncIterator[httpx.AsyncClient]:
-    """Bring up the full cortistrate app with lifespan, return an httpx client.
+    """Bring up the full corti app with lifespan, return an httpx client.
 
     The lifespan starts: SQLite engine, Postgres connection + business
     indexes, Cascade orchestrator (watcher + scanner + worker), OME
     engine. Teardown stops everything in reverse.
     """
-    from cortistrate.entrypoints.api.app import create_app
+    from corti.entrypoints.api.app import create_app
 
     app = create_app()
     transport = httpx.ASGITransport(app=app)
@@ -192,7 +192,7 @@ def cascade_done_poll() -> Callable[..., Awaitable[None]]:
     """Wait until ``md_change_state`` queue is drained (no pending/processing)."""
 
     async def _wait(*, deadline_seconds: float = 180.0) -> None:
-        from cortistrate.infra.persistence.sqlite import md_change_state_repo
+        from corti.infra.persistence.sqlite import md_change_state_repo
 
         async def _drained() -> bool:
             summary = await md_change_state_repo.queue_summary()
@@ -217,8 +217,8 @@ def pipeline_done_poll() -> Callable[..., Awaitable[None]]:
     """
 
     async def _wait(*, deadline_seconds: float = 180.0) -> None:
-        from cortistrate.infra.persistence.sqlite import md_change_state_repo
-        from cortistrate.service.memorize import _get_engine
+        from corti.infra.persistence.sqlite import md_change_state_repo
+        from corti.service.memorize import _get_engine
 
         engine = _get_engine()
 
@@ -248,7 +248,7 @@ def buffer_count() -> Callable[[str], Awaitable[int]]:
     """Return an async callable: ``await buffer_count(session_id) -> int``."""
 
     async def _count(session_id: str) -> int:
-        from cortistrate.infra.persistence.sqlite import get_engine
+        from corti.infra.persistence.sqlite import get_engine
 
         engine = get_engine()
         async with engine.connect() as conn:
@@ -270,7 +270,7 @@ def memcell_count() -> Callable[[str], Awaitable[int]]:
     """
 
     async def _count(session_id: str | None = None) -> int:
-        from cortistrate.infra.persistence.sqlite import get_engine
+        from corti.infra.persistence.sqlite import get_engine
 
         engine = get_engine()
         async with engine.connect() as conn:

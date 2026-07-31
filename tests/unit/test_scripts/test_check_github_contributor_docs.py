@@ -51,7 +51,7 @@ def test_legacy_branch_model_terms_are_blocked() -> None:
                 Path("CLAUDE.md"),
                 f"{stable_branch} is stable and {integration_branch} is integration.\n",
             ),
-            (Path("CONTRIBUTING.md"), f"Open an internal {legacy_review}.\n"),
+            (Path("legal/CONTRIBUTING.md"), f"Open an internal {legacy_review}.\n"),
             (
                 Path(".claude/skills/pr/SKILL.md"),
                 f"{branch_model} {emergency_branch} path.\n",
@@ -62,7 +62,7 @@ def test_legacy_branch_model_terms_are_blocked() -> None:
     assert [(v.path.as_posix(), v.label) for v in violations] == [
         ("CLAUDE.md", "legacy stable branch reference"),
         ("CLAUDE.md", "legacy integration branch reference"),
-        ("CONTRIBUTING.md", "legacy review wording"),
+        ("legal/CONTRIBUTING.md", "legacy review wording"),
         (".claude/skills/pr/SKILL.md", "legacy branch model"),
         (".claude/skills/pr/SKILL.md", "legacy emergency branch model"),
     ]

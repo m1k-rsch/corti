@@ -2,11 +2,10 @@
 
 from __future__ import annotations
 
+from corti.memory import IngestResult
+from corti.memory.events import AgentPipelineStarted
+from corti.memory.extract.pipeline.agent_memory import AgentMemoryPipeline
 from everalgo.types import ChatMessage, MemCell
-
-from cortistrate.memory import IngestResult
-from cortistrate.memory.events import AgentPipelineStarted
-from cortistrate.memory.extract.pipeline.agent_memory import AgentMemoryPipeline
 
 
 class _FakeEngine:

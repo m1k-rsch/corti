@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from cortistrate.config import load_settings
+from corti.config import load_settings
 
 
 class TestKnowledgeSettings:

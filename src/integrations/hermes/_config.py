@@ -1,4 +1,4 @@
-"""Hermes-agnostic config loading and resolution for the Cortistrate plugin.
+"""Hermes-agnostic config loading and resolution for the Corti plugin.
 
 This module deliberately imports only stdlib + the local ``_constants`` /
 ``_types`` siblings. It must remain importable without a Hermes runtime so
@@ -72,15 +72,15 @@ def _defaults() -> dict[str, Any]:
         "agent_id": _DEFAULT_AGENT_ID,
         "app_id": _DEFAULT_APP_ID,
         "project_id": _DEFAULT_PROJECT_ID,
-        "cortistrate_root": None,
+        "corti_root": None,
     }
 
 
 def load_config(hermes_home: Path) -> dict[str, Any]:
-    """Merge defaults with ``$HERMES_HOME/cortistrate.json`` (json wins).
+    """Merge defaults with ``$HERMES_HOME/corti.json`` (json wins).
 
-    Env vars ``CORTISTRATE_API_URL`` / ``CORTISTRATE_USER_ID`` / ``CORTISTRATE_AGENT_ID`` /
-    ``CORTISTRATE_MODE`` act as a fallback layer between the defaults and the JSON
+    Env vars ``CORTI_API_URL`` / ``CORTI_USER_ID`` / ``CORTI_AGENT_ID`` /
+    ``CORTI_MODE`` act as a fallback layer between the defaults and the JSON
     file: the JSON file still overrides them when present.
 
     Returns a plain dict; never raises on a malformed/missing JSON file —
@@ -89,20 +89,20 @@ def load_config(hermes_home: Path) -> dict[str, Any]:
     cfg = _defaults()
 
     # Env layer — only set when the operator actually exported a value.
-    env_api_url = os.environ.get("CORTISTRATE_API_URL")
+    env_api_url = os.environ.get("CORTI_API_URL")
     if env_api_url:
         cfg["api_url"] = env_api_url
-    env_user_id = os.environ.get("CORTISTRATE_USER_ID")
+    env_user_id = os.environ.get("CORTI_USER_ID")
     if env_user_id:
         cfg["user_id"] = env_user_id
-    env_agent_id = os.environ.get("CORTISTRATE_AGENT_ID")
+    env_agent_id = os.environ.get("CORTI_AGENT_ID")
     if env_agent_id:
         cfg["agent_id"] = env_agent_id
-    env_mode = os.environ.get("CORTISTRATE_MODE")
+    env_mode = os.environ.get("CORTI_MODE")
     if env_mode:
         cfg["mode"] = env_mode
 
-    config_path = Path(hermes_home) / "cortistrate.json"
+    config_path = Path(hermes_home) / "corti.json"
     if config_path.exists():
         try:
             file_cfg = json.loads(config_path.read_text(encoding="utf-8"))

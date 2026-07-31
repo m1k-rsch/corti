@@ -13,14 +13,14 @@ from typing import ClassVar, Literal
 
 import pytest
 
-from cortistrate.component.utils.datetime import today_with_timezone
-from cortistrate.core.persistence import (
+from corti.component.utils.datetime import today_with_timezone
+from corti.core.persistence import (
     AgentScopedFrontmatter,
     MarkdownReader,
     MemoryRoot,
     UserScopedFrontmatter,
 )
-from cortistrate.infra.persistence.markdown.writers import BaseDailyWriter
+from corti.infra.persistence.markdown.writers import BaseDailyWriter
 
 
 class _UserDemoFrontmatter(UserScopedFrontmatter):

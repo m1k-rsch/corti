@@ -2,11 +2,11 @@ from __future__ import annotations
 
 import pytest
 
-from cortistrate.infra.ome.context import StrategyContext
-from cortistrate.infra.ome.decorator import Strategy, StrategyMeta, offline_strategy
-from cortistrate.infra.ome.events import BaseEvent
-from cortistrate.infra.ome.gates import Counter
-from cortistrate.infra.ome.triggers import Immediate
+from corti.infra.ome.context import StrategyContext
+from corti.infra.ome.decorator import Strategy, StrategyMeta, offline_strategy
+from corti.infra.ome.events import BaseEvent
+from corti.infra.ome.gates import Counter
+from corti.infra.ome.triggers import Immediate
 
 
 class _E(BaseEvent):

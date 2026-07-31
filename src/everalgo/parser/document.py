@@ -34,7 +34,11 @@ from asgiref.sync import async_to_sync
 
 from everalgo.llm import ChatMessage, LLMClient, TextPart, image_url_part_from_bytes
 from everalgo.parser._utils import clean_html_content, clean_html_for_llm
-from everalgo.parser.prompts.en import PROMPT_FOR_FILE, PROMPT_FOR_HTML, PROMPT_FOR_PICTURE
+from everalgo.parser.prompts.en import (
+    PROMPT_FOR_FILE,
+    PROMPT_FOR_HTML,
+    PROMPT_FOR_PICTURE,
+)
 from everalgo.types import Modality, ParsedContent, RawFile, get_modality
 
 if TYPE_CHECKING:

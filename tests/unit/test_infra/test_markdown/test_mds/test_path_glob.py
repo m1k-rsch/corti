@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import pytest
 
-from cortistrate.infra.persistence.markdown import (
+from corti.infra.persistence.markdown import (
     AtomicFactDailyFrontmatter,
     EpisodeDailyFrontmatter,
     ForesightDailyFrontmatter,

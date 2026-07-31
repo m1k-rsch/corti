@@ -3,7 +3,7 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from cortistrate.infra.ome.gates import Counter
+from corti.infra.ome.gates import Counter
 
 
 def test_counter_accepts_threshold() -> None:

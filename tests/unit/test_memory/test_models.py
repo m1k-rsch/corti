@@ -1,7 +1,7 @@
 """Unit tests for memory domain models — focused on ``from_algo`` factories.
 
 The factories carry the load-bearing contract: algo's emitted business
-fields survive, cortistrate's engineering metadata (session_id / sender_ids
+fields survive, corti's engineering metadata (session_id / sender_ids
 / parent_id) gets injected, and any algo-side ``parent_id`` (smuggled
 through ``extra='allow'``) is dropped in favour of the caller's value.
 """
@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import uuid
 
+from corti.memory.models import AgentCase, AtomicFact, Episode, Foresight
 from everalgo.types import (
     AgentCase as AlgoAgentCase,
 )
@@ -22,8 +23,6 @@ from everalgo.types import (
 from everalgo.types import (
     Foresight as AlgoForesight,
 )
-
-from cortistrate.memory.models import AgentCase, AtomicFact, Episode, Foresight
 
 
 def test_atomic_fact_from_algo_carries_business_fields_and_metadata() -> None:
@@ -128,7 +127,7 @@ def test_foresight_from_algo_preserves_algo_owner_id() -> None:
 
 
 def test_agent_case_from_algo_injects_owner_and_drops_algo_id() -> None:
-    """Algo emits a uuid `id` + no owner; cortistrate injects agent_id, drops uuid."""
+    """Algo emits a uuid `id` + no owner; corti injects agent_id, drops uuid."""
     algo = AlgoAgentCase(
         id=uuid.uuid4().hex,
         timestamp=1_700_000_000_000,

@@ -12,8 +12,8 @@ from pathlib import Path
 
 import pytest
 
-from cortistrate.core.persistence import MemoryRoot
-from cortistrate.memory.cascade.scanner import CascadeScanner, _collect_scan_inputs
+from corti.core.persistence import MemoryRoot
+from corti.memory.cascade.scanner import CascadeScanner, _collect_scan_inputs
 
 
 async def test_double_start_is_idempotent(tmp_path: Path) -> None:

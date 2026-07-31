@@ -1,7 +1,7 @@
 """Re-run probes against an existing corpus + regenerate the report.
 
 Reuses everything from :mod:`_run_full_report` except the ingest step —
-points at the already-populated ``~/.cortistrate-report-corpus`` and only
+points at the already-populated ``~/.corti-report-corpus`` and only
 re-runs the search probes + report rendering. Useful when the corpus
 is already there from a previous run and you just want to refresh the
 retrieval section without paying for LLM ingestion again.
@@ -33,14 +33,14 @@ from _run_full_report import (  # noqa: E402
 async def main() -> None:
     if not (CORPUS_ROOT / "users").is_dir():
         raise SystemExit(f"{CORPUS_ROOT} not populated — run _run_full_report.py first")
-    os.environ["CORTISTRATE_ROOT"] = str(CORPUS_ROOT)
-    from cortistrate.config import load_settings
+    os.environ["CORTI_ROOT"] = str(CORPUS_ROOT)
+    from corti.config import load_settings
 
     load_settings.cache_clear()
 
     print(f"[1/3] using corpus at {CORPUS_ROOT}")
 
-    from cortistrate.entrypoints.api.app import create_app
+    from corti.entrypoints.api.app import create_app
 
     app = create_app()
     transport = httpx.ASGITransport(app=app)

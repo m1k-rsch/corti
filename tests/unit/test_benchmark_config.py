@@ -157,7 +157,7 @@ def test_run_spec_includes_git_hash() -> None:
         stages=["add", "search"],
         git_hash="abc1234",
         python_version="3.12.11",
-        cortistrate_version="1.1.0",
+        corti_version="1.1.0",
         started_at="2026-06-28T22:30:00Z",
     )
     assert spec.git_hash == "abc1234"

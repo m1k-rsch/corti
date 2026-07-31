@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from cortistrate.core.errors import (
+from corti.core.errors import (
     AppError,
     CapabilityError,
     ConfigurationError,
@@ -87,12 +87,12 @@ class TestConfigurationBranch:
 
 class TestBackwardCompat:
     def test_old_document_already_exists_alias(self) -> None:
-        from cortistrate.core.errors import DocumentAlreadyExistsError
+        from corti.core.errors import DocumentAlreadyExistsError
 
         assert DocumentAlreadyExistsError is DuplicateDocumentError
 
     def test_old_validation_error_alias(self) -> None:
-        from cortistrate.core.errors import ValidationError
+        from corti.core.errors import ValidationError
 
         assert ValidationError is InvalidInputError
 

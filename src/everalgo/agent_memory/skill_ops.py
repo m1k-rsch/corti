@@ -10,7 +10,9 @@ from difflib import SequenceMatcher
 from typing import TYPE_CHECKING, Any
 
 from everalgo.agent_memory._text import json_default, truncate_text
-from everalgo.agent_memory.prompts.skill_maturity import AGENT_SKILL_MATURITY_SCORE_PROMPT
+from everalgo.agent_memory.prompts.skill_maturity import (
+    AGENT_SKILL_MATURITY_SCORE_PROMPT,
+)
 from everalgo.llm.types import ChatMessage as LLMChatMessage
 from everalgo.prompts import render_prompt
 from everalgo.types import AgentCase, AgentSkill
@@ -309,7 +311,7 @@ async def _apply_add(
     )
 
 
-async def _apply_update(  # noqa: C901
+async def _apply_update(
     op: dict[str, Any],
     existing_list: Sequence[AgentSkill],
     source_case_ids: Sequence[str],

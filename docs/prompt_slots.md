@@ -2,7 +2,7 @@
 
 PromptSlot is the layer between the algorithm code (`everalgo`) and
 the prompts it sends to LLMs. Algorithm code receives a `PromptSlot`
-parameter; the *project* (Cortistrate) supplies defaults and lets operators
+parameter; the *project* (Corti) supplies defaults and lets operators
 override.
 
 > **Status (2026-05-07)**: Layer 1 (bundled defaults under
@@ -10,14 +10,14 @@ override.
 > memorize pipeline (`service/memorize.py`). Two slots ship today —
 > `boundary_detection` and `episode_extract`; other extractors use their
 > algo-bundled defaults. Layers 2-3 (app-level overlay from
-> `~/.cortistrate/prompt_slots/` and per-call runtime override) are still pending.
+> `~/.corti/prompt_slots/` and per-call runtime override) are still pending.
 
 ## Three-layer overlay
 
 ```
 config/prompt_slots/<name>.yaml          (Layer 1: defaults shipped with the package)
        ↓
-~/.cortistrate/prompt_slots/<name>.yaml       (Layer 2: app-level override; per-deployment)
+~/.corti/prompt_slots/<name>.yaml       (Layer 2: app-level override; per-deployment)
        ↓
 runtime override                         (Layer 3: per-call override; e.g. "force model X")
 ```
@@ -29,19 +29,19 @@ layer 3 is supplied at the call site.
 ## Loader
 
 The prompt-slots public entry point is
-[`PromptLoader`](../src/cortistrate/memory/prompt_slots/loader.py) (re-exported
-from `cortistrate.memory.prompt_slots`). Its public method is
+[`PromptLoader`](../src/corti/memory/prompt_slots/loader.py) (re-exported
+from `corti.memory.prompt_slots`). Its public method is
 `load(name: str) -> str | None` — returns the override template when the
 slot is enabled and non-empty, or `None` to fall back to the algo default.
 
 Internally, `PromptLoader` wraps the generic category loader
-[`YamlConfigLoader`](../src/cortistrate/component/config/loader.py):
+[`YamlConfigLoader`](../src/corti/component/config/loader.py):
 
 ```python
-from cortistrate.memory.prompt_slots import PromptLoader
+from corti.memory.prompt_slots import PromptLoader
 from pathlib import Path
 
-loader = PromptLoader(config_root=Path("src/cortistrate/config"))
+loader = PromptLoader(config_root=Path("src/corti/config"))
 
 # Returns the template string, or None when disabled / empty.
 template = loader.load("episode_extract")
@@ -93,7 +93,7 @@ forcing one model on the other gets clunky.
 
 ## See also
 
-- [`src/cortistrate/memory/prompt_slots/`](../src/cortistrate/memory/prompt_slots/) — `PromptLoader` (prompt-slots public API)
-- [`src/cortistrate/component/config/loader.py`](../src/cortistrate/component/config/loader.py) — generic `YamlConfigLoader`
+- [`src/corti/memory/prompt_slots/`](../src/corti/memory/prompt_slots/) — `PromptLoader` (prompt-slots public API)
+- [`src/corti/component/config/loader.py`](../src/corti/component/config/loader.py) — generic `YamlConfigLoader`
 - [`tests/unit/test_component/test_config/test_loader.py`](../tests/unit/test_component/test_config/test_loader.py)
 - [`docs/architecture.md`](architecture.md) — layer placement

@@ -15,18 +15,18 @@
 
 ## The two-zone discipline
 
-Cortistrate treats datetimes on **two separate rails**:
+Corti treats datetimes on **two separate rails**:
 
 | Rail | Where it lives | Helper |
 |---|---|---|
 | **UTC** (storage) | SQLite, Postgres, OME events — anything persisted to disk | `get_utc_now`, `ensure_utc`, `UtcDatetime` |
 | **Display tz** | Markdown frontmatter, HTTP API responses, daily-log filename buckets, fallback zone for naive caller input | `get_now_with_timezone`, `today_with_timezone`, `to_display_tz` |
 
-The display timezone is set by the `CORTISTRATE_MEMORY__TIMEZONE`
+The display timezone is set by the `CORTI_MEMORY__TIMEZONE`
 environment variable (or `[memory] timezone` in TOML). Default `UTC`.
 
 **Inviolable rule**: the display tz must **never** reach storage. Once
-the user switches `CORTISTRATE_MEMORY__TIMEZONE`, existing on-disk rows
+the user switches `CORTI_MEMORY__TIMEZONE`, existing on-disk rows
 must not misalign.
 
 ## Why two zones
@@ -37,7 +37,7 @@ The naive design — "use one configured timezone everywhere" — has two
 failure modes, both subtle:
 
 1. **Configuration drift.** Day 1 the user configures
-   `CORTISTRATE_MEMORY__TIMEZONE=Asia/Shanghai`. Everything stores
+   `CORTI_MEMORY__TIMEZONE=Asia/Shanghai`. Everything stores
    Shanghai-local datetimes. On Day 30 they switch to
    `UTC`. SQLite (which strips tz on write and returns naive on read)
    silently reinterprets the old Shanghai values as UTC — every old
@@ -59,7 +59,7 @@ at the boundary.
 
 ## Helper reference
 
-All helpers live in [`cortistrate.component.utils.datetime`](../src/cortistrate/component/utils/datetime.py).
+All helpers live in [`corti.component.utils.datetime`](../src/corti/component/utils/datetime.py).
 
 ### Storage rail
 
@@ -91,8 +91,8 @@ All helpers live in [`cortistrate.component.utils.datetime`](../src/cortistrate/
 ### SQLite tables
 
 ```python
-from cortistrate.component.utils.datetime import UtcDatetime, get_utc_now
-from cortistrate.core.persistence.sqlite import BaseTable, Field
+from corti.component.utils.datetime import UtcDatetime, get_utc_now
+from corti.core.persistence.sqlite import BaseTable, Field
 
 class MyRow(BaseTable, table=True):
     happened_at: UtcDatetime = Field(default_factory=get_utc_now)
@@ -106,7 +106,7 @@ normalised to UTC before persistence.
 SQLModel's ORM hydrate path (rows from `select(...)`) **bypasses**
 the Pydantic validator — SQLAlchemy assigns column values straight
 to instance attributes. To close that gap,
-[core/persistence/sqlite/base.py](../src/cortistrate/core/persistence/sqlite/base.py)
+[core/persistence/sqlite/base.py](../src/corti/core/persistence/sqlite/base.py)
 defines a `TypeDecorator` column type, `UtcDateTimeColumn`, whose
 `process_result_value` re-attaches `tzinfo=UTC` on read (and
 `process_bind_param` normalises to UTC on write). Net effect:
@@ -155,8 +155,8 @@ event payload.
 
 | Backend | Defense | Where |
 |---|---|---|
-| **SQLite** | `UtcDateTimeColumn` (`TypeDecorator`) re-attaches `tzinfo=UTC` on read (`process_result_value`) and normalises to UTC on write (`process_bind_param`) | [core/persistence/sqlite/base.py](../src/cortistrate/core/persistence/sqlite/base.py) |
-| **Postgres** | `BasePgTable.to_arrow_schema()` rewrites **every** `timestamp[us]` column to `timestamp[us, tz=UTC]`; PyArrow handles UTC end-to-end | [core/persistence/postgres/base.py](../src/cortistrate/core/persistence/postgres/base.py) |
+| **SQLite** | `UtcDateTimeColumn` (`TypeDecorator`) re-attaches `tzinfo=UTC` on read (`process_result_value`) and normalises to UTC on write (`process_bind_param`) | [core/persistence/sqlite/base.py](../src/corti/core/persistence/sqlite/base.py) |
+| **Postgres** | `BasePgTable.to_arrow_schema()` rewrites **every** `timestamp[us]` column to `timestamp[us, tz=UTC]`; PyArrow handles UTC end-to-end | [core/persistence/postgres/base.py](../src/corti/core/persistence/postgres/base.py) |
 | **CI gate** | `scripts/check_datetime_discipline.py` fails the build on any code that bypasses `component/utils/datetime` | wired into `make lint` |
 
 These defenses replace what used to be an "every consumer must call
@@ -235,12 +235,12 @@ clear:
 
 ```python
 import pytest
-from cortistrate.component.utils import datetime as dt_module
-from cortistrate.config import load_settings
+from corti.component.utils import datetime as dt_module
+from corti.config import load_settings
 
 @pytest.fixture(autouse=True)
 def _isolate_tz(monkeypatch: pytest.MonkeyPatch) -> None:
-    monkeypatch.delenv("CORTISTRATE_MEMORY__TIMEZONE", raising=False)
+    monkeypatch.delenv("CORTI_MEMORY__TIMEZONE", raising=False)
     load_settings.cache_clear()
     dt_module._display_tz.cache_clear()
 ```
@@ -252,7 +252,7 @@ var **and** clear both caches:
 
 ```python
 def test_my_thing(monkeypatch):
-    monkeypatch.setenv("CORTISTRATE_MEMORY__TIMEZONE", "Asia/Shanghai")
+    monkeypatch.setenv("CORTI_MEMORY__TIMEZONE", "Asia/Shanghai")
     load_settings.cache_clear()
     dt_module._display_tz.cache_clear()
     ...

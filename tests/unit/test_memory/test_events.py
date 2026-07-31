@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import pydantic
 import pytest
-from everalgo.types import ChatMessage, MemCell
 
-from cortistrate.memory.events import AgentPipelineStarted, UserPipelineStarted
+from corti.memory.events import AgentPipelineStarted, UserPipelineStarted
+from everalgo.types import ChatMessage, MemCell
 
 
 def _sample_memcell() -> MemCell:
@@ -30,11 +30,11 @@ def _sample_memcell() -> MemCell:
 
 
 def test_user_pipeline_started_topic_is_module_qualified() -> None:
-    assert UserPipelineStarted.topic() == "cortistrate.memory.events:UserPipelineStarted"
+    assert UserPipelineStarted.topic() == "corti.memory.events:UserPipelineStarted"
 
 
 def test_agent_pipeline_started_topic_is_module_qualified() -> None:
-    assert AgentPipelineStarted.topic() == "cortistrate.memory.events:AgentPipelineStarted"
+    assert AgentPipelineStarted.topic() == "corti.memory.events:AgentPipelineStarted"
 
 
 def test_user_pipeline_started_roundtrip_json() -> None:

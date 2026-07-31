@@ -8,8 +8,8 @@ from unittest.mock import patch
 
 import pytest
 
-from cortistrate.core.errors import PathTraversalError
-from cortistrate.core.persistence import (
+from corti.core.errors import PathTraversalError
+from corti.core.persistence import (
     EntryId,
     MarkdownReader,
     MarkdownWriter,
@@ -63,7 +63,7 @@ async def test_write_cleans_up_temp_on_failure(tmp_path: Path) -> None:
 
     boom = OSError("simulated rename failure")
     with (
-        patch("cortistrate.core.persistence.markdown.writer.os.replace", side_effect=boom),
+        patch("corti.core.persistence.markdown.writer.os.replace", side_effect=boom),
         pytest.raises(OSError, match="simulated"),
     ):
         await writer.write(target, "hello")

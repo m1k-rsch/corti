@@ -200,7 +200,7 @@ def clean_html_for_llm(html_content: str) -> str:
 
     # ``find_all(True)`` is bs4's idiom for "every tag"; the literal is part of the
     # library API, not a behaviour-toggling boolean flag, so FBT003 doesn't apply.
-    for tag in soup.find_all(True):  # noqa: FBT003
+    for tag in soup.find_all(True):
         for attr in _REMOVE_ATTRS:
             tag.attrs.pop(attr, None)
 

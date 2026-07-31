@@ -137,7 +137,7 @@ async def _call_llm_for_rerank(llm: LLMClient, rendered: str) -> list[dict[str, 
     data = json.loads(json_str)
     ranked = data.get("ranked")
     if not isinstance(ranked, list):
-        raise ValueError(f"Missing or invalid 'ranked' field in rerank response: {data!r}")  # noqa: TRY004
+        raise ValueError(f"Missing or invalid 'ranked' field in rerank response: {data!r}")
     return cast("list[dict[str, Any]]", ranked)
 
 
@@ -290,4 +290,6 @@ async def _arank(rank_input: RankInput, **kwargs: Any) -> RankOutput:
 _rank = async_to_sync(_arank)
 """Sync bridge over ``_arank``; re-exported as ``rank`` from the package root. Only safe outside an event loop."""
 
-from everalgo.rank import fusion  # noqa: E402  (late import breaks the circular dependency with rank/__init__.py)
+from everalgo.rank import (
+    fusion,
+)

@@ -6,25 +6,25 @@ from pathlib import Path
 
 import pytest
 
-from cortistrate.core.persistence import MemoryRoot
+from corti.core.persistence import MemoryRoot
 
 
-def test_default_returns_home_cortistrate(
+def test_default_returns_home_corti(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    monkeypatch.delenv("CORTISTRATE_ROOT", raising=False)
+    monkeypatch.delenv("CORTI_ROOT", raising=False)
     monkeypatch.chdir(tmp_path)
-    from cortistrate.config import load_settings
+    from corti.config import load_settings
 
     load_settings.cache_clear()
     mr = MemoryRoot.default()
-    assert mr.root == (Path.home() / ".cortistrate").resolve()
+    assert mr.root == (Path.home() / ".corti").resolve()
 
 
-def test_default_from_cortistrate_root_env(
+def test_default_from_corti_root_env(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    monkeypatch.setenv("CORTISTRATE_ROOT", str(tmp_path / "custom"))
+    monkeypatch.setenv("CORTI_ROOT", str(tmp_path / "custom"))
     mr = MemoryRoot.default()
     assert mr.root == (tmp_path / "custom").resolve()
 
@@ -95,7 +95,7 @@ def test_ensure_is_idempotent(tmp_path: Path) -> None:
 
 
 def test_ensure_does_not_create_ome_toml(tmp_path: Path) -> None:
-    """ome.toml creation moved to ``cortistrate init``; ensure() only makes dirs."""
+    """ome.toml creation moved to ``corti init``; ensure() only makes dirs."""
     mr = MemoryRoot(tmp_path / "fresh")
     mr.ensure()
     assert not mr.ome_config.exists()

@@ -1,6 +1,6 @@
 # Architecture rule (always loaded)
 
-Cortistrate is a DDD-layered framework. The dependency direction is **single, downward only**:
+Corti is a DDD-layered framework. The dependency direction is **single, downward only**:
 
 ```
 entrypoints  →  service  →  memory  →  infra
@@ -22,7 +22,7 @@ entrypoints  →  service  →  memory  →  infra
    `entrypoints → service → memory → infra`.
 2. **Private internals**: `service`, `memory`, and `entrypoints` must not import
    `infra.persistence.{markdown,lancedb,sqlite}.**` internals — go through the
-   package facade (`from cortistrate.infra.persistence.markdown import ...`).
+   package facade (`from corti.infra.persistence.markdown import ...`).
 3. **OME isolation**: `infra.ome` must not import `persistence`, `memory`,
    `service`, or `entrypoints`. It is a low-level scheduler with no domain knowledge.
 

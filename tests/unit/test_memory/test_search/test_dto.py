@@ -5,7 +5,7 @@ from __future__ import annotations
 import pytest
 from pydantic import ValidationError
 
-from cortistrate.memory.search import (
+from corti.memory.search import (
     SearchData,
     SearchMethod,
     SearchRequest,

@@ -7,7 +7,7 @@ paths:
 
 - **Use the project logger**, never `print` or the stdlib `logging` directly:
   ```python
-  from cortistrate.core.observability.logging import get_logger
+  from corti.core.observability.logging import get_logger
   logger = get_logger(__name__)
   ```
 - **Structured logging** (`structlog`): pass context as keyword fields, not f-strings.

@@ -4,7 +4,7 @@ Verifies dual-column BM25 + cosine ANN recall, using ``unittest.mock``
 to patch ``get_table`` so no real Postgres connection is needed.
 
 White-box surfaces touched:
-  - ``cortistrate.memory.search.recall.knowledge_topic.get_table`` (patched)
+  - ``corti.memory.search.recall.knowledge_topic.get_table`` (patched)
   - ``KnowledgeTopicRecaller.sparse_recall`` — queries both BM25 columns
   - ``KnowledgeTopicRecaller.dense_recall`` — cosine ANN with distance→score
 """
@@ -16,11 +16,11 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 import pytest
 
-from cortistrate.component.tokenizer import Tokenizer
-from cortistrate.memory.search.recall.base import RecallerDeps
-from cortistrate.memory.search.recall import KnowledgeTopicRecaller
+from corti.component.tokenizer import Tokenizer
+from corti.memory.search.recall import KnowledgeTopicRecaller
+from corti.memory.search.recall.base import RecallerDeps
 
-_MODULE = "cortistrate.memory.search.recall.knowledge_topic"
+_MODULE = "corti.memory.search.recall.knowledge_topic"
 
 
 class _WhitespaceTokenizer(Tokenizer):
