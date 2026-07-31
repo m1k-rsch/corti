@@ -73,6 +73,10 @@ RUN chmod +x /docker-entrypoint.sh
 COPY src/cortistrate/config/default.toml /opt/cortistrate/config/default.toml
 COPY src/cortistrate/config/default_ome.toml /opt/cortistrate/config/default_ome.toml
 
+# Stage agent-integration plugin bundles for install.sh to extract.
+COPY src/integrations/hermes /opt/cortistrate/integrations/hermes
+COPY src/integrations/claude-code /opt/cortistrate/integrations/claude-code
+
 # Create data directory structure.
 RUN mkdir -p /home/app/.cortistrate/.index/pg \
              /home/app/.cortistrate/.index/sqlite \

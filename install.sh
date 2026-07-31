@@ -1,7 +1,9 @@
 #!/usr/bin/env bash
-# cortistrate — one-command Docker install
+# cortistrate — one-command Docker install (pull pre-built image)
 # Usage: curl -fsSL https://raw.githubusercontent.com/mark1kwok/cortistrate/main/install.sh | bash
 set -euo pipefail
+
+IMAGE="mark1kwok/cortistrate:latest"
 
 # ── Colors ────────────────────────────────────────────────────────────────
 if [ -t 1 ]; then
@@ -61,29 +63,14 @@ else
     exit 1
 fi
 
-# ── Step 2: Clone repo ────────────────────────────────────────────────────
-section "Step 2: Clone Cortistrate"
+# ── Step 2: Pull image ────────────────────────────────────────────────────
+section "Step 2: Pull Image"
 
-REPO_URL="https://github.com/mark1kwok/cortistrate.git"
-REPO_DIR="${CORTISTRATE_REPO:-$HOME/.local/share/cortistrate/repo}"
+info "Pulling $IMAGE..."
+docker pull "$IMAGE"
 
-if [ -d "$REPO_DIR/.git" ]; then
-    info "Updating existing repo at $REPO_DIR"
-    git -C "$REPO_DIR" pull --ff-only
-else
-    info "Cloning to $REPO_DIR"
-    mkdir -p "$(dirname "$REPO_DIR")"
-    git clone "$REPO_URL" "$REPO_DIR"
-fi
-
-# ── Step 3: Build Docker image ────────────────────────────────────────────
-section "Step 3: Build Docker Image"
-
-info "Building cortistrate:latest (this may take a few minutes)..."
-docker build -t cortistrate:latest "$REPO_DIR"
-
-# ── Step 4: Seed data directory ───────────────────────────────────────────
-section "Step 4: Data Directory"
+# ── Step 3: Seed data directory ───────────────────────────────────────────
+section "Step 3: Data Directory"
 
 DATA_DIR="${CORTISTRATE_ROOT:-$HOME/.cortistrate}"
 
@@ -92,17 +79,22 @@ if [ -d "$DATA_DIR" ] && [ -f "$DATA_DIR/cortistrate.toml" ]; then
 else
     info "Seeding data directory at $DATA_DIR"
     mkdir -p "$DATA_DIR/.index/sqlite" "$DATA_DIR/.index/pg" "$DATA_DIR/.tmp"
-    cp "$REPO_DIR/src/cortistrate/config/default.toml" "$DATA_DIR/cortistrate.toml"
-    cp "$REPO_DIR/src/cortistrate/config/default_ome.toml" "$DATA_DIR/ome.toml"
+
+    # Extract default configs from the Docker image.
+    CID=$(docker create "$IMAGE")
+    docker cp "$CID:/opt/cortistrate/config/default.toml" "$DATA_DIR/cortistrate.toml"
+    docker cp "$CID:/opt/cortistrate/config/default_ome.toml" "$DATA_DIR/ome.toml"
+    docker rm "$CID" >/dev/null
 fi
 
-# ── Step 5: Agent integrations ────────────────────────────────────────────
-section "Step 5: Agent Integrations"
+# ── Step 4: Agent integrations ────────────────────────────────────────────
+section "Step 4: Agent Integrations"
 
-# ── 5a: Hermes ──────────────────────────────────────────────────────────────
+CID=$(docker create "$IMAGE")
+
+# ── 4a: Hermes ──────────────────────────────────────────────────────────────
 HERMES_PLUGIN_DIR="$HOME/.hermes/plugins"
 HERMES_TARGET="$HERMES_PLUGIN_DIR/cortistrate"
-HERMES_SRC="$REPO_DIR/src/integrations/hermes"
 
 if command -v hermes &>/dev/null; then
     info "Hermes detected"
@@ -115,7 +107,8 @@ if command -v hermes &>/dev/null; then
         echo "  Remove it manually if you want a fresh install: rm -rf $HERMES_TARGET"
     else
         mkdir -p "$HERMES_PLUGIN_DIR"
-        cp -r "$HERMES_SRC" "$HERMES_TARGET"
+        docker cp "$CID:/opt/cortistrate/integrations/hermes" "$HERMES_PLUGIN_DIR/"
+        mv "$HERMES_PLUGIN_DIR/hermes" "$HERMES_TARGET"
         info "Hermes plugin installed: $HERMES_TARGET"
     fi
 else
@@ -123,10 +116,9 @@ else
     echo "  Install Hermes: https://github.com/mark1kwok/hermes"
 fi
 
-# ── 5b: Claude Code ─────────────────────────────────────────────────────────
+# ── 4b: Claude Code ─────────────────────────────────────────────────────────
 CLAUDE_PLUGIN_DIR="$HOME/.claude/plugins"
 CLAUDE_TARGET="$CLAUDE_PLUGIN_DIR/cortistrate"
-CLAUDE_SRC="$REPO_DIR/src/integrations/claude-code"
 
 if command -v claude &>/dev/null; then
     info "Claude Code detected"
@@ -139,7 +131,8 @@ if command -v claude &>/dev/null; then
         echo "  Remove it manually if you want a fresh install: rm -rf $CLAUDE_TARGET"
     else
         mkdir -p "$CLAUDE_PLUGIN_DIR"
-        cp -r "$CLAUDE_SRC" "$CLAUDE_TARGET"
+        docker cp "$CID:/opt/cortistrate/integrations/claude-code" "$CLAUDE_PLUGIN_DIR/"
+        mv "$CLAUDE_PLUGIN_DIR/claude-code" "$CLAUDE_TARGET"
         info "Claude Code plugin installed: $CLAUDE_TARGET"
     fi
 else
@@ -147,8 +140,10 @@ else
     echo "  Install Claude Code: https://claude.ai/code"
 fi
 
-# ── Step 6: Configure LLM ─────────────────────────────────────────────────
-section "Step 6: Configure LLM"
+docker rm "$CID" >/dev/null
+
+# ── Step 5: Default endpoints ─────────────────────────────────────────────
+section "Step 5: Default Endpoints"
 
 echo "Cortistrate ships with free default endpoints — no API key required:"
 echo ""
@@ -179,14 +174,14 @@ echo -e "  ${BOLD}1. Start the server:${NC}"
 echo "    docker run -d --name cortistrate \\"
 echo "      -p 5473:5473 \\"
 echo "      -v ~/.cortistrate:/home/app/.cortistrate \\"
-echo "      cortistrate:latest"
+echo "      $IMAGE"
 echo ""
 echo -e "  ${BOLD}2. Check health:${NC}"
 echo "    curl http://localhost:5473/health"
 echo ""
 echo -e "  ${BOLD}Update:${NC}"
-echo "    cd $REPO_DIR && git pull && docker build -t cortistrate:latest ."
-echo "    docker rm -f cortistrate && docker run -d ... cortistrate:latest"
+echo "    docker pull $IMAGE"
+echo "    docker rm -f cortistrate && docker run -d ... $IMAGE"
 echo ""
 echo -e "  ${BOLD}Docs:${NC} https://cortistrate.dev/docs"
 echo ""

@@ -123,19 +123,17 @@ Three-piece embedded engine. Markdown = Single Source of Truth. SQLite + Postgre
 curl -fsSL https://raw.githubusercontent.com/mark1kwok/cortistrate/main/install.sh | bash
 ```
 
-What this does: checks Docker → clones the repo → builds the Docker image → seeds `~/.cortistrate/` with default config → auto-installs agent plugins (Hermes, Claude Code) if detected.
+What this does: checks Docker → pulls the pre-built image from Docker Hub → seeds `~/.cortistrate/` with default config → auto-installs agent plugins (Hermes, Claude Code) if detected.
 
 **Requirements**: Docker 24+.
 
-### 2. Configure LLM & Start
-
-Edit `~/.cortistrate/cortistrate.toml` and fill in `[llm]` and `[embedding]` API keys, then:
+### 2. Start the Server
 
 ```bash
 docker run -d --name cortistrate \
   -p 5473:5473 \
   -v ~/.cortistrate:/home/app/.cortistrate \
-  cortistrate:latest
+  mark1kwok/cortistrate:latest
 
 # Verify
 curl http://localhost:5473/health
@@ -164,9 +162,9 @@ curl -s -X POST http://localhost:5473/api/v1/memory/search \
 
 The install script (`install.sh`) handles everything automatically:
 
-1. **Docker build** — produces `cortistrate:latest` image with embedded Postgres + pgvector
-2. **Data seeding** — writes default config to `~/.cortistrate/cortistrate.toml`
-3. **Agent plugin installation** — copies plugin source into the agent's local plugins directory:
+1. **Docker pull** — fetches pre-built `mark1kwok/cortistrate:latest` from Docker Hub (no clone, no build)
+2. **Data seeding** — extracts default config from the image into `~/.cortistrate/cortistrate.toml`
+3. **Agent plugin installation** — extracts plugin source from the image into the agent's local plugins directory:
 
 | Agent | Target | Source |
 |---|---|---|
@@ -177,14 +175,20 @@ Plugins are **copied** (not symlinked), so they survive repo updates and work in
 
 ### 2. Manual Plugin Install
 
-If you already ran the Docker install but skipped plugin detection, or want to reinstall just one plugin:
+If you already pulled the image but skipped plugin detection, or want to reinstall just one plugin:
 
 ```bash
 # Hermes
-cp -r ~/.local/share/cortistrate/repo/src/integrations/hermes ~/.hermes/plugins/cortistrate/
+docker create --name cortistrate-tmp mark1kwok/cortistrate:latest
+docker cp cortistrate-tmp:/opt/cortistrate/integrations/hermes ~/.hermes/plugins/
+mv ~/.hermes/plugins/hermes ~/.hermes/plugins/cortistrate
+docker rm cortistrate-tmp
 
 # Claude Code
-cp -r ~/.local/share/cortistrate/repo/src/integrations/claude-code ~/.claude/plugins/cortistrate/
+docker create --name cortistrate-tmp mark1kwok/cortistrate:latest
+docker cp cortistrate-tmp:/opt/cortistrate/integrations/claude-code ~/.claude/plugins/
+mv ~/.claude/plugins/claude-code ~/.claude/plugins/cortistrate
+docker rm cortistrate-tmp
 ```
 
 ---
