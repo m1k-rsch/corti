@@ -1,7 +1,7 @@
 """OpenAI-compatible embedding provider.
 
 Wraps :class:`openai.AsyncOpenAI` so any OpenAI-protocol endpoint
-(DeepInfra, OpenAI, Together, Fireworks, …) works without per-provider
+(DeepInfra, OpenAI, Together, Fireworks, ...) works without per-provider
 forks. Self-hosted vLLM also exposes the same shape; the only quirk it
 imposes is that the ``dimensions`` request parameter is ignored — we
 truncate client-side to ``dim`` so callers always see the declared
@@ -14,16 +14,33 @@ Concurrency model:
   in-flight requests; remaining chunks queue and start as slots free.
 - Retries / timeouts come from the openai SDK (``max_retries``,
   ``timeout`` constructor args).
+
+Sentinel-key support:
+
+When ``api_key`` starts with ``"sk-no-"`` (the sentinel prefix used by
+free keyless endpoints like Pollinations and OVHcloud), the provider
+sets ``default_headers={"Authorization": ""}`` so the upstream never
+sees a dummy key.
 """
 
 from __future__ import annotations
 
 import asyncio
 from collections.abc import Sequence
+from typing import Any
 
 import openai
 
 from .protocol import EmbeddingServiceError
+
+_SENTINEL_KEY_PREFIX = "sk-no-"
+
+
+def _auth_headers(api_key: str) -> dict[str, str] | None:
+    """Override the Authorization header with empty string for sentinel keys."""
+    if api_key.startswith(_SENTINEL_KEY_PREFIX):
+        return {"Authorization": ""}
+    return None
 
 
 class OpenAIEmbeddingProvider:
@@ -59,12 +76,17 @@ class OpenAIEmbeddingProvider:
         self._model = model
         self._batch_size = batch_size
         self._semaphore = asyncio.Semaphore(max_concurrent)
-        self._client = openai.AsyncOpenAI(
-            api_key=api_key,
+        kwargs: dict[str, Any] = dict(
             base_url=base_url,
             timeout=timeout,
             max_retries=max_retries,
         )
+        if api_key.startswith(_SENTINEL_KEY_PREFIX):
+            kwargs["api_key"] = " "
+            kwargs["default_headers"] = {"Authorization": ""}
+        else:
+            kwargs["api_key"] = api_key
+        self._client = openai.AsyncOpenAI(**kwargs)
 
     async def embed(self, text: str) -> list[float]:
         """Embed a single string."""

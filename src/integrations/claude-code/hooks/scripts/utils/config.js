@@ -35,7 +35,7 @@ if (existsSync(envPath)) {
   }
 }
 
-const DEFAULT_BASE_URL = 'http://127.0.0.1:8000';
+const DEFAULT_BASE_URL = 'http://127.0.0.1:5473';
 const DEFAULT_APP_ID = 'shared-agent-memory';
 const DEFAULT_PROJECT_ID = 'default';
 const DEFAULT_USER_ID = 'default';

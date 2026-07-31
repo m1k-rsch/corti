@@ -111,6 +111,12 @@ if command -v hermes &>/dev/null; then
         mv "$HERMES_PLUGIN_DIR/hermes" "$HERMES_TARGET"
         info "Hermes plugin installed: $HERMES_TARGET"
     fi
+    # Auto-enable the plugin so it's active immediately.
+    if hermes plugins list 2>/dev/null | grep -q cortistrate; then
+        hermes plugins enable cortistrate 2>/dev/null && \
+            info "Hermes plugin enabled" || \
+            warn "Could not auto-enable Hermes plugin — run: hermes plugins enable cortistrate"
+    fi
 else
     info "Hermes not detected — skipping plugin install"
     echo "  Install Hermes: https://github.com/mark1kwok/hermes"
@@ -134,6 +140,16 @@ if command -v claude &>/dev/null; then
         docker cp "$CID:/opt/cortistrate/integrations/claude-code" "$CLAUDE_PLUGIN_DIR/"
         mv "$CLAUDE_PLUGIN_DIR/claude-code" "$CLAUDE_TARGET"
         info "Claude Code plugin installed: $CLAUDE_TARGET"
+    fi
+    # Register MCP server so Claude Code discovers it (plugin dir alone is not enough).
+    if claude mcp list 2>/dev/null | grep -q cortistrate; then
+        info "Claude Code MCP already registered"
+    else
+        claude mcp add -s user cortistrate -- \
+            python3 "$CLAUDE_TARGET/mcp/mcp_server.py" \
+            --env CORTISTRATE_BASE_URL=http://127.0.0.1:5473 2>/dev/null && \
+            info "Claude Code MCP registered" || \
+            warn "Could not auto-register Claude Code MCP — run: claude mcp add -s user cortistrate -- python3 ~/.claude/plugins/cortistrate/mcp/mcp_server.py"
     fi
 else
     info "Claude Code not detected — skipping plugin install"

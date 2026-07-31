@@ -22,7 +22,7 @@ _DEFAULT_USER_ID = "hermes-user"
 _DEFAULT_AGENT_ID = "hermes"
 _DEFAULT_APP_ID = "default"
 _DEFAULT_PROJECT_ID = "default"
-_DEFAULT_API_URL = "http://127.0.0.1:8000"
+_DEFAULT_API_URL = "http://127.0.0.1:5473"
 
 # ── Cortistrate scope-id validation ─────────────────────────────────────────────────
 

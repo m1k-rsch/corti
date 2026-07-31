@@ -4,7 +4,7 @@
       "command": "python3",
       "args": ["${CLAUDE_PLUGIN_ROOT}/mcp/mcp_server.py"],
       "env": {
-        "CORTISTRATE_BASE_URL": "http://127.0.0.1:8000"
+        "CORTISTRATE_BASE_URL": "http://127.0.0.1:5473"
       }
     }
   }

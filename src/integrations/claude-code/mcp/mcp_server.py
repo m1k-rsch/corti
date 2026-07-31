@@ -18,7 +18,7 @@ Scoping (shared with Hermes + Claude Code hooks):
   agent_id    = pc-claude-code (configurable via env)
 
 Env vars:
-  CORTISTRATE_BASE_URL   - Cortistrate API URL (default: http://127.0.0.1:8000)
+  CORTISTRATE_BASE_URL   - Cortistrate API URL (default: http://127.0.0.1:5473)
   CORTISTRATE_USER_ID    - default
   CORTISTRATE_AGENT_ID   - pc-claude-code
   CORTISTRATE_APP_ID     - shared-agent-memory
@@ -41,7 +41,7 @@ from mcp.types import Tool, TextContent
 
 # ── Config ────────────────────────────────────────────────────────────────────
 
-CORTISTRATE_URL = os.getenv("CORTISTRATE_BASE_URL", "http://127.0.0.1:8000")
+CORTISTRATE_URL = os.getenv("CORTISTRATE_BASE_URL", "http://127.0.0.1:5473")
 APP_ID = os.getenv("CORTISTRATE_APP_ID", "shared-agent-memory")
 PROJECT_ID = os.getenv("CORTISTRATE_PROJECT_ID", "default")
 USER_ID = os.getenv("CORTISTRATE_USER_ID", "default")
