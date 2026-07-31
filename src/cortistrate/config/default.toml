@@ -23,7 +23,7 @@ timezone = "UTC"
 # have placed your own gateway / auth layer in front of the server.
 # Override via CORTISTRATE_API__HOST and CORTISTRATE_API__PORT.
 host = "127.0.0.1"
-port = 8000
+port = 5473
 
 [sqlite]
 # PRAGMA journal_mode  — WAL is the recommended high-concurrency mode.

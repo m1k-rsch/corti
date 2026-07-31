@@ -34,7 +34,7 @@ def start(
     port: int | None = typer.Option(
         None,
         "--port",
-        help="Bind port (env: CORTISTRATE_API__PORT, default: 8000)",
+        help="Bind port (env: CORTISTRATE_API__PORT, default: 5473)",
     ),
     root: str | None = typer.Option(
         None,

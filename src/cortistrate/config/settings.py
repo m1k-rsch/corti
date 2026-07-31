@@ -98,7 +98,7 @@ class ApiSettings(BaseModel):
     """
 
     host: str = "127.0.0.1"
-    port: int = Field(default=8000, ge=1, le=65535)
+    port: int = Field(default=5473, ge=1, le=65535)
 
 
 class SqliteSettings(BaseModel):
