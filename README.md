@@ -17,6 +17,7 @@ CortiStrate (cortistrate): persistent, self-evolving memory layer for AI agents.
 | 1. LLM Backend (API)     --> Brainstem / Basal Ganglia (Stateless Core) |
 | 2. Agent Framework       --> Sensorimotor Exoskeleton (Hands & Feet)   |
 | 3. Memory ───────────────--> Agent Cortex (Persistent State Core)       |
+|      └─ [CortiStrate Implementation Substrate]                          |
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -116,57 +117,74 @@ Three-piece embedded engine. Markdown = Single Source of Truth. SQLite + Postgre
 
 ## 🚀 Quick Start
 
-### 1. Installation & Initialization
+### 1. One-Command Install
 
 ```bash
-pip install cortistrate
-cortistrate init
-cortistrate server start   # Starts FastAPI server at http://127.0.0.1:8000
+curl -fsSL https://raw.githubusercontent.com/mark1kwok/cortistrate/main/install.sh | bash
 ```
 
-### 2. Basic Command Sequences
+What this does: checks Docker → clones the repo → builds the Docker image → seeds `~/.cortistrate/` with default config → auto-installs agent plugins (Hermes, Claude Code) if detected.
+
+**Requirements**: Docker 24+.
+
+### 2. Configure LLM & Start
+
+Edit `~/.cortistrate/cortistrate.toml` and fill in `[llm]` and `[embedding]` API keys, then:
+
+```bash
+docker run -d --name cortistrate \
+  -p 5473:5473 \
+  -v ~/.cortistrate:/home/app/.cortistrate \
+  cortistrate:latest
+
+# Verify
+curl http://localhost:5473/health
+# → {"status":"ok"}
+```
+
+### 3. Store & Search (HTTP API)
 
 ```bash
 # Store preference
-cortistrate memorize \
-  --user-id default_user \
-  --text "Prefer strictly typed Python, dark mode UI"
+curl -s -X POST http://localhost:5473/api/v1/memory/add \
+  -H 'Content-Type: application/json' \
+  -d '{"user_id":"default_user","messages":[{"role":"user","content":"Prefer strictly typed Python, dark mode UI","timestamp":'"$(date +%s)000"'}]}'
 
 # Search memory store
-cortistrate search --user-id default_user --query "dev styling preference"
+curl -s -X POST http://localhost:5473/api/v1/memory/search \
+  -H 'Content-Type: application/json' \
+  -d '{"user_id":"default_user","query":"dev styling preference"}'
 ```
 
 ---
 
 ## ⚙️ Installation & Plugin Integration
 
-Three ways to connect Cortistrate to your agent.
+### 1. One-Command Docker Install
 
-### 1. Automatic (pip install)
-`pip install cortistrate` scans your system for Hermes Agent or Claude Code.
-If detected, the plugin is silently installed — no extra commands needed.
+The install script (`install.sh`) handles everything automatically:
 
-### 2. Manual CLI
+1. **Docker build** — produces `cortistrate:latest` image with embedded Postgres + pgvector
+2. **Data seeding** — writes default config to `~/.cortistrate/cortistrate.toml`
+3. **Agent plugin installation** — copies plugin source into the agent's local plugins directory:
+
+| Agent | Target | Source |
+|---|---|---|
+| Hermes Agent | `~/.hermes/plugins/cortistrate/` | `src/integrations/hermes/` |
+| Claude Code | `~/.claude/plugins/cortistrate/` | `src/integrations/claude-code/` |
+
+Plugins are **copied** (not symlinked), so they survive repo updates and work independently.
+
+### 2. Manual Plugin Install
+
+If you already ran the Docker install but skipped plugin detection, or want to reinstall just one plugin:
+
 ```bash
-cortistrate integrations install hermes       # symlink → ~/.hermes/plugins/cortistrate/
-cortistrate integrations install claude-code   # symlink → ~/.claude/skills/cortistrate/
-cortistrate integrations status               # check what's installed
-```
+# Hermes
+cp -r ~/.local/share/cortistrate/repo/src/integrations/hermes ~/.hermes/plugins/cortistrate/
 
-### 3. In-Agent Plugin (Claude Code)
-Install from inside Claude Code using its native plugin system:
-```
-/plugin marketplace add mark1kwok/cortistrate
-/plugin install cortistrate
-/reload-plugins
-```
-The plugin provides 4 lifecycle hooks (SessionStart, UserPromptSubmit, Stop,
-SessionEnd) plus an MCP server with mem_search / mem_recall / mem_add / mem_flush
-tools.
-
-For Hermes Agent, activate via the built-in memory setup:
-```bash
-hermes memory setup       # select "cortistrate" from the provider list
+# Claude Code
+cp -r ~/.local/share/cortistrate/repo/src/integrations/claude-code ~/.claude/plugins/cortistrate/
 ```
 
 ---

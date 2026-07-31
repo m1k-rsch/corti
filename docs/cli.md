@@ -61,12 +61,12 @@ cortistrate integrations install hermes [--source PATH] [--force]
 cortistrate integrations uninstall hermes [--source PATH] [--force] [--yes]
 ```
 
-`install` symlinks the bundle at `integrations/hermes/` into
+`install` copies the bundle at `integrations/hermes/` into
 `$HERMES_HOME/plugins/cortistrate/` so Hermes discovers it. The bundle source
 resolves in this order: `CORTISTRATE_HERMES_PLUGIN_SOURCE` env → `--source`
 flag → repo-root walk-up from `cortistrate.__file__` (covers editable/dev
-installs). An existing symlink is replaced; a real directory requires
-`--force`. `uninstall` removes the symlink only if it points at this
+installs). An existing directory is preserved (use `--force` to overwrite).
+`uninstall` removes the directory only if it contains this
 bundle (`--force` skips the ownership check; `--source` overrides the
 expected path). `~/.cortistrate` memory data is never touched.
 

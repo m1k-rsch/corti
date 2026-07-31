@@ -65,9 +65,12 @@ statement_timeout_ms = 30000
 # Provider-agnostic OpenAI-protocol client config. Override via env:
 #   CORTISTRATE_LLM__MODEL, CORTISTRATE_LLM__API_KEY, CORTISTRATE_LLM__BASE_URL
 # Or set the field directly in this file (<root>/cortistrate.toml).
-model = "openai/gpt-4.1-mini"
-api_key = ""
-base_url = "https://openrouter.ai/api/v1"
+#
+# Default: Pollinations.ai (free, no key required, community-supported ~3 yr).
+# Replace with your own provider for higher quality / reliability.
+model = "openai-fast"
+api_key = "sk-no-key-required"
+base_url = "https://text.pollinations.ai/openai"
 
 [multimodal]
 # Independent LLM for multimodal parsing (everalgo-parser); must accept
@@ -86,10 +89,13 @@ max_concurrency = 4
 [embedding]
 # OpenAI-compatible embedding endpoint. Override via env:
 #   CORTISTRATE_EMBEDDING__MODEL, CORTISTRATE_EMBEDDING__API_KEY, CORTISTRATE_EMBEDDING__BASE_URL
-# model and base_url ship with recommended defaults; api_key must be set.
-model     = "Qwen/Qwen3-Embedding-4B"
-api_key   = ""
-base_url  = "https://api.deepinfra.com/v1/openai"
+#
+# Default: OVHcloud AI Endpoints (free anonymous tier, no key required).
+# bge-m3 (1024-d, MIT-licensed, multilingual). 2 RPM per IP — sufficient for
+# background batch embedding. Replace with a paid provider for higher throughput.
+model     = "bge-m3"
+api_key   = "sk-no-key-required"
+base_url  = "https://oai.endpoints.kepler.ai.cloud.ovh.net/v1"
 timeout_seconds = 30.0
 max_retries     = 3
 batch_size      = 10

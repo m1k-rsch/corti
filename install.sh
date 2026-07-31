@@ -101,20 +101,22 @@ section "Step 5: Agent Integrations"
 
 # ── 5a: Hermes ──────────────────────────────────────────────────────────────
 HERMES_PLUGIN_DIR="$HOME/.hermes/plugins"
-HERMES_LINK="$HERMES_PLUGIN_DIR/cortistrate"
+HERMES_TARGET="$HERMES_PLUGIN_DIR/cortistrate"
 HERMES_SRC="$REPO_DIR/src/integrations/hermes"
 
 if command -v hermes &>/dev/null; then
     info "Hermes detected"
-    if [ -L "$HERMES_LINK" ]; then
-        info "Hermes plugin already linked: $HERMES_LINK"
-    elif [ -d "$HERMES_LINK" ]; then
-        warn "Hermes plugin dir exists as real directory (not symlink)."
-        echo "  Remove it manually if you want a fresh install: rm -rf $HERMES_LINK"
+    if [ -L "$HERMES_TARGET" ]; then
+        warn "Old symlink found at $HERMES_TARGET — removing"
+        rm "$HERMES_TARGET"
+    fi
+    if [ -d "$HERMES_TARGET" ]; then
+        info "Hermes plugin already installed at $HERMES_TARGET"
+        echo "  Remove it manually if you want a fresh install: rm -rf $HERMES_TARGET"
     else
         mkdir -p "$HERMES_PLUGIN_DIR"
-        ln -s "$HERMES_SRC" "$HERMES_LINK"
-        info "Hermes plugin installed: $HERMES_LINK → $HERMES_SRC"
+        cp -r "$HERMES_SRC" "$HERMES_TARGET"
+        info "Hermes plugin installed: $HERMES_TARGET"
     fi
 else
     info "Hermes not detected — skipping plugin install"
@@ -122,10 +124,24 @@ else
 fi
 
 # ── 5b: Claude Code ─────────────────────────────────────────────────────────
+CLAUDE_PLUGIN_DIR="$HOME/.claude/plugins"
+CLAUDE_TARGET="$CLAUDE_PLUGIN_DIR/cortistrate"
+CLAUDE_SRC="$REPO_DIR/src/integrations/claude-code"
+
 if command -v claude &>/dev/null; then
     info "Claude Code detected"
-    echo "  Register cortistrate in Claude Code:"
-    echo "    ${BLUE}/plugin marketplace add cortistrate${NC}"
+    if [ -L "$CLAUDE_TARGET" ]; then
+        warn "Old symlink found at $CLAUDE_TARGET — removing"
+        rm "$CLAUDE_TARGET"
+    fi
+    if [ -d "$CLAUDE_TARGET" ]; then
+        info "Claude Code plugin already installed at $CLAUDE_TARGET"
+        echo "  Remove it manually if you want a fresh install: rm -rf $CLAUDE_TARGET"
+    else
+        mkdir -p "$CLAUDE_PLUGIN_DIR"
+        cp -r "$CLAUDE_SRC" "$CLAUDE_TARGET"
+        info "Claude Code plugin installed: $CLAUDE_TARGET"
+    fi
 else
     info "Claude Code not detected — skipping plugin install"
     echo "  Install Claude Code: https://claude.ai/code"
@@ -134,13 +150,21 @@ fi
 # ── Step 6: Configure LLM ─────────────────────────────────────────────────
 section "Step 6: Configure LLM"
 
-echo "Cortistrate needs an OpenAI-compatible LLM endpoint for memory extraction."
-echo "Edit your config to add API keys:"
+echo "Cortistrate ships with free default endpoints — no API key required:"
 echo ""
-echo -e "  ${BLUE}\$EDITOR $DATA_DIR/cortistrate.toml${NC}"
+echo -e "  ${BOLD}LLM:${NC}       Pollinations.ai (openai-fast, GPT-OSS 20B)"
+echo "           https://text.pollinations.ai/openai"
+echo -e "  ${BOLD}Embedding:${NC}  OVHcloud AI Endpoints (bge-m3, 1024-d, MIT)"
+echo "           https://oai.endpoints.kepler.ai.cloud.ovh.net/v1"
 echo ""
-echo "  [llm] section: api_key, model, base_url"
-echo "  [embedding] section: api_key, model, base_url"
+echo "These are community / anonymous-tier services:"
+echo "  • Pollinations — ~3 yr track record, community-funded, no key needed"
+echo "  • OVHcloud — European public cloud (€20B market cap), 2 RPM per IP"
+echo ""
+echo "For production / higher quality, replace them with your own provider."
+echo -e "Edit:  ${BLUE}\$EDITOR $DATA_DIR/cortistrate.toml${NC}"
+echo ""
+echo "Sections to configure: [llm], [embedding], [rerank]"
 echo ""
 
 # ── Done ──────────────────────────────────────────────────────────────────

@@ -20,15 +20,30 @@ logger = get_logger(__name__)
 
 
 class LLMLifespanProvider(LifespanProvider):
-    """Resolve the LLM client at startup; raise if credentials are missing."""
+    """Resolve the LLM client at startup; warn (do not crash) on failure.
+
+    Missing or misconfigured credentials must not take down the entire
+    process — memory storage, health checks, and other subsystems stay
+    alive.  Downstream callers that actually invoke the LLM will surface
+    errors at call time via their own exception handling.
+    """
 
     def __init__(self, order: int = 8) -> None:
         super().__init__(name="llm", order=order)
 
     async def startup(self, app: FastAPI) -> Any:
-        client = get_llm_client()
-        logger.info("llm_lifespan_ready")
-        return client
+        try:
+            client = get_llm_client()
+            logger.info("llm_lifespan_ready")
+            return client
+        except Exception:
+            logger.warning(
+                "llm_lifespan_degraded",
+                msg="LLM client could not be built — "
+                "memory extraction and search will be unavailable. "
+                "Check [llm] in cortistrate.toml.",
+            )
+            return None
 
     async def shutdown(self, app: FastAPI) -> None:
         # The client is stateless (algo facade over openai.AsyncOpenAI);

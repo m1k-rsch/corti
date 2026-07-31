@@ -2,9 +2,10 @@
 
 Lazy singleton — first call reads settings and builds the algo LLM
 client; subsequent calls return the cached instance. Raises
-:class:`LLMNotConfiguredError` when no credentials are present so
-misconfiguration surfaces at app startup (via the LLM lifespan
-provider) instead of silently failing per-request downstream.
+:class:`LLMNotConfiguredError` when ``api_key`` or ``base_url`` is
+unset so misconfiguration surfaces at app startup. The lifespan
+provider catches this and degrades gracefully — the process stays
+alive; only memory extraction / search are unavailable.
 """
 
 from __future__ import annotations
@@ -40,7 +41,9 @@ def get_llm_client() -> LLMClient:
 
     llm_cfg = load_settings().llm
     api_key = (
-        llm_cfg.api_key.get_secret_value() if llm_cfg.api_key is not None else None
+        llm_cfg.api_key.get_secret_value()
+        if llm_cfg.api_key is not None
+        else ""
     )
     if not api_key or not llm_cfg.base_url:
         raise LLMNotConfiguredError(
@@ -72,7 +75,11 @@ def get_multimodal_llm_client() -> LLMClient:
         return _multimodal_client
 
     cfg = load_settings().multimodal
-    api_key = cfg.api_key.get_secret_value() if cfg.api_key is not None else None
+    api_key = (
+        cfg.api_key.get_secret_value()
+        if cfg.api_key is not None
+        else ""
+    )
     if not api_key or not cfg.base_url:
         raise LLMNotConfiguredError(
             "Multimodal LLM is required for parsing; set "

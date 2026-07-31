@@ -562,8 +562,11 @@ Cortistrate accepts text-based files natively. Binary formats require the
 | Images (OCR) | `.png`, `.jpg`, `.webp`, `.tiff`, `.bmp`, `.svg` | Yes |
 | Audio (transcription) | `.mp3`, `.wav`, `.m4a`, `.amr`, `.aiff`, `.aac`, `.ogg`, `.flac` | Yes |
 
+Install the `pymupdf` and `whisper` extra dependencies for multimodal support:
+
 ```bash
-pip install cortistrate[multimodal]
+# Multimodal deps are bundled in the Docker image by default.
+# For local dev: uv sync --extra multimodal
 ```
 
 ## Error handling

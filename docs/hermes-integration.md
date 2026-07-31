@@ -8,7 +8,7 @@ with no `hermes-agent` PR required.
 The integration ships **inside the Cortistrate repo** as a Hermes
 `MemoryProvider` plugin bundle at
 [`integrations/hermes/`](../integrations/hermes/). The
-`cortistrate integrations install hermes` command symlinks the bundle into
+`cortistrate integrations install hermes` command copies the bundle into
 `~/.hermes/plugins/cortistrate/`; Hermes discovers user-installed plugins and
 loads them via the `MemoryProvider` subclass-fallback path.
 
@@ -164,7 +164,7 @@ never crashes Hermes or stalls the conversation — it degrades to built-in
 ## Uninstall
 
 ```bash
-cortistrate integrations uninstall hermes          # removes the dev symlink
+cortistrate integrations uninstall hermes          # removes the plugin directory
 # revert the provider if you no longer use it:
 hermes config set memory.provider ''
 ```
