@@ -133,7 +133,7 @@ What this does: checks Docker → pulls the pre-built image from Docker Hub → 
 docker run -d --name corti \
   -p 5473:5473 \
   -v ~/.corti:/home/app/.corti \
-  mark1kwok/corti:latest
+  m1research/corti:latest
 # Verify
 curl http://localhost:5473/health
 # → {"status":"ok"}
@@ -161,7 +161,7 @@ curl -s -X POST http://localhost:5473/api/v1/memory/search \
 
 The install script (`install.sh`) handles everything automatically:
 
-1. **Docker pull** — fetches pre-built `mark1kwok/corti:latest` from Docker Hub (no clone, no build)
+1. **Docker pull** — fetches pre-built `m1research/corti:latest` from Docker Hub (no clone, no build)
 2. **Data seeding** — extracts default config from the image into `~/.corti/corti.toml`
 3. **Agent plugin installation** — extracts plugin source from the image into the agent's local plugins directory:
 
@@ -178,14 +178,14 @@ If you already pulled the image but skipped plugin detection, or want to reinsta
 
 ```bash
 # Hermes
-docker create --name corti-tmp mark1kwok/corti:latest
+docker create --name corti-tmp m1research/corti:latest
 docker cp corti-tmp:/opt/corti/integrations/hermes ~/.hermes/plugins/
 mv ~/.hermes/plugins/hermes ~/.hermes/plugins/corti
 docker rm corti-tmp
 
 # Claude Code — dropped into ~/.claude/skills/ for auto-discovery
 # (hooks/hooks.json + MCP auto-loaded on next session, zero CLI)
-docker create --name corti-tmp mark1kwok/corti:latest
+docker create --name corti-tmp m1research/corti:latest
 docker cp corti-tmp:/opt/corti/integrations/claude-code ~/.claude/skills/
 mv ~/.claude/skills/claude-code ~/.claude/skills/corti
 docker rm corti-tmp

@@ -3,7 +3,7 @@
 # Usage: curl -fsSL https://raw.githubusercontent.com/m1k-rsch/corti/main/install.sh | bash
 set -euo pipefail
 
-IMAGE="mark1kwok/corti:latest"
+IMAGE="m1research/corti:latest"
 
 # ── Colors ────────────────────────────────────────────────────────────────
 if [ -t 1 ]; then
