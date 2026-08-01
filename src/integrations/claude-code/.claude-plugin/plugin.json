@@ -3,10 +3,10 @@
   "description": "Persistent cross-session memory for Claude Code — automatic capture, semantic recall, and context injection powered by a local Corti server.",
   "version": "0.1.0",
   "author": {
-    "name": "mark1kwok"
+    "name": "m1k-rsch"
   },
-  "homepage": "https://github.com/mark1kwok/corti",
-  "repository": "https://github.com/mark1kwok/corti",
+  "homepage": "https://github.com/m1k-rsch/corti",
+  "repository": "https://github.com/m1k-rsch/corti",
   "license": "Apache-2.0",
   "keywords": ["memory", "agent-memory", "persistent-context", "corti", "long-term-memory"]
 }
