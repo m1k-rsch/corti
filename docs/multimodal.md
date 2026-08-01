@@ -67,11 +67,10 @@ Multimodal parsing lives behind an optional dependency group so the base
 install stays lean:
 
 ```bash
-uv pip install 'corti[multimodal]'    # or: pip install 'corti[multimodal]'
+uv sync --extra multimodal    # source installs (Docker images skip the extra)
 ```
 
-This pulls in `everalgo-parser[svg]` — the `[svg]` bundle adds `cairosvg`
-so SVG works out of the box.
+This pulls in `cairosvg` so SVG works out of the box.
 
 ### LibreOffice (office documents only)
 

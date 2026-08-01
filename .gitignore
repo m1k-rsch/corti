@@ -275,8 +275,5 @@ benchmarks/.env
 .corti*/
 corti-src/
 
-# PyPI packaging workspace (staging copy, not source-of-truth)
-.pypi-packaging/
-
 # Scratch directory — throwaway scripts, design drafts, experiments
 .scratch/

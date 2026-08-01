@@ -22,7 +22,7 @@ app = typer.Typer(
     add_completion=False,
 )
 
-# On first CLI invocation after pip install, auto-detect installed agents
+# On first CLI invocation after installation, auto-detect installed agents
 # and silently symlink the integration plugins.  Guarded by a sentinel
 # so it runs exactly once per environment.
 integrations.auto_detect_and_install()

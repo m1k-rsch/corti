@@ -19,7 +19,7 @@ The script is exposed via `pyproject.toml`:
 corti = "corti.entrypoints.cli.main:app"
 ```
 
-After `uv sync` (or `pip install -e .`) the `corti` command resolves
+After `uv sync` the `corti` command resolves
 to [`src/corti/entrypoints/cli/main.py`](../src/corti/entrypoints/cli/main.py),
 a [Typer](https://typer.tiangolo.com/) app.
 

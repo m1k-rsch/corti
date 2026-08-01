@@ -256,6 +256,7 @@ def _rasterise_svg_to_png(data: bytes) -> bytes:  # pragma: no cover  (cairosvg 
         import cairosvg  # type: ignore[import-not-found]  # pragma: no cover
     except ImportError as exc:  # pragma: no cover
         raise RuntimeError(  # pragma: no cover
-            "SVG support requires the optional `cairosvg` dependency. Install via: pip install 'everalgo-parser[svg]'"
+            "SVG support requires the optional `cairosvg` dependency "
+            "(Corti 'multimodal' extra)."
         ) from exc
     return cairosvg.svg2png(bytestring=data)  # type: ignore[no-any-return]  # pragma: no cover

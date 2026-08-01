@@ -6,7 +6,7 @@ plugin directory into the pip-installed integration bundle (shipped as
 
 Auto-detect runs once per environment (guarded by
 ``~/.corti/.integrations-sentinel``) on first ``corti``
-invocation after ``pip install``.
+invocation after installation.
 """
 
 from __future__ import annotations
@@ -326,8 +326,8 @@ def auto_detect_and_install(
 ) -> None:
     """Run once per environment: detect agents, silently install plugins.
 
-    Skipped in dev checkouts — only fires for real ``pip install`` end users.
-    The sentinel file prevents repeat work.
+    Skipped in dev checkouts — only fires for real installs (Docker /
+    site-packages). The sentinel file prevents repeat work.
     """
     # Guard: dev checkout users don't need auto-install.
     import sys

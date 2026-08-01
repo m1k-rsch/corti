@@ -4,7 +4,7 @@ status: accepted
 
 # Storage backend is PostgreSQL + pgvector, deployed in a single all-in-one Docker container
 
-Corti deploys as a single Docker image bundling PostgreSQL 18 + pgvector and the corti server, with `supervisord` as PID 1. The app connects to PG over TCP `localhost:5432` (container loopback). All user data lives in a single host volume mounted at `~/.corti/` — markdown truth source, SQLite state, and PG index data — following 12-Factor App principles for code/config/data separation. The existing bare-Python deployment (`pip install` + external PG) remains fully supported via environment-variable configuration.
+Corti deploys as a single Docker image bundling PostgreSQL 18 + pgvector and the corti server, with `supervisord` as PID 1. The app connects to PG over TCP `localhost:5432` (container loopback). All user data lives in a single host volume mounted at `~/.corti/` — markdown truth source, SQLite state, and PG index data — following 12-Factor App principles for code/config/data separation. Distribution is Docker-only (Docker Hub `m1research/corti`); the slim variant runs against an external PostgreSQL configured via environment variables.
 
 ## Context
 
@@ -80,10 +80,10 @@ All persistent data lives under one host directory, mounted into the container a
 
 | Factor | Implementation |
 |---|---|
-| **I. Codebase** | Baked into Docker image (immutable). `pip install corti` from the image. |
+| **I. Codebase** | Baked into Docker image (immutable). |
 | **III. Config** | Environment variables (`CORTI_LLM__API_KEY`, etc.) for secrets. `corti.toml` in memory root for non-secret overrides. Both feed into `pydantic-settings`. |
 | **IV. Backing services** | PG treated as attached resource. Connection via `DB_HOST` / `DB_PORT` env vars — no hardcoded connection string. Swap to external PG by changing one env var. |
-| **V. Build/release/run** | Three stages: PyPI package (`pip install corti`), Docker image build (GHCR), `docker run`. |
+| **V. Build/release/run** | Two stages: Docker image build (Docker Hub `m1research/corti`), `docker run`. |
 | **VI. Processes** | `supervisord` manages PG + corti as equal child processes. Container restart = both restart together. |
 | **VII. Port binding** | Only `:5473` exposed to host (HTTP API). PG listens on container loopback only (`127.0.0.1:5432`). No port conflict with host PG on `:5432`. |
 | **VIII–IX. Concurrency / Disposability** | PG connection pool (`psycopg_pool.AsyncConnectionPool`) handles concurrent requests. Container is stateless — all state in the mounted volume. |
@@ -92,9 +92,7 @@ All persistent data lives under one host directory, mounted into the container a
 
 | Channel | User command | Target user |
 |---|---|---|
-| **PyPI** | `pip install corti` | Bare-Python deployment (BYO-PG, development) |
-| **Docker Hub / GHCR** | `docker run -p 5473:5473 -v ~/.corti:/home/app/.corti corti/corti` | One-click deployment (personal / small team) |
-| **CLI subcommand** | `corti docker start` | Bridges PyPI install → Docker launch (auto-detects Docker, pulls image, mounts volumes) |
+| **Docker Hub** | `docker run -p 5473:5473 -v ~/.corti:/home/app/.corti m1research/corti` | One-click deployment (personal / small team) |
 
 ## Considered options (and why rejected)
 

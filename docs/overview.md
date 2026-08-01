@@ -46,7 +46,13 @@ User trust comes from physical visibility — the user can `cat` / `vim` / `grep
 
 ### 3. Algorithm-orchestration separation
 
-`everalgo` (a set of separate PyPI packages — `everalgo-user-memory` / `-agent-memory` / `-rank` / `-knowledge`, plus the optional `-parser` extra) holds the extraction algorithms (memory-cell extraction, episode generation, profile evolution). Corti calls everalgo's extractor functions directly — passing storage-free data in, getting structured results out; for a couple of extractors (episode and boundary detection) it can override the bundled prompt via the PromptSlot mechanism. everalgo knows nothing about storage.
+`everalgo` (vendored under `src/everalgo/`; formerly published as separate
+packages `everalgo-user-memory` / `-agent-memory` / `-rank` / `-knowledge`)
+holds the extraction algorithms (memory-cell extraction, episode generation,
+profile evolution). Corti calls everalgo's extractor functions directly —
+passing storage-free data in, getting structured results out; for a couple
+of extractors (episode and boundary detection) it can override the bundled
+prompt via the PromptSlot mechanism. everalgo knows nothing about storage.
 
 This boundary lets the same algorithm power both this open-source lightweight version and other product forms.
 
@@ -62,9 +68,9 @@ Strict single-direction dependency, enforced by `import-linter` in CI.
 
 ## Why src layout (`src/corti/`)
 
-- Standard PyPA project structure used when shipping to PyPI
+- Standard src-layout project structure — the working tree stays off the import path until installed
 - Avoid namespace collision with system packages named `memory`, `infra`, etc.
-- Avoid accidental import of working-tree code in dev (PyPA recommendation)
+- Avoid accidental import of working-tree code in dev (standard Python packaging recommendation)
 
 ## Comparable projects (where Corti differs)
 
@@ -80,10 +86,10 @@ Strict single-direction dependency, enforced by `import-linter` in CI.
 - **v0.1 (MVP)** — Phase 1 core loop: markdown + postgres + cascade + episode extraction
 - **v0.2** — Full extraction pipeline (workspace / agent / knowledge), evolution framework
 - **v0.3** — Production hardening, full CLI, HTTP API, Obsidian demo
-- **v1.0** — Stable API, PyPI release, comprehensive docs
+- **v1.0** — Stable API, comprehensive docs
 - **v1.1** — Knowledge base + Reflection (offline memory consolidation)
 - **v2** (future) — Edge-to-cloud sync via EverMe (separate project)
 
 ## Status
 
-**Latest stable release: v1.1.0** (PyPI) — the v1 API is stable.
+**Latest stable release: v0.3.0** — Docker-first distribution; see [releases](https://github.com/m1k-rsch/corti/releases).

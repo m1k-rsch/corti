@@ -31,8 +31,8 @@ def require_parser() -> None:
     """
     if not parser_available():
         raise MultimodalNotEnabledError(
-            "Multimodal parsing requires the parser extra. "
-            "Install with: pip install 'corti[multimodal]'"
+            "Multimodal parsing requires the multimodal extra. "
+            "Install with: uv sync --extra multimodal"
         )
 
 

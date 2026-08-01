@@ -211,10 +211,10 @@ protection (L1 read-only / L2 system / L3 business / L4 user).
 
 ## everalgo boundary
 
-`everalgo` is a set of PyPI-published packages (`everalgo-user-memory`,
-`everalgo-agent-memory`, `everalgo-rank`, `everalgo-knowledge`, plus the
-optional `everalgo-parser` extra), imported under the `everalgo` namespace,
-holding **only memory extraction algorithms**:
+`everalgo` is vendored under `src/everalgo/` (formerly separate packages
+`everalgo-user-memory`, `everalgo-agent-memory`, `everalgo-rank`,
+`everalgo-knowledge`, plus the optional `everalgo-parser` extra), imported
+under the `everalgo` namespace, holding **only memory extraction algorithms**:
 
 - `everalgo.parser` — multi-modal parsing (optional `[multimodal]` extra)
 - `everalgo.user_memory` — ConvMemCell / Episode / Foresight / AtomicFact / Profile extractors

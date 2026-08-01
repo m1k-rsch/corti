@@ -12,9 +12,8 @@ from typing import Any
 from corti.core.errors import MultimodalNotEnabledError
 
 _INSTALL_HINT = (
-    "Multimodal input received but the parser extra is not installed. "
-    "Install it with:  pip install 'corti[multimodal]'  "
-    "(or  uv add 'corti[multimodal]')."
+    "Multimodal input received but the multimodal extra is not installed. "
+    "Install it with:  uv sync --extra multimodal"
 )
 
 
