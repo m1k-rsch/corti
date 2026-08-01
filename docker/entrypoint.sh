@@ -122,9 +122,15 @@ if [ ! -f "${DATA_DIR}/ome.toml" ]; then
     chown app:app "${DATA_DIR}/ome.toml"
 fi
 
-# ── Step 5: Final ownership fix for any new files ─────────────────
+# ── Step 5: Final ownership fix for data subdirectories ─────────
+# Deliberately does NOT chown the volume root: ~/.corti/corti.toml and
+# ome.toml must keep the host user's ownership so they can edit them
+# (README: "edit ~/.corti/corti.toml → docker restart"). Only data
+# subdirectories (and anything the app creates at runtime) belong to
+# the container's app user. 2>/dev/null + || true: some subdirs may not
+# exist yet (e.g. agents/users/knowledge are created by the app).
 if [ "$(id -u)" = "0" ]; then
-    chown -R app:app "${DATA_DIR}"
+    chown -R app:app "${DATA_DIR}/.index" "${DATA_DIR}/.tmp" "${DATA_DIR}/agents" "${DATA_DIR}/users" "${DATA_DIR}/knowledge" 2>/dev/null || true
     chown -R postgres:postgres "${PGDATA}"
 fi
 

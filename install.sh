@@ -125,7 +125,13 @@ if command -v hermes &>/dev/null; then
     # the pipe and SIGPIPE-ing `hermes plugins list` — the whole condition
     # would silently evaluate false and the enable would never run.
     if hermes plugins list 2>/dev/null | grep -c corti >/dev/null; then
-        if hermes plugins enable corti 2>/dev/null; then
+        # --no-allow-tool-override: skips the interactive "allow tool
+        # override?" prompt. That prompt reads from stdin, which under
+        # `curl ... | bash` IS the script pipe — the prompt would swallow
+        # the remaining script bytes and the install would silently
+        # truncate (exit 0) right here. Corti's plugin doesn't need
+        # built-in tool overrides, so never grant them and never prompt.
+        if hermes plugins enable --no-allow-tool-override corti 2>/dev/null; then
             info "Hermes plugin enabled"
         else
             warn "Hermes plugin found but enable failed — run: hermes plugins enable corti"
