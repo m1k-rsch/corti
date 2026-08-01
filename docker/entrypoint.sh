@@ -23,7 +23,11 @@ mkdir -p "${PGDATA}"
 # ── Step 2: Fix ownership on mounted volume ──────────────────────
 if [ "$(id -u)" = "0" ]; then
     echo "[entrypoint] Fixing volume ownership..."
-    chown -R app:app "${DATA_DIR}"
+    # Only chown data subdirectories — never the config files at the root
+    # (~/.corti/corti.toml, ome.toml). Those must stay owned by the host
+    # user so they can edit them (README: "edit ~/.corti/corti.toml →
+    # docker restart"). Chowning the whole volume breaks that workflow.
+    chown -R app:app "${DATA_DIR}/.index" "${DATA_DIR}/.tmp" 2>/dev/null || true
     chown -R postgres:postgres "${PGDATA}"
 fi
 

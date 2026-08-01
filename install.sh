@@ -120,7 +120,11 @@ if command -v hermes &>/dev/null; then
         info "Hermes plugin installed: $HERMES_TARGET"
     fi
     # Auto-enable the plugin + set memory provider so it's active immediately.
-    if hermes plugins list 2>/dev/null | grep -q corti; then
+    # NOTE: `grep -c ... >/dev/null` instead of `grep -q`: under `set -o
+    # pipefail` (top of script) grep -q exits as soon as it matches, closing
+    # the pipe and SIGPIPE-ing `hermes plugins list` — the whole condition
+    # would silently evaluate false and the enable would never run.
+    if hermes plugins list 2>/dev/null | grep -c corti >/dev/null; then
         if hermes plugins enable corti 2>/dev/null; then
             info "Hermes plugin enabled"
         else
@@ -128,15 +132,13 @@ if command -v hermes &>/dev/null; then
         fi
     fi
     # Also set the memory provider (belt-and-suspenders — some Hermes versions
-    # require this even after plugin enable).
-    if hermes config get memory.provider 2>/dev/null | grep -q corti; then
-        info "Hermes memory.provider already set to corti"
+    # require this even after plugin enable). No `config get` pre-check: the
+    # CLI has no `get` subcommand (show/edit/set only), and `config set` is
+    # idempotent — set unconditionally, warn only on failure.
+    if hermes config set memory.provider corti 2>/dev/null; then
+        info "Hermes memory.provider set to corti"
     else
-        if hermes config set memory.provider corti 2>/dev/null; then
-            info "Hermes memory.provider set to corti"
-        else
-            warn "Could not set memory.provider. Run: hermes config set memory.provider corti"
-        fi
+        warn "Could not set memory.provider. Run: hermes config set memory.provider corti"
     fi
 else
     info "Hermes not detected — skipping plugin install"
@@ -180,6 +182,10 @@ echo ""
 echo -e "  ${BOLD}${RED}⚠  API keys are required.${NC} Corti ships with ${BOLD}empty keys${NC}"
 echo -e "  pointing at ${BOLD}OpenAI${NC} (https://api.openai.com/v1). Nothing works"
 echo -e "  until you add your own key:"
+echo ""
+echo -e "  ${BOLD}${RED}⚠  The server will NOT start without a valid key.${NC} Corti"
+echo -e "  fails fast at boot when [llm] / [embedding] keys are missing — this is"
+echo -e "  intentional: configure your keys BEFORE the first docker run."
 echo ""
 echo -e "  ${BOLD}1. Edit the seeded config:${NC}"
 echo -e "     ${CYAN}\$EDITOR $DATA_DIR/corti.toml${NC}"
