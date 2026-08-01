@@ -531,6 +531,37 @@ correlation.
   LLM ran extraction and the writers persisted at least one memory
   cell. The buffer is empty after the call returns.
 
+#### Failure semantics: accumulate-then-extract (at-least-once)
+
+`/add` is **not atomic** — it is a two-phase operation:
+
+1. **Accumulate (faithful, durable)** — the incoming messages are
+   merged into the session buffer and persisted (SQLite buffer rows;
+   once the boundary detector trips, the memcell rows are inserted
+   too). This write completes before any derived work starts.
+2. **Extract (derived enhancement)** — the LLM-derived passes
+   (atomic facts, foresight, user profile) run against the persisted
+   cells, then the writers fan out to markdown + index rows.
+
+If phase 2 fails — the request returns `500`
+(`INTERNAL_ERROR` or `EXTERNAL_SERVICE_UNAVAILABLE`) — the phase-1
+data is **already on disk**. The endpoint is therefore *at-least-once*:
+a failed extraction never loses messages, but the caller cannot tell
+from the error alone how much of phase 2 ran.
+
+**Do not blindly retry.** `/add` has no idempotency key: every
+extraction mints a fresh random `memcell_id` (`mc_<12 hex>`), so
+re-POSTing the same payload re-runs boundary detection and can produce
+a duplicate memory cell. On a `500` from the extraction phase, verify
+the outcome with `/search` (or inspect the buffer via
+`filters.session_id`) instead of retrying.
+
+> **Production impact (assessed 2026-08-01):** this endpoint is invoked
+> automatically by the LLM runtime, whose actual usage of `/add` is
+> very low. The non-atomicity is therefore documented here rather than
+> fixed — the duplicate-extraction risk on blind retry is acceptable
+> for the current deployment profile.
+
 #### cURL example
 
 ```bash
@@ -696,6 +727,29 @@ own cross-encoder loop).
 **`filters`** — Optional filter-DSL node; see
 [FilterNode](#filternode-filter-dsl). Applied **before** ranking, so
 it does not perturb the ranker.
+
+#### Threshold guidance
+
+- **Always pass `top_k` — a positive value (`1..100`) is recommended.**
+  Production paths (the LLM-runtime plugins and daemon clients) always
+  send `top_k > 0`; the server then trusts the truncation cap to drop
+  the low-quality tail and applies **no** default `radius` (see the
+  three-level fallback above).
+- **`top_k=-1` ("unlimited") must be paired with an explicit
+  threshold.** If you deliberately request unlimited recall, also pass
+  `radius` and/or `min_score` (e.g. `0.4` or `0.5`). "Unlimited
+  without a threshold" is logically contradictory: unless you set one,
+  the server silently falls back to its internal `0.5` cosine default
+  (`_DEFAULT_UNLIMITED_RADIUS`) — the effective quality floor is chosen
+  by the server, not by you — and with no floor at all (explicit
+  `radius: 0.0`) the response is dominated by low-quality candidates.
+- **The `0.5` cosine lower bound only matters when hand-calling the
+  bare API without `top_k`.** It is exactly the server-side default
+  described above: `top_k=-1` with no caller-supplied `radius`, which
+  is what a manual call omitting `top_k` (default `-1`) produces. Any
+  call that passes `top_k > 0` is unaffected — no default radius is
+  applied, and only an explicit `radius` / `min_score` acts as a
+  threshold.
 
 #### Response body
 
