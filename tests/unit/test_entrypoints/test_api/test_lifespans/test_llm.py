@@ -1,28 +1,26 @@
-"""LLMLifespanProvider — startup raises on missing credentials, otherwise resolves."""
+"""LLMLifespanProvider — degrades on missing credentials, else resolves."""
 
 from __future__ import annotations
 
 from unittest.mock import patch
 
-import pytest
 from fastapi import FastAPI
 
 from corti.component.llm import LLMNotConfiguredError
 from corti.entrypoints.api.lifespans import LLMLifespanProvider
 
 
-async def test_startup_raises_when_credentials_missing() -> None:
+async def test_startup_degrades_when_credentials_missing() -> None:
     provider = LLMLifespanProvider()
     app = FastAPI()
 
-    with (
-        patch(
-            "corti.entrypoints.api.lifespans.llm.get_llm_client",
-            side_effect=LLMNotConfiguredError("missing api_key"),
-        ),
-        pytest.raises(LLMNotConfiguredError),
+    with patch(
+        "corti.entrypoints.api.lifespans.llm.get_llm_client",
+        side_effect=LLMNotConfiguredError("missing api_key"),
     ):
-        await provider.startup(app)
+        result = await provider.startup(app)
+
+    assert result is None
 
 
 async def test_startup_returns_client_when_configured() -> None:

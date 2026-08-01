@@ -27,9 +27,9 @@ base_url = "https://api.openai.com/v1"
 
 # ── Embedding ─────────────────────────────────────────
 [embedding]
-model    = "Qwen/Qwen3-Embedding-4B"
-api_key  = "..."
-base_url = "https://api.deepinfra.com/v1/openai"
+model    = "text-embedding-3-small"
+api_key  = "sk-..."
+base_url = "https://api.openai.com/v1"
 # Runtime knobs (defaults shown):
 timeout_seconds = 30.0
 max_retries     = 3

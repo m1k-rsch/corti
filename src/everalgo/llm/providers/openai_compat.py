@@ -13,22 +13,6 @@ from everalgo.llm.types import ChatMessage, ChatResponse, Usage
 if TYPE_CHECKING:
     from openai.types.chat import ChatCompletion
 
-_SENTINEL_KEY_PREFIX = "sk-no-"
-
-
-def _auth_headers(api_key: str) -> dict[str, str] | None:
-    """Return headers that strip the Auth header for sentinel keys.
-
-    When ``api_key`` starts with ``"sk-no-"`` — a sentinel used by free
-    keyless endpoints (Pollinations, OVHcloud) — override the SDK's
-    ``Authorization`` header with an empty string. The SDK requires a
-    non-empty ``api_key``, so we pass the sentinel and neutralise the
-    header at the client level.
-    """
-    if api_key.startswith(_SENTINEL_KEY_PREFIX):
-        return {"Authorization": ""}
-    return None
-
 
 class OpenAICompatClient:
     """Thin async wrapper over ``openai.AsyncOpenAI``.
@@ -39,20 +23,11 @@ class OpenAICompatClient:
 
     def __init__(self, config: LLMConfig) -> None:
         self._config = config
-        api_key = config.api_key.get_secret_value()
-        kwargs: dict[str, Any] = dict(
+        self._client = openai.AsyncOpenAI(
             base_url=config.base_url,
             timeout=config.timeout,
+            api_key=config.api_key.get_secret_value(),
         )
-        if api_key.startswith(_SENTINEL_KEY_PREFIX):
-            # Sentinel key: pass a single space to satisfy SDK validation,
-            # then override the Authorization header to empty string so
-            # keyless endpoints (Pollinations, OVHcloud) treat us as anonymous.
-            kwargs["api_key"] = " "
-            kwargs["default_headers"] = {"Authorization": ""}
-        else:
-            kwargs["api_key"] = api_key
-        self._client = openai.AsyncOpenAI(**kwargs)
 
     async def chat(
         self,

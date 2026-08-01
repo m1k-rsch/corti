@@ -173,37 +173,30 @@ fi
 
 docker rm "$CID" >/dev/null
 
-# ── Step 5: Default endpoints ─────────────────────────────────────────────
-section "Step 5: Default Endpoints"
+# ── Step 5: API keys ─────────────────────────────────────────────────────
+section "Step 5: Configure API Keys"
 
-echo -e "  ${CYAN}Corti ships with free default endpoints — no API key required:${NC}"
 echo ""
-echo -e "  ${BOLD}LLM:${NC}       ${GREEN}Pollinations.ai${NC} (openai-fast, GPT-OSS 20B)"
-echo "           https://text.pollinations.ai/openai"
-echo -e "  ${BOLD}Embedding:${NC}  ${GREEN}OVHcloud AI Endpoints${NC} (bge-m3, 1024-d, MIT)"
-echo "           https://oai.endpoints.kepler.ai.cloud.ovh.net/v1"
+echo -e "  ${BOLD}${RED}⚠  API keys are required.${NC} Corti ships with ${BOLD}empty keys${NC}"
+echo -e "  pointing at ${BOLD}OpenAI${NC} (https://api.openai.com/v1). Nothing works"
+echo -e "  until you add your own key:"
 echo ""
-echo "  These are community / anonymous-tier services:"
-echo "    • Pollinations — ~3 yr track record, community-funded"
-echo "    • OVHcloud — European public cloud (€20B market cap), 2 RPM per IP"
+echo -e "  ${BOLD}1. Edit the seeded config:${NC}"
+echo -e "     ${CYAN}\$EDITOR $DATA_DIR/corti.toml${NC}"
+echo -e "        [llm]       api_key = \"sk-...\"   # model: gpt-4.1-mini"
+echo -e "        [embedding] api_key = \"sk-...\"   # model: text-embedding-3-small"
+echo -e "        [rerank]    api_key = \"sk-...\"   # optional"
 echo ""
-echo -e "  ${YELLOW}╔══════════════════════════════════════════════════════════╗${NC}"
-echo -e "  ${YELLOW}║${NC}  ${BOLD}For production / higher quality, replace the defaults.${NC}  ${YELLOW}║${NC}"
-echo -e "  ${YELLOW}║${NC}                                                          ${YELLOW}║${NC}"
-echo -e "  ${YELLOW}║${NC}  Edit: ${BOLD}${CYAN}\$EDITOR $DATA_DIR/corti.toml${NC}               ${YELLOW}║${NC}"
-echo -e "  ${YELLOW}║${NC}  Sections: [llm]  [embedding]  [rerank]                    ${YELLOW}║${NC}"
-echo -e "  ${YELLOW}║${NC}                                                          ${YELLOW}║${NC}"
-echo -e "  ${YELLOW}║${NC}  ${RED}⚠ After editing, restart the container:${NC}                ${YELLOW}║${NC}"
-echo -e "  ${YELLOW}║${NC}    ${BOLD}docker restart corti${NC}                             ${YELLOW}║${NC}"
-echo -e "  ${YELLOW}╚══════════════════════════════════════════════════════════╝${NC}"
+echo -e "  ${BOLD}2. Or pass env vars to docker run (Step 6):${NC}"
+echo -e "     ${CYAN}CORTI_LLM__API_KEY=sk-... CORTI_EMBEDDING__API_KEY=sk-...${NC}"
 echo ""
 
-# ── Step 6: Auto-start ────────────────────────────────────────────────────
+# ── Step 6: Start the server ────────────────────────────────────────────
 section "Step 6: Start Server"
 
 CONTAINER_NAME="corti"
 
-# ── Slim mode: validate external PG connectivity ──────────────────
+# Slim mode: external PostgreSQL required.
 if [ "$TAG" = "slim" ]; then
     info "Slim mode: external PostgreSQL required"
     missing=""
@@ -213,58 +206,31 @@ if [ "$TAG" = "slim" ]; then
         fi
     done
     if [ -n "$missing" ]; then
-        error "Slim mode requires these environment variables:\n$missing"
-        echo "  Set them before running install.sh:"
-        echo "    export DB_HOST=192.168.1.100"
-        echo "    export DB_PORT=5432"
-        echo "    export DB_NAME=corti"
-        echo "    export DB_USER=corti"
-        echo "    export DB_PASSWORD=xxx"
-        exit 1
-    fi
-    info "External PostgreSQL at ${DB_HOST}:${DB_PORT}/${DB_NAME}"
-fi
-
-# Check if a container with this name already exists (running or stopped).
-if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -qx "$CONTAINER_NAME"; then
-    STATE=$(docker inspect -f '{{.State.Status}}' "$CONTAINER_NAME" 2>/dev/null || true)
-    if [ "$STATE" = "running" ]; then
-        info "Container '$CONTAINER_NAME' is already running"
-        echo "  docker restart $CONTAINER_NAME   # if you edit config"
+        warn "Slim mode needs these env vars set before docker run:"
+        printf "$missing"
+        echo "  export DB_HOST=192.168.1.100 DB_PORT=5432 DB_NAME=corti DB_USER=corti DB_PASSWORD=xxx"
     else
-        warn "Container '$CONTAINER_NAME' exists but is $STATE"
-        echo "  docker start $CONTAINER_NAME     # to resume"
-    fi
-else
-    info "Starting Corti server..."
-    # Build docker run args (add DB_* env vars for slim mode).
-    _run_args=(-d --name "$CONTAINER_NAME" -p 5473:5473 -v "$DATA_DIR:/home/app/.corti")
-    if [ "$TAG" = "slim" ]; then
-        _run_args+=(
-            -e "DB_HOST=$DB_HOST"
-            -e "DB_PORT=$DB_PORT"
-            -e "DB_NAME=$DB_NAME"
-            -e "DB_USER=$DB_USER"
-            -e "DB_PASSWORD=$DB_PASSWORD"
-        )
-    fi
-    _run_args+=("$IMAGE_FULL")
-    docker run "${_run_args[@]}" >/dev/null
-
-    # Quick health check
-    sleep 2
-    if curl -sf http://localhost:5473/health >/dev/null 2>&1; then
-        info "Server is running — http://localhost:5473"
-    else
-        warn "Server started but health check pending (may still be initializing)"
-        echo "  docker logs $CONTAINER_NAME  # check progress"
+        info "External PostgreSQL at ${DB_HOST}:${DB_PORT}/${DB_NAME}"
     fi
 fi
 
 echo ""
+echo -e "  ${BOLD}Install complete. Start Corti with:${NC}"
+echo ""
+if [ "$TAG" = "slim" ]; then
+    echo -e "  ${CYAN}docker run -d --name $CONTAINER_NAME -p 5473:5473 \\"
+    echo -e "    -v $DATA_DIR:/home/app/.corti \\"
+    echo -e "    -e DB_HOST=$DB_HOST -e DB_PORT=$DB_PORT -e DB_NAME=$DB_NAME \\"
+    echo -e "    -e DB_USER=$DB_USER -e DB_PASSWORD=$DB_PASSWORD $IMAGE_FULL${NC}"
+else
+    echo -e "  ${CYAN}docker run -d --name $CONTAINER_NAME -p 5473:5473 \\"
+    echo -e "    -v $DATA_DIR:/home/app/.corti $IMAGE_FULL${NC}"
+fi
+echo ""
+echo -e "  ${YELLOW}⚠ Configured your API keys first? If not, see Step 5 above.${NC}"
+echo ""
 echo -e "  ${BOLD}Check:${NC}     curl http://localhost:5473/health"
 echo -e "  ${BOLD}Logs:${NC}      docker logs -f $CONTAINER_NAME"
 echo -e "  ${BOLD}Restart:${NC}   docker restart $CONTAINER_NAME   ${CYAN}# after editing corti.toml${NC}"
-echo -e "  ${BOLD}Update:${NC}    docker pull $IMAGE_FULL && docker rm -f $CONTAINER_NAME && docker run -d --name $CONTAINER_NAME -p 5473:5473 -v $DATA_DIR:/home/app/.corti $IMAGE_FULL"
 echo -e "  ${BOLD}Docs:${NC}     https://cortistrate.dev/docs"
 echo ""

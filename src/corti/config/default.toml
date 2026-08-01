@@ -66,11 +66,14 @@ statement_timeout_ms = 30000
 #   CORTI_LLM__MODEL, CORTI_LLM__API_KEY, CORTI_LLM__BASE_URL
 # Or set the field directly in this file (<root>/corti.toml).
 #
-# Default: Pollinations.ai (free, no key required, community-supported ~3 yr).
-# Replace with your own provider for higher quality / reliability.
-model = "openai-fast"
-api_key = "sk-no-pollinations"
-base_url = "https://text.pollinations.ai/openai"
+# Default: OpenAI (https://api.openai.com/v1). The api_key is intentionally
+# empty — you MUST supply your own key before the LLM is usable:
+#   - edit <root>/corti.toml → [llm] api_key = "sk-...", or
+#   - export CORTI_LLM__API_KEY=sk-...
+# Any OpenAI-compatible endpoint works via base_url (OpenRouter, vLLM, ...).
+model = "gpt-4.1-mini"
+api_key = ""
+base_url = "https://api.openai.com/v1"
 
 [multimodal]
 # Independent LLM for multimodal parsing (everalgo-parser); must accept
@@ -90,12 +93,13 @@ max_concurrency = 4
 # OpenAI-compatible embedding endpoint. Override via env:
 #   CORTI_EMBEDDING__MODEL, CORTI_EMBEDDING__API_KEY, CORTI_EMBEDDING__BASE_URL
 #
-# Default: OVHcloud AI Endpoints (free anonymous tier, no key required).
-# bge-m3 (1024-d, MIT-licensed, multilingual). 2 RPM per IP — sufficient for
-# background batch embedding. Replace with a paid provider for higher throughput.
-model     = "bge-m3"
-api_key   = "sk-no-ovhcloud"
-base_url  = "https://oai.endpoints.kepler.ai.cloud.ovh.net/v1"
+# Default: OpenAI text-embedding-3-small. The api_key is intentionally empty —
+# you MUST supply your own key (CORTI_EMBEDDING__API_KEY or [embedding] api_key).
+# Vectors are truncated to 1024-d client-side to match the Postgres vector
+# column; switch model / base_url freely (any OpenAI-compatible endpoint).
+model     = "text-embedding-3-small"
+api_key   = ""
+base_url  = "https://api.openai.com/v1"
 timeout_seconds = 30.0
 max_retries     = 3
 batch_size      = 10

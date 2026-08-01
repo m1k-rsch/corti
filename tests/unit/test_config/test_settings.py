@@ -109,15 +109,17 @@ def test_load_settings_is_cached() -> None:
 
 def test_embedding_rerank_defaults() -> None:
     s = Settings()
-    assert s.embedding.model == "bge-m3"
-    assert s.embedding.base_url == "https://oai.endpoints.kepler.ai.cloud.ovh.net/v1"
-    assert s.embedding.api_key.get_secret_value() == "sk-no-ovhcloud"
+    assert s.embedding.model == "text-embedding-3-small"
+    assert s.embedding.base_url == "https://api.openai.com/v1"
+    assert s.embedding.api_key.get_secret_value() == ""
     assert s.embedding.timeout_seconds == 30.0
     assert s.rerank.model == "Qwen/Qwen3-Reranker-4B"
     assert s.rerank.base_url == "https://api.deepinfra.com/v1/inference"
     assert s.rerank.api_key.get_secret_value() == ""
     assert s.rerank.timeout_seconds == 30.0
-    assert s.llm.api_key.get_secret_value() == "sk-no-pollinations"
+    assert s.llm.api_key.get_secret_value() == ""
+    assert s.llm.model == "gpt-4.1-mini"
+    assert s.llm.base_url == "https://api.openai.com/v1"
 
 
 def test_resolve_root_default(monkeypatch: pytest.MonkeyPatch) -> None:
