@@ -122,15 +122,19 @@ if [ ! -f "${DATA_DIR}/ome.toml" ]; then
     chown app:app "${DATA_DIR}/ome.toml"
 fi
 
-# ── Step 5: Final ownership fix for data subdirectories ─────────
-# Deliberately does NOT chown the volume root: ~/.corti/corti.toml and
-# ome.toml must keep the host user's ownership so they can edit them
-# (README: "edit ~/.corti/corti.toml → docker restart"). Only data
-# subdirectories (and anything the app creates at runtime) belong to
-# the container's app user. 2>/dev/null + || true: some subdirs may not
-# exist yet (e.g. agents/users/knowledge are created by the app).
+# ── Step 5: Final ownership — volume root to app, configs to host ──
+# The app process must be able to create the data tree (default_app/,
+# arbitrary app/project dirs) and the integrations sentinel at the
+# volume root, so the root itself belongs to the app user. The config
+# files (corti.toml / ome.toml) are chowned back to the HOST user who
+# owns the mounted volume — editing a file only needs file write
+# permission, not directory write permission, so README's
+# "edit ~/.corti/corti.toml → docker restart" keeps working.
 if [ "$(id -u)" = "0" ]; then
-    chown -R app:app "${DATA_DIR}/.index" "${DATA_DIR}/.tmp" "${DATA_DIR}/agents" "${DATA_DIR}/users" "${DATA_DIR}/knowledge" 2>/dev/null || true
+    HOST_UID="$(stat -c '%u' "${DATA_DIR}" 2>/dev/null || echo 1000)"
+    HOST_GID="$(stat -c '%g' "${DATA_DIR}" 2>/dev/null || echo 1000)"
+    chown -R app:app "${DATA_DIR}"
+    chown "${HOST_UID}:${HOST_GID}" "${DATA_DIR}/corti.toml" "${DATA_DIR}/ome.toml" 2>/dev/null || true
     chown -R postgres:postgres "${PGDATA}"
 fi
 

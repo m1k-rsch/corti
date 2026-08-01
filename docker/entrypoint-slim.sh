@@ -17,7 +17,14 @@ mkdir -p "${DATA_DIR}/.tmp"
 # ── Step 2: Fix ownership on mounted volume ──────────────────────
 if [ "$(id -u)" = "0" ]; then
     echo "[entrypoint] Fixing volume ownership..."
+    # Volume root belongs to the app user (it must create the data tree
+    # default_app/... and the integrations sentinel there); config files
+    # are chowned back to the host user who owns the volume so they can
+    # edit ~/.corti/corti.toml (file write permission suffices).
+    HOST_UID="$(stat -c '%u' "${DATA_DIR}" 2>/dev/null || echo 1000)"
+    HOST_GID="$(stat -c '%g' "${DATA_DIR}" 2>/dev/null || echo 1000)"
     chown -R app:app "${DATA_DIR}"
+    chown "${HOST_UID}:${HOST_GID}" "${DATA_DIR}/corti.toml" "${DATA_DIR}/ome.toml" 2>/dev/null || true
 fi
 
 # ── Step 3: Copy default config files if missing ─────────────────
