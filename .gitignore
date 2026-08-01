@@ -277,3 +277,11 @@ corti-src/
 
 # Scratch directory — throwaway scripts, design drafts, experiments
 .scratch/
+
+# Local developer tooling — kept out of the public repo (removed from
+# tracking; these stay useful on disk for local dev workflows)
+.claude/
+.claude-plugin/
+.github/
+.pre-commit-config.yaml
+.gitlint
