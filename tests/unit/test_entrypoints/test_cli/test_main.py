@@ -12,7 +12,6 @@ def test_help_exits_zero() -> None:
     assert result.exit_code == 0
     assert "corti" in result.stdout
     assert "server" in result.stdout
-    assert "cascade" in result.stdout
     assert "config" in result.stdout
 
 

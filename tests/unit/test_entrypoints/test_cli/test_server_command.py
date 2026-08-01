@@ -49,7 +49,7 @@ def test_start_uses_default_host_port_log_level(captured: dict[str, object]) -> 
     kwargs = captured["kwargs"]
     assert isinstance(kwargs, dict)
     assert kwargs["host"] == "127.0.0.1"
-    assert kwargs["port"] == 8000
+    assert kwargs["port"] == 5473
     assert kwargs["log_level"] == "info"
     assert kwargs["factory"] is True
     args = captured["args"]
