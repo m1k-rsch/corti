@@ -20,6 +20,8 @@ import openai
 
 from .protocol import ChatMessage, ChatResponse, LLMError, Usage
 
+_SENTINEL_KEY_PREFIX = "sk-no-"
+
 
 class OpenAIProvider:
     """Thin async wrapper over ``openai.AsyncOpenAI``.
@@ -54,11 +56,19 @@ class OpenAIProvider:
         self._model = model
         self._temperature = temperature
         self._max_tokens = max_tokens
-        self._client = openai.AsyncOpenAI(
-            api_key=api_key,
+        kwargs: dict[str, Any] = dict(
             base_url=base_url,
             timeout=timeout,
         )
+        if api_key.startswith(_SENTINEL_KEY_PREFIX):
+            # Sentinel key: pass a single space to satisfy SDK validation,
+            # then override the Authorization header to empty string so
+            # keyless endpoints (Pollinations, OVHcloud) treat us as anonymous.
+            kwargs["api_key"] = " "
+            kwargs["default_headers"] = {"Authorization": ""}
+        else:
+            kwargs["api_key"] = api_key
+        self._client = openai.AsyncOpenAI(**kwargs)
 
     async def chat(
         self,

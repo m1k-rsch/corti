@@ -1,6 +1,6 @@
 [project]
 name = "corti"
-version = "0.1.0"
+version = "0.3.0"
 description = "Corti — markdown memory framework for AI agent swarms; cross-machine, multi-agent, self-hosted"
 license = {text = "Apache-2.0"}
 readme = "README.md"

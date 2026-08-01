@@ -69,7 +69,7 @@ statement_timeout_ms = 30000
 # Default: Pollinations.ai (free, no key required, community-supported ~3 yr).
 # Replace with your own provider for higher quality / reliability.
 model = "openai-fast"
-api_key = "sk-no-key-required"
+api_key = "sk-no-pollinations"
 base_url = "https://text.pollinations.ai/openai"
 
 [multimodal]
@@ -94,7 +94,7 @@ max_concurrency = 4
 # bge-m3 (1024-d, MIT-licensed, multilingual). 2 RPM per IP — sufficient for
 # background batch embedding. Replace with a paid provider for higher throughput.
 model     = "bge-m3"
-api_key   = "sk-no-key-required"
+api_key   = "sk-no-ovhcloud"
 base_url  = "https://oai.endpoints.kepler.ai.cloud.ovh.net/v1"
 timeout_seconds = 30.0
 max_retries     = 3

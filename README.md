@@ -1,6 +1,6 @@
-# 🧠 CortiStrate
+# 🧠 Corti
 
-**Cognitive State Substrate for AI Agent Swarms**
+**Cognitive Substrate for AI Agent Swarms**
 
 *Markdown Source of Truth · Sub-second Cascade Sync · Postgres Vector Search · Multi-Agent Adaptive*
 
@@ -8,7 +8,7 @@
 
 ---
 
-CortiStrate (corti): persistent, self-evolving memory layer for AI agents. Decouples runtime state from static weights. Stores state as diffable Markdown. Rebuilds high-performance Postgres/SQLite vector/BM25 indexes. Fully self-hosted.
+Corti (corti): persistent, self-evolving memory layer for AI agents. Decouples runtime state from static weights. Stores state as diffable Markdown. Rebuilds high-performance Postgres/SQLite vector/BM25 indexes. Fully self-hosted.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────┐
@@ -17,7 +17,6 @@ CortiStrate (corti): persistent, self-evolving memory layer for AI agents. Decou
 | 1. LLM Backend (API)     --> Brainstem / Basal Ganglia (Stateless Core) |
 | 2. Agent Framework       --> Sensorimotor Exoskeleton (Hands & Feet)   |
 | 3. Memory ───────────────--> Agent Cortex (Persistent State Core)       |
-|      └─ [CortiStrate Implementation Substrate]                          |
 └─────────────────────────────────────────────────────────────────────────┘
 ```
 
@@ -33,7 +32,7 @@ CortiStrate (corti): persistent, self-evolving memory layer for AI agents. Decou
 * **Simplicity over Complexity (Why Not Knowledge Graphs?)**:
   * *Open-World Semantic Discrepancy*: Open-world semantic parsing fails to converge. Code parsing has strict AST syntax, but natural language has systemic ambiguity. LLM parsing under AST/Safeguards generates naming collisions (e.g., "ABC Project" parsed sometimes as "ABC", other times as "ABC Project"), stalling graph construction. Formal ontology engineering (KBpedia, Wikipedia scale) is cost-prohibitive.
   * *Diminishing Search Utility*: Graph traversal provides minimal marginal gain over raw keyword/semantic search. Open-world information lacks strict dependency chains; it relies on loose causality/inclusion. LLMs possess massive pre-trained associative spaces; passing raw keywords + semantic vectors triggers the correct associative touchpoints instantaneously without explicit graph edges.
-  * *Memory-Knowledge Isomorphism & Limitation*: Memory and knowledge are isomorphic at the root [1] [2]. Limitation: CortiStrate does not currently distill memory into structured academic knowledge. Resolution: Semantic keywords/vectors are the most cost-effective trigger mechanism to activate LLM's pre-trained latent space.
+  * *Memory-Knowledge Isomorphism & Limitation*: Memory and knowledge are isomorphic at the root [1] [2]. Limitation: Corti does not currently distill memory into structured academic knowledge. Resolution: Semantic keywords/vectors are the most cost-effective trigger mechanism to activate LLM's pre-trained latent space.
   * *Theoretical Grounding*: "Memory and knowledge share an isomorphic graph base $G = (V, E)$. The distinction is operational (meta-attribute variance), not structural (data format divergence)." [1]
 * **Dual Ingestion Paths**:
   * *Silent Background Digestion*: Automatic, silent background ingestion of conversation logs from active agent sessions.
@@ -127,6 +126,13 @@ What this does: checks Docker → pulls the pre-built image from Docker Hub → 
 
 **Requirements**: Docker 24+.
 
+> **Slim variant** — if you already have PostgreSQL 18+ with pgvector:
+> ```bash
+> export DB_HOST=... DB_PORT=5432 DB_NAME=corti DB_USER=corti DB_PASSWORD=...
+> curl -fsSL https://raw.githubusercontent.com/m1k-rsch/corti/main/install.sh | bash -s slim
+> ```
+> Slim image: ~400 MB vs 1.2 GB all-in-one. Pinned version: `bash -s v0.2-slim`.
+
 ### 2. Start the Server
 
 ```bash
@@ -134,6 +140,10 @@ docker run -d --name corti \
   -p 5473:5473 \
   -v ~/.corti:/home/app/.corti \
   m1research/corti:latest
+# Slim variant (external PG):
+# docker run -d --name corti -p 5473:5473 -v ~/.corti:/home/app/.corti \
+#   -e DB_HOST=... -e DB_NAME=corti -e DB_USER=corti -e DB_PASSWORD=... \
+#   m1research/corti:slim
 # Verify
 curl http://localhost:5473/health
 # → {"status":"ok"}
@@ -174,28 +184,30 @@ Plugins are **copied** (not symlinked), so they survive repo updates and work in
 
 ### 2. Manual Plugin Install
 
-If you already pulled the image but skipped plugin detection, or want to reinstall just one plugin:
+If the install script's auto-detection didn't pick up your agent, or you installed a new agent
+after Corti — pull the plugins directly from the GitHub repo (no Docker required):
 
 ```bash
-# Hermes
-docker create --name corti-tmp m1research/corti:latest
-docker cp corti-tmp:/opt/corti/integrations/hermes ~/.hermes/plugins/
+# Hermes Agent
+curl -fsSL https://github.com/m1k-rsch/corti/archive/refs/heads/main.tar.gz | \
+  tar -xz --strip-components=3 -C ~/.hermes/plugins/ corti-main/src/integrations/hermes
 mv ~/.hermes/plugins/hermes ~/.hermes/plugins/corti
-docker rm corti-tmp
+hermes plugins enable corti
 
 # Claude Code — dropped into ~/.claude/skills/ for auto-discovery
 # (hooks/hooks.json + MCP auto-loaded on next session, zero CLI)
-docker create --name corti-tmp m1research/corti:latest
-docker cp corti-tmp:/opt/corti/integrations/claude-code ~/.claude/skills/
+curl -fsSL https://github.com/m1k-rsch/corti/archive/refs/heads/main.tar.gz | \
+  tar -xz --strip-components=3 -C ~/.claude/skills/ corti-main/src/integrations/claude-code
 mv ~/.claude/skills/claude-code ~/.claude/skills/corti
-docker rm corti-tmp
 ```
+
+Pin to a specific version by replacing `main` with a tag (e.g. `v0.2`).
 
 ---
 
 ## 🛠 Design Philosophy: Feature Removals
 
-CortiStrate actively removes legacy **Agent Case** and **Agent Skill** modules from the execution loop. 
+Corti actively removes legacy **Agent Case** and **Agent Skill** modules from the execution loop. 
 
 ### 1. Removal of Agent Case (Trajectory Summaries)
 * *Original Feature*: Reviewed memory histories to summarize individual Agent trajectories and task scenarios for future replays.
@@ -245,17 +257,17 @@ CortiStrate actively removes legacy **Agent Case** and **Agent Skill** modules f
 
 ## ⚖️ EverOS Provenance & Minimalist Production Overhaul
 
-CortiStrate originally borrowed code structures and core concepts from the upstream [EverOS](https://github.com/EverMind-AI/EverOS) codebase (Apache-2.0). However, the system has undergone deep local redevelopment, custom architecture optimization, and design philosophy shifts.
+Corti originally borrowed code structures and core concepts from the upstream [EverOS](https://github.com/EverMind-AI/EverOS) codebase (Apache-2.0). However, the system has undergone deep local redevelopment, custom architecture optimization, and design philosophy shifts.
 
 ### Minimalist Engineering & Feature Removal:
 * Applied strict UNIX-style minimalism to optimize execution paths and reduce cognitive bloat.
-* Removed `agent_case` (trajectory summaries) and `agent_skill` (capability stores) entirely. Upstream EverOS retains these components; CortiStrate prunes them because high-parameter LLM latent spaces need only raw semantic triggers (`episode` and `facts` schemas) rather than redundant, pre-summarized local structures and custom execution registries.
+* Removed `agent_case` (trajectory summaries) and `agent_skill` (capability stores) entirely. Upstream EverOS retains these components; Corti prunes them because high-parameter LLM latent spaces need only raw semantic triggers (`episode` and `facts` schemas) rather than redundant, pre-summarized local structures and custom execution registries.
 
 ### Upstream Open-Source Limitations:
 * **The LanceDB Bottleneck**: Upstream EverOS relies on LanceDB—an embedded columnar store designed for flat, high-read research data. In persistent daemon workloads, LanceDB loads full tables into memory and copies during mutation. This results in severe, unrecoverable memory leaks and thread-locking, rendering it completely unsuitable for multi-agent self-hosted production.
 * **SaaS Commercial Split**: EverOS open-source core acts as a funnel for their proprietary cloud SaaS. Consequently, its "out-of-the-box" local self-hosted readiness is low, lacking multi-tenant transactional safety, concurrent execution pipelines, and robust local persistence guarantees.
 
-### Custom CortiStrate Enhancements:
+### Custom Corti Enhancements:
 * **Transactional Postgres Overhaul**: Replaced the entire retrieval chassis with a robust, production-grade PostgreSQL / pgvector backend (offering embedded PGLite support for lightweight instances), resolving storage leaks and securing transactional safety.
 * **Persistent API Daemon**: Overhauled execution-loop CLI overhead, replacing it with an active, concurrent FastAPI daemon to serve concurrent Agent swarms safely.
 * **Lightweight Memory Fragments**: Dumped prompt-bloating full-episode ingestion, replacing it with title-based fragment retrieval. Injecting 20 concise metadata fragments widens the recall trigger surface while preserving token context boundaries.

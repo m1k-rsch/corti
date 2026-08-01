@@ -30,7 +30,7 @@ def test_load_settings_defaults_from_shipped_toml() -> None:
     assert s.sqlite.synchronous == "NORMAL"
     assert s.sqlite.busy_timeout_ms == 5000
     assert s.api.host == "127.0.0.1"
-    assert s.api.port == 8000
+    assert s.api.port == 5473
 
 
 def test_corti_toml_overrides_defaults(tmp_path: Path) -> None:
@@ -109,15 +109,15 @@ def test_load_settings_is_cached() -> None:
 
 def test_embedding_rerank_defaults() -> None:
     s = Settings()
-    assert s.embedding.model == "Qwen/Qwen3-Embedding-4B"
-    assert s.embedding.base_url == "https://api.deepinfra.com/v1/openai"
-    assert s.embedding.api_key.get_secret_value() == ""
+    assert s.embedding.model == "bge-m3"
+    assert s.embedding.base_url == "https://oai.endpoints.kepler.ai.cloud.ovh.net/v1"
+    assert s.embedding.api_key.get_secret_value() == "sk-no-ovhcloud"
     assert s.embedding.timeout_seconds == 30.0
     assert s.rerank.model == "Qwen/Qwen3-Reranker-4B"
     assert s.rerank.base_url == "https://api.deepinfra.com/v1/inference"
     assert s.rerank.api_key.get_secret_value() == ""
     assert s.rerank.timeout_seconds == 30.0
-    assert s.llm.api_key.get_secret_value() == ""
+    assert s.llm.api_key.get_secret_value() == "sk-no-pollinations"
 
 
 def test_resolve_root_default(monkeypatch: pytest.MonkeyPatch) -> None:

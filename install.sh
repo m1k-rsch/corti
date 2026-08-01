@@ -3,7 +3,15 @@
 # Usage: curl -fsSL https://raw.githubusercontent.com/m1k-rsch/corti/main/install.sh | bash
 set -euo pipefail
 
-IMAGE="m1research/corti:latest"
+IMAGE="m1research/corti"
+
+# Tag selector (first positional argument).
+#   curl ... | bash              → latest      (all-in-one, embedded PG)
+#   curl ... | bash -s slim      → slim        (external PG required)
+#   curl ... | bash -s v0.2      → v0.2        (pinned version, full)
+#   curl ... | bash -s v0.2-slim → v0.2-slim   (pinned version, slim)
+TAG="${1:-latest}"
+IMAGE_FULL="${IMAGE}:${TAG}"
 
 # ── Colors ────────────────────────────────────────────────────────────────
 if [ -t 1 ]; then
@@ -66,8 +74,8 @@ fi
 # ── Step 2: Pull image ────────────────────────────────────────────────────
 section "Step 2: Pull Image"
 
-info "Pulling $IMAGE..."
-docker pull "$IMAGE"
+info "Pulling $IMAGE_FULL..."
+docker pull "$IMAGE_FULL"
 
 # ── Step 3: Seed data directory ───────────────────────────────────────────
 section "Step 3: Data Directory"
@@ -81,7 +89,7 @@ else
     mkdir -p "$DATA_DIR/.index/sqlite" "$DATA_DIR/.index/pg" "$DATA_DIR/.tmp"
 
     # Extract default configs from the Docker image.
-    CID=$(docker create "$IMAGE")
+    CID=$(docker create "$IMAGE_FULL")
     docker cp "$CID:/opt/corti/config/default.toml" "$DATA_DIR/corti.toml"
     docker cp "$CID:/opt/corti/config/default_ome.toml" "$DATA_DIR/ome.toml"
     docker rm "$CID" >/dev/null
@@ -90,7 +98,7 @@ fi
 # ── Step 4: Agent integrations ────────────────────────────────────────────
 section "Step 4: Agent Integrations"
 
-CID=$(docker create "$IMAGE")
+CID=$(docker create "$IMAGE_FULL")
 
 # ── 4a: Hermes ──────────────────────────────────────────────────────────────
 HERMES_PLUGIN_DIR="$HOME/.hermes/plugins"
@@ -113,16 +121,22 @@ if command -v hermes &>/dev/null; then
     fi
     # Auto-enable the plugin + set memory provider so it's active immediately.
     if hermes plugins list 2>/dev/null | grep -q corti; then
-        hermes plugins enable corti 2>/dev/null || true
+        if hermes plugins enable corti 2>/dev/null; then
+            info "Hermes plugin enabled"
+        else
+            warn "Hermes plugin found but enable failed — run: hermes plugins enable corti"
+        fi
     fi
     # Also set the memory provider (belt-and-suspenders — some Hermes versions
     # require this even after plugin enable).
     if hermes config get memory.provider 2>/dev/null | grep -q corti; then
-        info "Hermes plugin enabled — memory.provider=corti"
+        info "Hermes memory.provider already set to corti"
     else
-        hermes config set memory.provider corti 2>/dev/null && \
-            info "Hermes plugin enabled — memory.provider=corti" || \
+        if hermes config set memory.provider corti 2>/dev/null; then
+            info "Hermes memory.provider set to corti"
+        else
             warn "Could not set memory.provider. Run: hermes config set memory.provider corti"
+        fi
     fi
 else
     info "Hermes not detected — skipping plugin install"
@@ -189,6 +203,28 @@ section "Step 6: Start Server"
 
 CONTAINER_NAME="corti"
 
+# ── Slim mode: validate external PG connectivity ──────────────────
+if [ "$TAG" = "slim" ]; then
+    info "Slim mode: external PostgreSQL required"
+    missing=""
+    for var in DB_HOST DB_PORT DB_NAME DB_USER DB_PASSWORD; do
+        if [ -z "${!var:-}" ]; then
+            missing="$missing  $var\n"
+        fi
+    done
+    if [ -n "$missing" ]; then
+        error "Slim mode requires these environment variables:\n$missing"
+        echo "  Set them before running install.sh:"
+        echo "    export DB_HOST=192.168.1.100"
+        echo "    export DB_PORT=5432"
+        echo "    export DB_NAME=corti"
+        echo "    export DB_USER=corti"
+        echo "    export DB_PASSWORD=xxx"
+        exit 1
+    fi
+    info "External PostgreSQL at ${DB_HOST}:${DB_PORT}/${DB_NAME}"
+fi
+
 # Check if a container with this name already exists (running or stopped).
 if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -qx "$CONTAINER_NAME"; then
     STATE=$(docker inspect -f '{{.State.Status}}' "$CONTAINER_NAME" 2>/dev/null || true)
@@ -201,10 +237,19 @@ if docker ps -a --format '{{.Names}}' 2>/dev/null | grep -qx "$CONTAINER_NAME"; 
     fi
 else
     info "Starting Corti server..."
-    docker run -d --name "$CONTAINER_NAME" \
-        -p 5473:5473 \
-        -v "$DATA_DIR:/home/app/.corti" \
-        "$IMAGE" >/dev/null
+    # Build docker run args (add DB_* env vars for slim mode).
+    _run_args=(-d --name "$CONTAINER_NAME" -p 5473:5473 -v "$DATA_DIR:/home/app/.corti")
+    if [ "$TAG" = "slim" ]; then
+        _run_args+=(
+            -e "DB_HOST=$DB_HOST"
+            -e "DB_PORT=$DB_PORT"
+            -e "DB_NAME=$DB_NAME"
+            -e "DB_USER=$DB_USER"
+            -e "DB_PASSWORD=$DB_PASSWORD"
+        )
+    fi
+    _run_args+=("$IMAGE_FULL")
+    docker run "${_run_args[@]}" >/dev/null
 
     # Quick health check
     sleep 2
@@ -220,6 +265,6 @@ echo ""
 echo -e "  ${BOLD}Check:${NC}     curl http://localhost:5473/health"
 echo -e "  ${BOLD}Logs:${NC}      docker logs -f $CONTAINER_NAME"
 echo -e "  ${BOLD}Restart:${NC}   docker restart $CONTAINER_NAME   ${CYAN}# after editing corti.toml${NC}"
-echo -e "  ${BOLD}Update:${NC}    docker pull $IMAGE && docker rm -f $CONTAINER_NAME && docker run -d --name $CONTAINER_NAME -p 5473:5473 -v $DATA_DIR:/home/app/.corti $IMAGE"
+echo -e "  ${BOLD}Update:${NC}    docker pull $IMAGE_FULL && docker rm -f $CONTAINER_NAME && docker run -d --name $CONTAINER_NAME -p 5473:5473 -v $DATA_DIR:/home/app/.corti $IMAGE_FULL"
 echo -e "  ${BOLD}Docs:${NC}     https://cortistrate.dev/docs"
 echo ""

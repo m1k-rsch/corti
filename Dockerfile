@@ -1,5 +1,5 @@
 # ── Stage 0: builder ──────────────────────────────────────────────
-# Install Python 3.12 + dependencies into a venv. The runtime stage
+# Install Python 3.14 + dependencies into a venv. The runtime stage
 # only gets the compiled venv, not the build toolchain.
 
 FROM pgvector/pgvector:pg18 AS builder
@@ -12,10 +12,10 @@ RUN apt-get update \
 RUN curl -LsSf https://astral.sh/uv/install.sh | sh
 ENV PATH="/root/.local/bin:$PATH"
 
-# Install a standalone Python 3.12 into a shared location so both
+# Install a standalone Python 3.14 into a shared location so both
 # root (builder) and the 'app' user (runtime) can access it.
 ENV UV_PYTHON_INSTALL_DIR=/opt/python
-RUN uv python install 3.12
+RUN uv python install 3.14
 # UV_PROJECT_ENVIRONMENT overrides the default .venv location so
 # uv sync installs into our staged path instead of a local .venv.
 ENV UV_PROJECT_ENVIRONMENT="/opt/corti/venv"
@@ -43,14 +43,14 @@ RUN apt-get update \
     && apt-get install -y --no-install-recommends curl supervisor \
     && rm -rf /var/lib/apt/lists/*
 
-# Install uv + Python 3.12 into shared location (matches builder exactly).
+# Install uv + Python 3.14 into shared location (matches builder exactly).
 RUN apt-get update \
     && apt-get install -y --no-install-recommends curl ca-certificates \
     && curl -LsSf https://astral.sh/uv/install.sh | sh \
     && rm -rf /var/lib/apt/lists/*
 ENV PATH="/root/.local/bin:$PATH"
 ENV UV_PYTHON_INSTALL_DIR=/opt/python
-RUN uv python install 3.12
+RUN uv python install 3.14
 
 # Create non-root user for the corti app process.
 # The base image already provides the 'postgres' user.

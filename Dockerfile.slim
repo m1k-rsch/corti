@@ -1,0 +1,75 @@
+# ── Slim variant: Python 3.14 + Corti app only (no embedded PG) ──
+# Requires an external PostgreSQL 18+ with pgvector extension.
+# Set DB_HOST / DB_PORT / DB_NAME / DB_USER / DB_PASSWORD via env vars.
+#
+# Build:  docker build -f Dockerfile.slim -t corti:slim .
+# Run:    docker run -d --name corti -p 5473:5473 \
+#           -v ~/.corti:/home/app/.corti \
+#           -e DB_HOST=192.168.1.100 \
+#           -e DB_PORT=5432 \
+#           -e DB_NAME=corti \
+#           -e DB_USER=corti \
+#           -e DB_PASSWORD=xxx \
+#           corti:slim
+
+FROM python:3.14-slim
+
+LABEL maintainer="Corti"
+LABEL description="Corti memory framework — slim (Python 3.14, external PG)"
+
+# Runtime deps: curl for HEALTHCHECK, ca-certificates for HTTPS.
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends curl ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install uv for dependency management.
+RUN curl -LsSf https://astral.sh/uv/install.sh | sh
+ENV PATH="/root/.local/bin:$PATH"
+
+# Create non-root user for the corti app process.
+RUN groupadd --system app \
+    && useradd --system --gid app --home-dir /home/app --create-home app
+
+# ── Build dependencies ────────────────────────────────────────────
+ENV UV_PROJECT_ENVIRONMENT="/opt/corti/venv"
+ENV VIRTUAL_ENV="/opt/corti/venv"
+ENV PATH="/opt/corti/venv/bin:$PATH"
+
+WORKDIR /build
+COPY uv.lock pyproject.toml README.md ./
+COPY src/ ./src/
+RUN uv sync --frozen --no-dev --no-editable
+
+# ── Stage config + integrations ───────────────────────────────────
+COPY src/corti/config/default.toml /opt/corti/config/default.toml
+COPY src/corti/config/default_ome.toml /opt/corti/config/default_ome.toml
+COPY src/integrations/hermes /opt/corti/integrations/hermes
+COPY src/integrations/claude-code /opt/corti/integrations/claude-code
+
+# ── Data directories ──────────────────────────────────────────────
+RUN mkdir -p /home/app/.corti/.index/sqlite \
+             /home/app/.corti/.index/pg \
+             /home/app/.corti/.tmp \
+    && chown -R app:app /home/app/.corti
+
+# ── Environment defaults (overridable via docker run -e) ──────────
+ENV CORTI_ROOT=/home/app/.corti
+ENV CORTI_API__HOST=0.0.0.0
+ENV CORTI_API__PORT=5473
+ENV LC_ALL=C.UTF-8
+ENV LANG=C.UTF-8
+ENV TZ=UTC
+
+# Only the HTTP API port is exposed to the host.
+EXPOSE 5473
+
+# Health check — probes the /health endpoint every 30s.
+HEALTHCHECK --interval=30s --timeout=5s --start-period=15s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:5473/health')" || exit 1
+
+# All persistent data lives in one volume.
+VOLUME ["/home/app/.corti"]
+
+COPY docker/entrypoint-slim.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+ENTRYPOINT ["/docker-entrypoint.sh"]
