@@ -1,6 +1,6 @@
 # Acknowledgments
 
-[Home](README.md) > [Docs](docs/index.md) > Acknowledgments
+[Home](../README.md) > [Docs](../docs/index.md) > Acknowledgments
 
 Thanks to the following projects and communities.
 
@@ -96,8 +96,8 @@ Corti is built on top of excellent open-source libraries and frameworks:
 ### LLM & embedding providers
 
 Corti is provider-agnostic by design. Tested provider integrations include
-OpenAI, Anthropic, Ollama, and SBERT. See [`component/llm/`](src/corti/component/llm/)
-and [`component/embedding/`](src/corti/component/embedding/) for the
+OpenAI, Anthropic, Ollama, and SBERT. See [`component/llm/`](../src/corti/component/llm/)
+and [`component/embedding/`](../src/corti/component/embedding/) for the
 adapter layouts.
 
 ---

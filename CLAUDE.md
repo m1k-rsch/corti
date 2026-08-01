@@ -59,7 +59,7 @@ for the full branch workflow.
 When refreshing this repository from an internal source archive, preserve
 GitHub-only contributor and automation files. Do not overwrite `CLAUDE.md`,
 `.claude/skills/*`, `legal/CONTRIBUTING.md`, or `.github/*` workflow/template files
-without checking [docs/github-sync.md](docs/github-sync.md).
+without following the GitHub sync guardrails.
 
 ## Storage three-piece set
 

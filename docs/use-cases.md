@@ -231,13 +231,13 @@ A context-native AI wearable that listens to everyday life and converts conversa
 <tr>
 <td width="50%" valign="top">
 
-[![banner-gif](https://github.com/user-attachments/assets/df9677ec-386f-4c56-a428-08bca25c54dc)](migration-to-1.0.0.md)
+![banner-gif](https://github.com/user-attachments/assets/df9677ec-386f-4c56-a428-08bca25c54dc)
 
 #### Legacy OpenClaw Agent Memory
 
 Archived pre-1.0.0 plugin reference. New integrations should use the current Corti API.
 
-[Learn more](migration-to-1.0.0.md)
+Coming soon
 
 </td>
 <td width="50%" valign="top">
@@ -266,26 +266,26 @@ Run screenshot-based analysis with computer-use and store the results in memory.
 </td>
 <td width="50%" valign="top">
 
-[![banner-gif](https://github.com/user-attachments/assets/54a7cf8f-62c4-4fbc-9d50-b214d034e051)](../use-cases/game-of-throne-demo)
+![banner-gif](https://github.com/user-attachments/assets/54a7cf8f-62c4-4fbc-9d50-b214d034e051)
 
 #### Game of Thrones Memories
 
 A demonstration of AI memory infrastructure through an interactive Q&A experience with *A Game of Thrones*.
 
-[Code](../use-cases/game-of-throne-demo)
+Coming soon
 
 </td>
 </tr>
 <tr>
 <td width="50%" valign="top">
 
-[![banner-gif](https://github.com/user-attachments/assets/af37c1f6-7ba5-430c-b99d-2a7e7eac618f)](../use-cases/claude-code-plugin)
+![banner-gif](https://github.com/user-attachments/assets/af37c1f6-7ba5-430c-b99d-2a7e7eac618f)
 
 #### Claude Code Plugin
 
 Persistent memory for Claude Code. Automatically saves and recalls context from past coding sessions.
 
-[Code](../use-cases/claude-code-plugin)
+Coming soon
 
 </td>
 <td width="50%" valign="top">

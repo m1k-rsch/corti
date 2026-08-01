@@ -60,8 +60,7 @@ and response bodies are UTF-8 JSON.
 
 Corti ships **no built-in authentication**. The server binds to
 `127.0.0.1` by default; place your own gateway or auth layer in front
-before exposing the API on any other interface. See
-[../SECURITY.md](../SECURITY.md) for the threat model.
+before exposing the API on any other interface.
 
 ### Response envelope
 

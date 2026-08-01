@@ -156,7 +156,7 @@ event payload.
 | Backend | Defense | Where |
 |---|---|---|
 | **SQLite** | `UtcDateTimeColumn` (`TypeDecorator`) re-attaches `tzinfo=UTC` on read (`process_result_value`) and normalises to UTC on write (`process_bind_param`) | [core/persistence/sqlite/base.py](../src/corti/core/persistence/sqlite/base.py) |
-| **Postgres** | `BasePgTable.to_arrow_schema()` rewrites **every** `timestamp[us]` column to `timestamp[us, tz=UTC]`; PyArrow handles UTC end-to-end | [core/persistence/postgres/base.py](../src/corti/core/persistence/postgres/base.py) |
+| **Postgres** | `BasePgTable.to_arrow_schema()` rewrites **every** `timestamp[us]` column to `timestamp[us, tz=UTC]`; PyArrow handles UTC end-to-end | [infra/persistence/pg/base.py](../src/corti/infra/persistence/pg/base.py) |
 | **CI gate** | `scripts/check_datetime_discipline.py` fails the build on any code that bypasses `component/utils/datetime` | wired into `make lint` |
 
 These defenses replace what used to be an "every consumer must call

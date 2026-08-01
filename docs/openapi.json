@@ -3,7 +3,7 @@
   "info": {
     "title": "corti",
     "description": "md-first memory extraction framework",
-    "version": "1.1.2"
+    "version": "0.3.0"
   },
   "paths": {
     "/health": {
@@ -1408,7 +1408,7 @@
         "additionalProperties": true,
         "type": "object",
         "title": "FilterNode",
-        "description": "One Filters DSL node.\n\nRecursive ``AND`` / ``OR`` arrays mix with arbitrary scalar fields at\nthe same level. Pydantic only checks the combinators; field-level\nsafety is enforced when compiling the node to a Postgres ``WHERE``\nstring in :mod:`corti.memory.search.filters`."
+        "description": "One Filters DSL node.\n\nRecursive ``AND`` / ``OR`` arrays mix with arbitrary scalar fields at\nthe same level. Pydantic only checks the combinators; field-level\nsafety is enforced when compiling the node to a Postgres ``where``\nstring in :mod:`corti.memory.search.filters`."
       },
       "FlushResponseData": {
         "properties": {
@@ -1427,15 +1427,22 @@
         ],
         "title": "FlushResponseData"
       },
-      "GetAgentCaseItem": {
+      "GetAtomicFactItem": {
         "properties": {
           "id": {
             "type": "string",
             "title": "Id"
           },
-          "agent_id": {
-            "type": "string",
-            "title": "Agent Id"
+          "user_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Id"
           },
           "app_id": {
             "type": "string",
@@ -1448,22 +1455,6 @@
             "default": "default"
           },
           "session_id": {
-            "type": "string",
-            "title": "Session Id"
-          },
-          "task_intent": {
-            "type": "string",
-            "title": "Task Intent"
-          },
-          "approach": {
-            "type": "string",
-            "title": "Approach"
-          },
-          "quality_score": {
-            "type": "number",
-            "title": "Quality Score"
-          },
-          "key_insight": {
             "anyOf": [
               {
                 "type": "string"
@@ -1472,7 +1463,33 @@
                 "type": "null"
               }
             ],
-            "title": "Key Insight"
+            "title": "Session Id"
+          },
+          "parent_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parent Id"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source"
           },
           "timestamp": {
             "type": "string",
@@ -1484,77 +1501,12 @@
         "type": "object",
         "required": [
           "id",
-          "agent_id",
-          "session_id",
-          "task_intent",
-          "approach",
-          "quality_score",
+          "user_id",
+          "content",
           "timestamp"
         ],
-        "title": "GetAgentCaseItem",
-        "description": "Agent case listing item — always agent-scoped."
-      },
-      "GetAgentSkillItem": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id"
-          },
-          "agent_id": {
-            "type": "string",
-            "title": "Agent Id"
-          },
-          "app_id": {
-            "type": "string",
-            "title": "App Id",
-            "default": "default"
-          },
-          "project_id": {
-            "type": "string",
-            "title": "Project Id",
-            "default": "default"
-          },
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "description": {
-            "type": "string",
-            "title": "Description"
-          },
-          "content": {
-            "type": "string",
-            "title": "Content"
-          },
-          "confidence": {
-            "type": "number",
-            "title": "Confidence"
-          },
-          "maturity_score": {
-            "type": "number",
-            "title": "Maturity Score"
-          },
-          "source_case_ids": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Source Case Ids"
-          }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "required": [
-          "id",
-          "agent_id",
-          "name",
-          "description",
-          "content",
-          "confidence",
-          "maturity_score"
-        ],
-        "title": "GetAgentSkillItem",
-        "description": "Agent skill listing item — always agent-scoped."
+        "title": "GetAtomicFactItem",
+        "description": "Atomic fact listing item — always user-scoped."
       },
       "GetData": {
         "properties": {
@@ -1572,19 +1524,19 @@
             "type": "array",
             "title": "Profiles"
           },
-          "agent_cases": {
+          "atomic_facts": {
             "items": {
-              "$ref": "#/components/schemas/GetAgentCaseItem"
+              "$ref": "#/components/schemas/GetAtomicFactItem"
             },
             "type": "array",
-            "title": "Agent Cases"
+            "title": "Atomic Facts"
           },
-          "agent_skills": {
+          "foresights": {
             "items": {
-              "$ref": "#/components/schemas/GetAgentSkillItem"
+              "$ref": "#/components/schemas/GetForesightItem"
             },
             "type": "array",
-            "title": "Agent Skills"
+            "title": "Foresights"
           },
           "total_count": {
             "type": "integer",
@@ -1600,7 +1552,7 @@
         "additionalProperties": false,
         "type": "object",
         "title": "GetData",
-        "description": "Body of ``response.data``.\n\nAll four arrays are always present so client code can iterate\nwithout branching on ``memory_type``; the route populates exactly\none."
+        "description": "Body of ``response.data``.\n\nAll arrays are always present so client code can iterate\nwithout branching on ``memory_type``; the route populates exactly\none."
       },
       "GetEpisodeItem": {
         "properties": {
@@ -1678,16 +1630,86 @@
         "title": "GetEpisodeItem",
         "description": "Episode listing item — always user-scoped."
       },
+      "GetForesightItem": {
+        "properties": {
+          "id": {
+            "type": "string",
+            "title": "Id"
+          },
+          "user_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "User Id"
+          },
+          "app_id": {
+            "type": "string",
+            "title": "App Id",
+            "default": "default"
+          },
+          "project_id": {
+            "type": "string",
+            "title": "Project Id",
+            "default": "default"
+          },
+          "session_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Id"
+          },
+          "content": {
+            "type": "string",
+            "title": "Content"
+          },
+          "insight_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Insight Type"
+          },
+          "timestamp": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Timestamp"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "id",
+          "user_id",
+          "content",
+          "timestamp"
+        ],
+        "title": "GetForesightItem",
+        "description": "Foresight listing item — always user-scoped."
+      },
       "GetMemoryType": {
         "type": "string",
         "enum": [
           "episode",
           "profile",
-          "agent_case",
-          "agent_skill"
+          "atomic_fact",
+          "foresight"
         ],
         "title": "GetMemoryType",
-        "description": "The four kinds enumerated by ``/get``.\n\n``episode`` and ``profile`` are user-owned; ``agent_case`` and\n``agent_skill`` are agent-owned. Cross-pairs are rejected by\n:meth:`GetRequest._validate_owner_memory_type_pair`.\n\nNaming note: all four values use the bare kind name (no\n``_memory`` suffix) and match the Postgres table name + everalgo\ntype name for that kind."
+        "description": "The kinds enumerated by ``/get``.\n\n``episode``, ``profile``, ``atomic_fact``, ``foresight`` are\nuser-owned."
       },
       "GetProfileItem": {
         "properties": {
@@ -1745,18 +1767,6 @@
               }
             ],
             "title": "User Id"
-          },
-          "agent_id": {
-            "anyOf": [
-              {
-                "type": "string",
-                "minLength": 1
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Agent Id"
           },
           "app_id": {
             "type": "string",
@@ -1819,7 +1829,7 @@
           "memory_type"
         ],
         "title": "GetRequest",
-        "description": "Request body for ``POST /api/v1/memory/get``.\n\nCallers identify the memory owner via ``user_id`` XOR ``agent_id`` —\nexactly one must be set. Internally the manager keeps using\n``owner_id`` / ``owner_type`` (the storage tables' columns); those\nare exposed as derived properties so the rename only affects the\nwire contract."
+        "description": "Request body for ``POST /api/v1/memory/get``.\n\nCallers identify the memory owner via ``user_id``."
       },
       "GetResponse": {
         "properties": {
@@ -2095,145 +2105,6 @@
         ],
         "title": "MessageItemDTO"
       },
-      "SearchAgentCaseItem": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id"
-          },
-          "agent_id": {
-            "type": "string",
-            "title": "Agent Id"
-          },
-          "app_id": {
-            "type": "string",
-            "title": "App Id",
-            "default": "default"
-          },
-          "project_id": {
-            "type": "string",
-            "title": "Project Id",
-            "default": "default"
-          },
-          "session_id": {
-            "type": "string",
-            "title": "Session Id"
-          },
-          "task_intent": {
-            "type": "string",
-            "title": "Task Intent"
-          },
-          "approach": {
-            "type": "string",
-            "title": "Approach"
-          },
-          "quality_score": {
-            "type": "number",
-            "title": "Quality Score"
-          },
-          "key_insight": {
-            "anyOf": [
-              {
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Key Insight"
-          },
-          "timestamp": {
-            "type": "string",
-            "format": "date-time",
-            "title": "Timestamp"
-          },
-          "score": {
-            "type": "number",
-            "title": "Score"
-          }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "required": [
-          "id",
-          "agent_id",
-          "session_id",
-          "task_intent",
-          "approach",
-          "quality_score",
-          "timestamp",
-          "score"
-        ],
-        "title": "SearchAgentCaseItem",
-        "description": "Agent case hit — always agent-scoped."
-      },
-      "SearchAgentSkillItem": {
-        "properties": {
-          "id": {
-            "type": "string",
-            "title": "Id"
-          },
-          "agent_id": {
-            "type": "string",
-            "title": "Agent Id"
-          },
-          "app_id": {
-            "type": "string",
-            "title": "App Id",
-            "default": "default"
-          },
-          "project_id": {
-            "type": "string",
-            "title": "Project Id",
-            "default": "default"
-          },
-          "name": {
-            "type": "string",
-            "title": "Name"
-          },
-          "description": {
-            "type": "string",
-            "title": "Description"
-          },
-          "content": {
-            "type": "string",
-            "title": "Content"
-          },
-          "confidence": {
-            "type": "number",
-            "title": "Confidence"
-          },
-          "maturity_score": {
-            "type": "number",
-            "title": "Maturity Score"
-          },
-          "source_case_ids": {
-            "items": {
-              "type": "string"
-            },
-            "type": "array",
-            "title": "Source Case Ids"
-          },
-          "score": {
-            "type": "number",
-            "title": "Score"
-          }
-        },
-        "additionalProperties": false,
-        "type": "object",
-        "required": [
-          "id",
-          "agent_id",
-          "name",
-          "description",
-          "content",
-          "confidence",
-          "maturity_score",
-          "score"
-        ],
-        "title": "SearchAgentSkillItem",
-        "description": "Agent skill hit — always agent-scoped."
-      },
       "SearchAtomicFactItem": {
         "properties": {
           "id": {
@@ -2275,20 +2146,6 @@
             "type": "array",
             "title": "Profiles"
           },
-          "agent_cases": {
-            "items": {
-              "$ref": "#/components/schemas/SearchAgentCaseItem"
-            },
-            "type": "array",
-            "title": "Agent Cases"
-          },
-          "agent_skills": {
-            "items": {
-              "$ref": "#/components/schemas/SearchAgentSkillItem"
-            },
-            "type": "array",
-            "title": "Agent Skills"
-          },
           "unprocessed_messages": {
             "items": {
               "$ref": "#/components/schemas/UnprocessedMessageDTO"
@@ -2300,7 +2157,7 @@
         "additionalProperties": false,
         "type": "object",
         "title": "SearchData",
-        "description": "Body of ``response.data``.\n\nAll five arrays are always present so client code can iterate without\nbranching on ``owner_type``. Routes not applicable to the request's\nowner type stay as ``[]``. ``unprocessed_messages`` is filled only\nwhen ``filters.session_id`` is present as a top-level eq scalar —\nin-flight buffer rows are scope-tagged but unattributed (no\n``user_id``), so session is the only meaningful query dimension."
+        "description": "Body of ``response.data``.\n\nAll arrays are always present so client code can iterate without\nbranching on ``owner_type``. Routes not applicable to the request's\nowner type stay as ``[]``. ``unprocessed_messages`` is filled only\nwhen ``filters.session_id`` is present as a top-level eq scalar —\nin-flight buffer rows are scope-tagged but unattributed (no\n``user_id``), so session is the only meaningful query dimension."
       },
       "SearchEpisodeItem": {
         "properties": {
@@ -2552,18 +2409,6 @@
             ],
             "title": "User Id"
           },
-          "agent_id": {
-            "anyOf": [
-              {
-                "type": "string",
-                "minLength": 1
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Agent Id"
-          },
           "app_id": {
             "type": "string",
             "title": "App Id",
@@ -2622,7 +2467,7 @@
           "enable_llm_rerank": {
             "type": "boolean",
             "title": "Enable Llm Rerank",
-            "description": "Opt-in LLM rerank pass for HYBRID. Applies to agent_case and agent_skill fusion only; the episode hybrid path has built-in fact eviction and ignores this flag. Ignored by keyword / vector / agentic.",
+            "description": "Opt-in LLM rerank pass for HYBRID. Ignored by keyword / vector / agentic.",
             "default": false
           },
           "filters": {
@@ -2642,7 +2487,7 @@
           "query"
         ],
         "title": "SearchRequest",
-        "description": "Request body for ``POST /api/v1/memory/search``.\n\nCallers identify the memory owner via ``user_id`` XOR ``agent_id`` —\nexactly one must be set. Internally the manager + compile_filters keep\nusing ``owner_id`` / ``owner_type`` (the storage tables' columns);\nthose are exposed as derived properties so the rename only affects\nthe wire contract, not the internal recall plumbing."
+        "description": "Request body for ``POST /api/v1/memory/search``.\n\nCallers identify the memory owner via ``user_id``."
       },
       "SearchResponse": {
         "properties": {

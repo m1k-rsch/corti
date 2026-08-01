@@ -7,8 +7,7 @@ from pathlib import Path
 
 SKIP_DIRS = {".git", "node_modules", ".venv", ".uv-cache"}
 USE_CASE_TABLES = {
-    Path("README.md"): "## Use Cases",
-    Path("use-cases/README.md"): "## Use Cases",
+    Path("docs/use-cases.md"): "# Corti Use Cases",
 }
 PRIMARY_LINK_RE = re.compile(
     r"^\[(?:Code|Plugin|Live Demo|Learn more)\]\(([^)]+)\)",

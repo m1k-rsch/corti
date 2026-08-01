@@ -7,15 +7,15 @@ with no `hermes-agent` PR required.
 
 The integration ships **inside the Corti repo** as a Hermes
 `MemoryProvider` plugin bundle at
-[`integrations/hermes/`](../integrations/hermes/). The
+[`integrations/hermes/`](../src/integrations/hermes/). The
 `corti integrations install hermes` command copies the bundle into
 `~/.hermes/plugins/corti/`; Hermes discovers user-installed plugins and
 loads them via the `MemoryProvider` subclass-fallback path.
 
 ## Prerequisites
 
-- An Corti server you can reach (local or remote). See
-  [QUICKSTART](../QUICKSTART.md) for install + `corti server start`.
+- An Corti server you can reach (local or remote). For install +
+  `corti server start`, see [README](../README.md).
 - Hermes Agent installed (`hermes` on your `PATH`).
 - For **OSS mode** (local Corti with self-supplied models): an
   OpenAI-protocol LLM, embedding, and (optionally) rerank endpoint —
@@ -173,7 +173,7 @@ hermes config set memory.provider ''
 
 ## See also
 
-- [Bundle README](../integrations/hermes/README.md) — full setup/config/tool reference
+- [Integration bundle](../src/integrations/hermes/) — plugin bundle source (manifest: `plugin.yaml`)
 - [how-memory-works.md](how-memory-works.md) — the write→index→read pipeline
 - [api.md](api.md) — the Corti HTTP API v1 contract this plugin calls
 - [configuration.md](configuration.md) — `corti.toml` / env-var reference

@@ -15,8 +15,8 @@ Modes:
 
 Run::
 
-    python scripts/dump_openapi.py            # write docs/openapi.json
-    python scripts/dump_openapi.py --check    # CI gate
+    uv run python src/scripts/dump_openapi.py            # write docs/openapi.json
+    uv run python src/scripts/dump_openapi.py --check    # CI gate
 """
 
 from __future__ import annotations
@@ -27,8 +27,8 @@ import sys
 import tempfile
 from pathlib import Path
 
-_ROOT = Path(__file__).resolve().parent.parent
-_TARGET = _ROOT / "docs" / "openapi.json"
+_REPO_ROOT = Path(__file__).resolve().parent.parent.parent
+_TARGET = _REPO_ROOT / "docs" / "openapi.json"
 
 
 def _build_schema() -> dict:
@@ -67,14 +67,14 @@ def _write_target(content: str) -> None:
 def _check_against_target(content: str) -> int:
     if not _TARGET.is_file():
         print(
-            f"error: {_TARGET.relative_to(_ROOT)} does not exist; "
+            f"error: {_TARGET.relative_to(_REPO_ROOT)} does not exist; "
             f"run `make openapi` to generate it.",
             file=sys.stderr,
         )
         return 1
     existing = _TARGET.read_text(encoding="utf-8")
     if existing == content:
-        print(f"OK — {_TARGET.relative_to(_ROOT)} matches app.openapi() output.")
+        print(f"OK — {_TARGET.relative_to(_REPO_ROOT)} matches app.openapi() output.")
         return 0
     # Drift: print a unified diff to stderr so CI / reviewer can see what changed.
     import difflib
@@ -83,14 +83,14 @@ def _check_against_target(content: str) -> int:
         difflib.unified_diff(
             existing.splitlines(keepends=True),
             content.splitlines(keepends=True),
-            fromfile=f"{_TARGET.relative_to(_ROOT)} (committed)",
+            fromfile=f"{_TARGET.relative_to(_REPO_ROOT)} (committed)",
             tofile="app.openapi() (current)",
         )
     )
     # Limit to first ~200 lines so a giant schema rewrite stays scannable.
     capped = "".join(diff.splitlines(keepends=True)[:200])
     print(
-        f"error: {_TARGET.relative_to(_ROOT)} is out of date.\n"
+        f"error: {_TARGET.relative_to(_REPO_ROOT)} is out of date.\n"
         "Run `make openapi` and commit the result.\n\n" + capped,
         file=sys.stderr,
     )
@@ -118,7 +118,7 @@ def main(argv: list[str] | None = None) -> int:
         return _check_against_target(content)
 
     _write_target(content)
-    print(f"wrote {_TARGET.relative_to(_ROOT)} ({len(content)} bytes)")
+    print(f"wrote {_TARGET.relative_to(_REPO_ROOT)} ({len(content)} bytes)")
     return 0
 
 

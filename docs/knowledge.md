@@ -8,8 +8,7 @@ and keeps the original file for reference.
 ## Quick start
 
 > The examples below assume Corti is running on the default port 8000.
-> See [README](../README.md) or [QUICKSTART](../QUICKSTART.md) to start
-> the server.
+> See [README](../README.md) to start the server.
 
 ```bash
 # Upload a document

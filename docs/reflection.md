@@ -19,7 +19,7 @@ rather than failing the run.
 ## Quick start
 
 > The examples below assume Corti is running on the default port 8000.
-> `<root>` is the Corti memory root (see [QUICKSTART](../QUICKSTART.md)).
+> `<root>` is the Corti memory root.
 
 Reflection is off by default. Turn it on in `<root>/ome.toml` — **one line**:
 

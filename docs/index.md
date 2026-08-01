@@ -11,7 +11,6 @@ before wiring it into a real workflow.
 
 | Doc | Purpose |
 |---|---|
-| [corti-demo.md](corti-demo.md) | `corti demo` — local educational TUI to feel the memory lifecycle before configuring keys |
 | [hermes-integration.md](hermes-integration.md) | Wire Hermes Agent to Corti as a long-term memory backend — install, config, lifecycle, tools |
 
 ## Reference
@@ -38,7 +37,6 @@ why the system is shaped the way it is.
 | Doc | Purpose |
 |---|---|
 | [overview.md](overview.md) | Project vision, scope, design philosophy |
-| [research/agent_memory_philosophy.md](research/agent_memory_philosophy.md) | Top-level philosophy, Sensorimotor Exoskeleton vs Cortex, and memory validity research |
 | [how-memory-works.md](how-memory-works.md) | Storage stack + on-disk paths + write→index→read pipeline + consistency |
 | [architecture.md](architecture.md) | DDD layered architecture + dependency rules |
 | [datetime.md](datetime.md) | Two-zone discipline — UTC at storage, display tz at boundaries |
@@ -51,8 +49,6 @@ specific thing (drain a queue, recover from a stuck row, etc.).
 | Doc | Purpose |
 |---|---|
 | [cascade_runbook.md](cascade_runbook.md) | Cascade subsystem ops — drain queue, recover stuck rows |
-| [github-sync.md](github-sync.md) | Guardrails for refreshing GitHub from internal exports without overwriting GitHub-only workflow files |
-| [benchmarks/README.md](../benchmarks/README.md) | LoCoMo benchmark — run and evaluate |
 
 ## Engineering / Internal
 
@@ -68,14 +64,8 @@ not for using it.
 Top-level project files live next to the repo root:
 
 - [README.md](../README.md) — quick start & feature overview
-- [QUICKSTART.md](../QUICKSTART.md) — 5-minute walkthrough (install → service → search)
-- [CONTRIBUTING.md](legal/CONTRIBUTING.md) — how to contribute (issue-only model)
-- [CHANGELOG.md](../CHANGELOG.md) — release notes
-- [release-notes-1.1.0.md](release-notes-1.1.0.md) — Corti 1.1.0 highlights (Knowledge, Reflection, OME)
-- [migration-to-1.0.0.md](migration-to-1.0.0.md) — migrate off pre-1.0.0 APIs / infrastructure
-- [SECURITY.md](../SECURITY.md) — security policy & private vulnerability reporting
-- [CITATION.md](../CITATION.md) — academic citation info
-- [ACKNOWLEDGMENTS.md](legal/ACKNOWLEDGMENTS.md) — third-party acknowledgments
+- [CONTRIBUTING.md](../legal/CONTRIBUTING.md) — how to contribute (issue-only model)
+- [ACKNOWLEDGMENTS.md](../legal/ACKNOWLEDGMENTS.md) — third-party acknowledgments
 
 Coding conventions and slash command workflows are auto-loaded by
 Claude Code from [.claude/rules/](../.claude/rules/) and
