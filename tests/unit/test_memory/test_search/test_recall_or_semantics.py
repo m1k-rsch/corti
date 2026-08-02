@@ -24,8 +24,9 @@ from pathlib import Path
 import pytest
 
 from corti.component.tokenizer import Tokenizer
+from corti.infra.persistence.pg import Episode, ParentType, episode_repo
 from corti.memory.search.recall import EpisodeRecaller
-from corti.memory.search.recall.base import RecallerDeps, build_or_query
+from corti.memory.search.recall.base import RecallerDeps
 
 
 class _WhitespaceTokenizer(Tokenizer):
@@ -69,39 +70,18 @@ def _episode_row(
 
 
 @pytest.fixture(autouse=True)
-async def _reset(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+async def _reset(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    pg_runtime: None,
+    pg_clean_tables: None,
+):
     monkeypatch.setenv("CORTI_ROOT", str(tmp_path))
     yield
 
 
 def _recaller() -> EpisodeRecaller:
     return EpisodeRecaller(RecallerDeps(tokenizer=_WhitespaceTokenizer()))
-
-
-# ── build_or_query helper unit-level checks ────────────────────────────
-
-
-def test_build_or_query_empty_returns_none() -> None:
-    """Empty / whitespace-only query → ``None`` (caller must short-circuit)."""
-    tk = _WhitespaceTokenizer()
-    assert build_or_query(tk, "", column="episode_tokens") is None
-    assert build_or_query(tk, "   ", column="episode_tokens") is None
-
-
-def test_build_or_query_single_token_returns_match_query() -> None:
-    """One token → bare MatchQuery (no boolean-wrapper overhead)."""
-
-    q = build_or_query(_WhitespaceTokenizer(), "hello", column="episode_tokens")
-    assert isinstance(q, MatchQuery)
-
-
-def test_build_or_query_multi_token_returns_boolean_query() -> None:
-    """≥2 tokens → BooleanQuery with one SHOULD clause per token."""
-
-    q = build_or_query(
-        _WhitespaceTokenizer(), "alice support group", column="episode_tokens"
-    )
-    assert isinstance(q, BooleanQuery)
 
 
 # ── Live recall: poison token + informative token must surface results ──
@@ -130,12 +110,6 @@ async def test_or_semantics_poison_token_does_not_kill_query() -> None:
             ),
         ]
     )
-    # Postgres FTS only sees data merged into the index after optimize().
-    # Tests treat that as part of "the corpus is ready to query".
-
-    tbl = await get_table(Episode.TABLE_NAME, Episode)
-    await tbl.optimize()
-
     where = "owner_id = 'alice' AND owner_type = 'user'"
     cands = await _recaller().sparse_recall("alice support group", where, limit=10)
     assert cands, "alice + support + group should recall ep_1 via SHOULD"
@@ -160,9 +134,6 @@ async def test_or_semantics_single_informative_token() -> None:
             ),
         ]
     )
-
-    tbl = await get_table(Episode.TABLE_NAME, Episode)
-    await tbl.optimize()
 
     where = "owner_id = 'alice' AND owner_type = 'user'"
     cands = await _recaller().sparse_recall("painting", where, limit=10)

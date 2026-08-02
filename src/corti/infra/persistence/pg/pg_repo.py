@@ -36,11 +36,13 @@ logger = get_logger(__name__)
 T = TypeVar("T", bound=PgBaseModel)
 
 # Columns auto-managed by the DB — don't include in INSERT/UPDATE
-_SERVER_COLUMNS: frozenset[str] = frozenset({
-    "created_at",
-    "updated_at",
-    # tsvector columns are GENERATED ALWAYS
-})
+_SERVER_COLUMNS: frozenset[str] = frozenset(
+    {
+        "created_at",
+        "updated_at",
+        # tsvector columns are GENERATED ALWAYS
+    }
+)
 
 # Suffixes that identify generated columns
 _GENERATED_SUFFIXES = ("_tsv",)
@@ -65,7 +67,8 @@ def _parse_vector_str(s: str) -> list[float]:
 
 
 def _apply_vector_default(d: dict[str, Any], key: str, dim: int = 1024) -> None:
-    """Ensure a ``vector`` column has a valid value; fill with zero-vector if missing."""
+    """Ensure a ``vector`` column has a valid value; fill with zero-vector
+    if missing."""
     if key in d and d[key] is not None:
         return
     d[key] = f"[{','.join(['0'] * dim)}]"
@@ -199,9 +202,10 @@ class PgRepoBase:
                 "_json"
             ):
                 if isinstance(v, str):
-                    # ``*_json`` fields are stored as ``text`` and Pydantic expects ``str``;
-                    # pass through without parsing. ``sender_ids`` etc. are stored as jsonb
-                    # and Pydantic expects ``list`` — parse from JSON string.
+                    # ``*_json`` fields are stored as ``text`` and Pydantic
+                    # expects ``str``; pass through without parsing.
+                    # ``sender_ids`` etc. are stored as jsonb and Pydantic
+                    # expects ``list`` — parse from JSON string.
                     if k.endswith("_json"):
                         filtered[k] = v
                     else:
@@ -415,10 +419,7 @@ class PgRepoBase:
                 cur = await conn.execute(sql, (vec_str, vec_str))
                 rows = await cur.fetchall()
         else:
-            sql = (
-                f"SELECT * FROM {self.table_name} "
-                f"WHERE {where_clause} LIMIT {limit}"
-            )
+            sql = f"SELECT * FROM {self.table_name} WHERE {where_clause} LIMIT {limit}"
             async with pool.connection() as conn:
                 cur = await conn.execute(sql)
                 rows = await cur.fetchall()
@@ -486,7 +487,8 @@ class PgRepoBase:
     # ── Maintenance ────────────────────────────────────────────────────
 
     async def optimize(self, *, cleanup_older_than: object | None = None) -> None:
-        """No-op. PG manages its own storage via autovacuum; no manual optimize needed."""
+        """No-op. PG manages its own storage via autovacuum; no manual
+        optimize needed."""
         pass
 
     async def rebuild_indexes(self) -> None:

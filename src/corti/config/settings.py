@@ -352,9 +352,7 @@ class Settings(BaseSettings):
         # Attempt to load <root>/corti.toml if it exists.
         corti_toml = resolve_root() / "corti.toml"
         if corti_toml.is_file():
-            sources.append(
-                TomlConfigSettingsSource(settings_cls, toml_file=corti_toml)
-            )
+            sources.append(TomlConfigSettingsSource(settings_cls, toml_file=corti_toml))
         sources.append(TomlConfigSettingsSource(settings_cls))  # default.toml
         return tuple(sources)
 

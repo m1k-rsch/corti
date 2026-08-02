@@ -29,17 +29,22 @@ from typing import Final
 
 VECTOR_DIM: Final[int] = 1024
 
+# Zero-vector literal rendered into ``DEFAULT`` clauses as a pgvector
+# array (e.g. ``'[0,0,...]'::vector``).
+_ZERO_VECTOR_SQL: Final[str] = f"[{','.join(['0'] * VECTOR_DIM)}]"
+
 # pgvector operator class for cosine distance.
 # pgvector 0.8.1 provides: vector_cosine_ops (<=> operator), vector_l2_ops,
 # vector_ip_ops, vector_halfvec_ops, etc.
 HNSW_COSINE_OPS: Final[str] = "vector_cosine_ops"
 
 # HNSW tuning — balanced for 20K–200K rows per table
-HNSW_M: Final[int] = 16          # max connections per layer
+HNSW_M: Final[int] = 16  # max connections per layer
 HNSW_EF_CONSTRUCTION: Final[int] = 200  # build-time search depth
 
 
 # ── Common CTE used by tsvector generated columns ──────────────────────────
+
 
 def _tsv_column(col_name: str) -> str:
     """Return SQL for a ``tsvector`` generated column over ``*_tokens``.
@@ -50,7 +55,10 @@ def _tsv_column(col_name: str) -> str:
     layer's jieba tokenizer). The GIN index on this column provides BM25
     via ``ts_rank_cd`` in recall queries.
     """
-    return f"{col_name}_tsv tsvector GENERATED ALWAYS AS (to_tsvector('simple', COALESCE({col_name}, ''))) STORED"
+    return (
+        f"{col_name}_tsv tsvector GENERATED ALWAYS AS "
+        f"(to_tsvector('simple', COALESCE({col_name}, ''))) STORED"
+    )
 
 
 # ── DDL fragments ──────────────────────────────────────────────────────────
@@ -112,7 +120,7 @@ _EPISODE_DDL = textwrap.dedent(f"""\
         summary         text,
         episode         text NOT NULL,
         episode_tokens  text NOT NULL DEFAULT '',
-        {_tsv_column('episode_tokens')},
+        {_tsv_column("episode_tokens")},
         subject_vector  vector({VECTOR_DIM}),
         created_at      timestamptz NOT NULL DEFAULT now(),
         updated_at      timestamptz NOT NULL DEFAULT now()
@@ -125,7 +133,7 @@ _ATOMIC_FACT_DDL = textwrap.dedent(f"""\
         {_DAILY_LOG_COMMON.format(dim=VECTOR_DIM)},
         fact            text NOT NULL,
         fact_tokens     text NOT NULL DEFAULT '',
-        {_tsv_column('fact_tokens')},
+        {_tsv_column("fact_tokens")},
         created_at      timestamptz NOT NULL DEFAULT now(),
         updated_at      timestamptz NOT NULL DEFAULT now()
     );""")
@@ -140,10 +148,10 @@ _FORESIGHT_DDL = textwrap.dedent(f"""\
         duration_days   int,
         foresight       text NOT NULL,
         foresight_tokens text NOT NULL DEFAULT '',
-        {_tsv_column('foresight_tokens')},
+        {_tsv_column("foresight_tokens")},
         evidence        text,
         evidence_tokens text,
-        {_tsv_column('evidence_tokens')},
+        {_tsv_column("evidence_tokens")},
         created_at      timestamptz NOT NULL DEFAULT now(),
         updated_at      timestamptz NOT NULL DEFAULT now()
     );""")
@@ -161,9 +169,9 @@ _KNOWLEDGE_TOPIC_DDL = textwrap.dedent(f"""\
         parent_node_id  text NOT NULL DEFAULT '',
         summary         text NOT NULL,
         summary_tokens  text NOT NULL DEFAULT '',
-        {_tsv_column('summary_tokens')},
+        {_tsv_column("summary_tokens")},
         content_tokens  text NOT NULL DEFAULT '',
-        {_tsv_column('content_tokens')},
+        {_tsv_column("content_tokens")},
         content_labels  jsonb NOT NULL DEFAULT '[]'::jsonb,
         md_path         text NOT NULL,
         content_sha256  text NOT NULL,
@@ -185,13 +193,15 @@ _USER_PROFILE_DDL = textwrap.dedent(f"""\
         profile_timestamp_ms bigint NOT NULL,
         md_path             text NOT NULL,
         content_sha256      text NOT NULL,
-        vector              vector({VECTOR_DIM}) NOT NULL DEFAULT '[{",".join(["0"] * VECTOR_DIM)}]'::vector,
+        vector              vector({VECTOR_DIM}) NOT NULL
+            DEFAULT '{_ZERO_VECTOR_SQL}'::vector,
         created_at          timestamptz NOT NULL DEFAULT now(),
         updated_at          timestamptz NOT NULL DEFAULT now()
     );""")
 
 
 # ── Index DDL (per-table) ─────────────────────────────────────────────────
+
 
 def _idx_ddl(table: str, gin_cols: list[str]) -> str:
     return _DAILY_LOG_INDEXES.format(
@@ -212,12 +222,14 @@ _KNOWLEDGE_TOPIC_IDX = textwrap.dedent(f"""\
     CREATE INDEX IF NOT EXISTS idx_knowledge_topic_vector
         ON knowledge_topic USING hnsw (vector {HNSW_COSINE_OPS})
         WITH (m = {HNSW_M}, ef_construction = {HNSW_EF_CONSTRUCTION});
-    {_gin_index_lines('knowledge_topic', ['summary_tokens_tsv', 'content_tokens_tsv'])}
+    {_gin_index_lines("knowledge_topic", ["summary_tokens_tsv", "content_tokens_tsv"])}
     CREATE INDEX IF NOT EXISTS idx_knowledge_topic_md_path ON knowledge_topic (md_path);
     CREATE INDEX IF NOT EXISTS idx_knowledge_topic_doc_id ON knowledge_topic (doc_id);
-    CREATE INDEX IF NOT EXISTS idx_knowledge_topic_category_id ON knowledge_topic (category_id);""")
+    CREATE INDEX IF NOT EXISTS idx_knowledge_topic_category_id
+        ON knowledge_topic (category_id);""")
 
-# user_profile has no tsvector columns (profile is KV-by-owner today)
+# user_profile has no tsvector columns (profile is KV-by-owner
+# today)
 _USER_PROFILE_IDX = textwrap.dedent(f"""\
     CREATE INDEX IF NOT EXISTS idx_user_profile_vector
         ON user_profile USING hnsw (vector {HNSW_COSINE_OPS})
@@ -247,19 +259,19 @@ DDL_STATEMENTS: Final[list[str]] = [
 # ── Table metadata map (used by repos) ─────────────────────────────────────
 
 TABLE_TSV_COLUMNS: Final[dict[str, list[str]]] = {
-    "episode":         ["episode_tokens_tsv"],
-    "atomic_fact":     ["fact_tokens_tsv"],
-    "foresight":       ["foresight_tokens_tsv", "evidence_tokens_tsv"],
+    "episode": ["episode_tokens_tsv"],
+    "atomic_fact": ["fact_tokens_tsv"],
+    "foresight": ["foresight_tokens_tsv", "evidence_tokens_tsv"],
     "knowledge_topic": ["summary_tokens_tsv", "content_tokens_tsv"],
-    "user_profile":    [],
+    "user_profile": [],
 }
 
 TABLE_VECTOR_COLUMNS: Final[dict[str, list[str]]] = {
-    "episode":         ["vector", "subject_vector"],
-    "atomic_fact":     ["vector"],
-    "foresight":       ["vector"],
+    "episode": ["vector", "subject_vector"],
+    "atomic_fact": ["vector"],
+    "foresight": ["vector"],
     "knowledge_topic": ["vector"],
-    "user_profile":    ["vector"],
+    "user_profile": ["vector"],
 }
 
 

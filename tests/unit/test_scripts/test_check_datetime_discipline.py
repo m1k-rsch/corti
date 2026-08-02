@@ -18,7 +18,7 @@ from pathlib import Path
 import pytest
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
-_SCANNER_PATH = _REPO_ROOT / "scripts" / "check_datetime_discipline.py"
+_SCANNER_PATH = _REPO_ROOT / "src" / "scripts" / "check_datetime_discipline.py"
 
 
 def _load_scanner_with(root: Path, allowlist: set[Path] | None = None):

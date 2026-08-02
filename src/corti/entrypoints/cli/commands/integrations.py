@@ -237,7 +237,7 @@ def install(
         typer.echo(
             "\nNext:\n"
             "  Start Claude Code. The plugin loads as corti@skills-dir.\n"
-            "  Verify: run `/corti:mem-search \"test\"` in Claude Code."
+            '  Verify: run `/corti:mem-search "test"` in Claude Code.'
         )
 
 
@@ -283,13 +283,11 @@ def uninstall(
     if not force:
         # Quick sanity: does the symlink point at something that looks like corti?
         resolved = link.resolve()
-        if not (resolved / "plugin.yaml").exists() and not (
-            resolved / ".claude-plugin" / "plugin.json"
-        ).exists():
-            msg = (
-                f"{link} does not appear to point to a corti "
-                "bundle. Remove anyway?"
-            )
+        if (
+            not (resolved / "plugin.yaml").exists()
+            and not (resolved / ".claude-plugin" / "plugin.json").exists()
+        ):
+            msg = f"{link} does not appear to point to a corti bundle. Remove anyway?"
             confirm = typer.confirm(msg, default=False)
             if not confirm:
                 typer.echo("Aborted.")
@@ -336,8 +334,7 @@ def auto_detect_and_install(
 
     pkg = Path(corti.__file__).resolve()
     in_site = any(
-        "site-packages" in p and pkg.is_relative_to(Path(p).resolve())
-        for p in sys.path
+        "site-packages" in p and pkg.is_relative_to(Path(p).resolve()) for p in sys.path
     )
     if not in_site:
         return

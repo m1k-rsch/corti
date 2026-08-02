@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
-_CHECKER_PATH = _REPO_ROOT / "scripts" / "check_github_contributor_docs.py"
+_CHECKER_PATH = _REPO_ROOT / "src" / "scripts" / "check_github_contributor_docs.py"
 
 
 def _load_checker():

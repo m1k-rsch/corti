@@ -39,11 +39,7 @@ def get_llm_client() -> LLMClient:
         return _llm_client
 
     llm_cfg = load_settings().llm
-    api_key = (
-        llm_cfg.api_key.get_secret_value()
-        if llm_cfg.api_key is not None
-        else ""
-    )
+    api_key = llm_cfg.api_key.get_secret_value() if llm_cfg.api_key is not None else ""
     if not api_key or not llm_cfg.base_url:
         raise LLMNotConfiguredError(
             "LLM is required; set CORTI_LLM__API_KEY + CORTI_LLM__BASE_URL"
@@ -74,11 +70,7 @@ def get_multimodal_llm_client() -> LLMClient:
         return _multimodal_client
 
     cfg = load_settings().multimodal
-    api_key = (
-        cfg.api_key.get_secret_value()
-        if cfg.api_key is not None
-        else ""
-    )
+    api_key = cfg.api_key.get_secret_value() if cfg.api_key is not None else ""
     if not api_key or not cfg.base_url:
         raise LLMNotConfiguredError(
             "Multimodal LLM is required for parsing; set "

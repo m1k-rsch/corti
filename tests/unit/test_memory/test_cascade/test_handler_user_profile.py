@@ -19,6 +19,7 @@ from corti.component.embedding import EmbeddingProvider
 from corti.component.tokenizer import Tokenizer
 from corti.core.persistence import MemoryRoot
 from corti.infra.persistence.markdown import ProfileWriter, UserProfileFrontmatter
+from corti.infra.persistence.pg import UserProfile
 from corti.memory.cascade.handlers import HandlerDeps, UserProfileHandler
 
 

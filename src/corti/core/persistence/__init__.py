@@ -24,8 +24,6 @@ External usage:
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 # ── Safe (pure-Python, no native libraries) imports — always available ─
 from .locking import LockError as LockError
 from .locking import memory_root_lock as memory_root_lock

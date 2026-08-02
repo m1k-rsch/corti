@@ -10,9 +10,9 @@ import json
 from collections.abc import Sequence
 from typing import ClassVar
 
+from corti.infra.persistence.pg import episode_repo
 from everalgo.types import Candidate
 
-from ....infra.persistence.pg.repos.episode import episode_repo
 from .base import RecallerDeps
 
 
@@ -138,7 +138,8 @@ class PgEpisodeRecaller:
                 continue
             # Strip noise columns like _row_to_candidate does.
             metadata = {
-                k: v for k, v in d.items()
+                k: v
+                for k, v in d.items()
                 if k not in ("vector", "subject_vector", "_score")
                 and not k.endswith("_tsv")
             }
@@ -166,7 +167,7 @@ class PgEpisodeRecaller:
             "LIMIT %s"
         )
         async with pool.connection() as conn:
-            cur = await conn.execute(sql, tuple(entry_ids) + (len(entry_ids),))
+            cur = await conn.execute(sql, (*entry_ids, len(entry_ids)))
             rows = await cur.fetchall()
         return [_row_to_candidate(r, source="vector") for r in rows]
 

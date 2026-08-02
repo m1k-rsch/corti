@@ -28,9 +28,7 @@ def hermes_home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     # via monkeypatching the resolve function.
     home = tmp_path / ".hermes"
     home.mkdir()
-    monkeypatch.setattr(
-        integrations_mod, "_resolve_hermes_home", lambda: home
-    )
+    monkeypatch.setattr(integrations_mod, "_resolve_hermes_home", lambda: home)
     return home
 
 
@@ -38,9 +36,7 @@ def hermes_home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
 def claude_skills(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
     skills = tmp_path / ".claude" / "skills"
     skills.mkdir(parents=True)
-    monkeypatch.setattr(
-        integrations_mod, "_resolve_claude_skills_dir", lambda: skills
-    )
+    monkeypatch.setattr(integrations_mod, "_resolve_claude_skills_dir", lambda: skills)
     return skills
 
 
@@ -94,9 +90,7 @@ def test_install_symlinks_hermes(runner: CliRunner, hermes_home: Path, bundle: P
     assert target.resolve() == bundle.resolve()
 
 
-def test_install_symlinks_claude(
-    runner: CliRunner, claude_skills: Path, bundle: Path
-):
+def test_install_symlinks_claude(runner: CliRunner, claude_skills: Path, bundle: Path):
     result = runner.invoke(
         integrations_mod.app, ["install", "claude-code", "--source", str(bundle)]
     )
@@ -164,9 +158,7 @@ def test_install_missing_source_exits_nonzero(
 
 
 def test_install_bad_target_exits_nonzero(runner: CliRunner):
-    result = runner.invoke(
-        integrations_mod.app, ["install", "nonexistent-agent"]
-    )
+    result = runner.invoke(integrations_mod.app, ["install", "nonexistent-agent"])
     assert result.exit_code != 0
 
 
@@ -238,7 +230,5 @@ def test_uninstall_nothing_to_remove(runner: CliRunner, hermes_home: Path):
 
 
 def test_uninstall_bad_target_exits_nonzero(runner: CliRunner):
-    result = runner.invoke(
-        integrations_mod.app, ["uninstall", "nonexistent-agent"]
-    )
+    result = runner.invoke(integrations_mod.app, ["uninstall", "nonexistent-agent"])
     assert result.exit_code != 0

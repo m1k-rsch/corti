@@ -139,8 +139,7 @@ async def enqueue_all_pending() -> int:
     """
     from sqlalchemy import select
 
-    from corti.infra.persistence.sqlite import get_engine
-    from corti.infra.persistence.sqlite.tables import UnprocessedBuffer
+    from corti.infra.persistence.sqlite import UnprocessedBuffer, get_engine
 
     engine = get_engine()
     async with engine.connect() as conn:

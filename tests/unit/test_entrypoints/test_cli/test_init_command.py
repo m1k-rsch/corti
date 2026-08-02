@@ -55,9 +55,7 @@ def test_created_ome_toml_matches_shipped_template(
 ) -> None:
     target = tmp_path / "myroot"
     runner.invoke(app, ["init", "--root", str(target)])
-    template = (
-        Path(__file__).resolve().parents[4] / "src/corti/config/default_ome.toml"
-    )
+    template = Path(__file__).resolve().parents[4] / "src/corti/config/default_ome.toml"
     assert (target / "ome.toml").read_bytes() == template.read_bytes()
 
 

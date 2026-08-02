@@ -7,7 +7,7 @@ import sys
 from pathlib import Path
 
 _REPO_ROOT = Path(__file__).resolve().parents[3]
-_CHECKER_PATH = _REPO_ROOT / "scripts" / "check_deprecated_names.py"
+_CHECKER_PATH = _REPO_ROOT / "src" / "scripts" / "check_deprecated_names.py"
 
 
 def _load_checker():

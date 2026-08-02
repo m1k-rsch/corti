@@ -94,6 +94,13 @@ async def memorize_env_scripted(
     tmp_path: Path,
     monkeypatch: pytest.MonkeyPatch,
 ) -> AsyncIterator[Callable[..., AsyncMock]]:
+    # Isolate settings: without a tmp CORTI_ROOT, load_settings() picks
+    # up the machine's ~/.corti/corti.toml (e.g. timezone=Asia/Shanghai),
+    # which skews naive-ISO round-trips by the tz offset.
+    monkeypatch.setenv("CORTI_ROOT", str(tmp_path))
+    from corti.config import load_settings
+
+    load_settings.cache_clear()
     monkeypatch.setattr(
         MemoryRoot, "default", classmethod(lambda cls: MemoryRoot(root=tmp_path))
     )

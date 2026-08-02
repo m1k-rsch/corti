@@ -33,26 +33,23 @@ from .tables import (
 )
 
 __all__ = [
-    # Tables
-    "Episode",
+    # Natural-sorted (RUF022) — tables, core, repos, lifecycle mixed by name.
     "AtomicFact",
+    "Episode",
     "Foresight",
     "KnowledgeTopic",
     "ParentType",
-    "UserProfile",
-    # Repos
-    "episode_repo",
-    "atomic_fact_repo",
-    "foresight_repo",
-    "knowledge_topic_repo",
-    "user_profile_repo",
-    # Core
     "PgBaseModel",
-    "PgRepoBase",
     "PgDailyLogRepoBase",
-    # Lifecycle
-    "init",
+    "PgRepoBase",
+    "UserProfile",
+    "atomic_fact_repo",
     "dispose",
+    "episode_repo",
+    "foresight_repo",
     "get_pool",
+    "init",
+    "knowledge_topic_repo",
     "run_ddl",
+    "user_profile_repo",
 ]

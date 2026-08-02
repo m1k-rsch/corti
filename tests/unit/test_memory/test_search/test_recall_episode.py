@@ -1,15 +1,50 @@
-"""Unit tests for ``EpisodeRecaller.fetch_all_for_owner`` and ``fetch_by_entry_ids``."""
+"""Unit tests for :class:`EpisodeRecaller` with a mocked PG pool.
+
+The PG recallers talk to Postgres through ``episode_repo._pool()``
+(psycopg async pool) and raw SQL — there is no ``get_table``/tantivy
+surface anymore. These tests swap the repo's pool lookup for a fake
+pool whose connection returns canned ``dict`` rows, exercising the
+candidate-shaping logic (entry_id keying, parent_id injection, noise
+column stripping) without a live database.
+"""
 
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
+from types import SimpleNamespace
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock
 
 import pytest
 
 from corti.component.tokenizer import Tokenizer
+from corti.infra.persistence.pg.repos.episode import episode_repo
 from corti.memory.search.recall import EpisodeRecaller
 from corti.memory.search.recall.base import RecallerDeps
+
+
+class _FakePool:
+    """Minimal pool stand-in: one connection whose ``execute`` returns rows."""
+
+    def __init__(self, rows: list[dict[str, Any]]) -> None:
+        self.rows = rows
+
+    @asynccontextmanager
+    async def connection(self):
+        cur = SimpleNamespace(fetchall=AsyncMock(return_value=self.rows))
+        yield SimpleNamespace(execute=AsyncMock(return_value=cur))
+
+
+@pytest.fixture
+def stub_pool(monkeypatch: pytest.MonkeyPatch):
+    """Patch ``episode_repo._pool``; returns a setter for the canned rows."""
+
+    def _set(rows: list[dict[str, Any]]) -> None:
+        monkeypatch.setattr(
+            episode_repo, "_pool", AsyncMock(return_value=_FakePool(rows))
+        )
+
+    return _set
 
 
 def _make_row(
@@ -18,9 +53,10 @@ def _make_row(
     *,
     parent_type: str = "memcell",
     entry_id: str = "",
+    score: float | None = None,
 ) -> dict[str, Any]:
     """Build a minimal episode Postgres row dict for test fixtures."""
-    return {
+    row: dict[str, Any] = {
         "id": ep_id,
         "owner_id": "alice",
         "owner_type": "user",
@@ -34,35 +70,26 @@ def _make_row(
         "parent_type": parent_type,
         "entry_id": entry_id or ep_id,
     }
-
-
-def _mock_table(rows: list[dict[str, Any]]) -> MagicMock:
-    tbl = MagicMock()
-    tbl.query.return_value.where.return_value.to_list = AsyncMock(return_value=rows)
-    return tbl
+    if score is not None:
+        row["_score"] = score
+    return row
 
 
 @pytest.fixture()
 def recaller() -> EpisodeRecaller:
-    tok = MagicMock(spec=Tokenizer)
+    tok = AsyncMock(spec=Tokenizer)
     tok.tokenize.return_value = ["hi"]
     return EpisodeRecaller(RecallerDeps(tokenizer=tok))
 
 
 async def test_fetch_all_for_owner_returns_entry_id_keyed_candidates(
     recaller: EpisodeRecaller,
+    stub_pool,
 ) -> None:
     """id must equal entry_id so acluster_retrieve membership works."""
-    rows = [
-        _make_row("ep_1", "mc_1"),
-        _make_row("ep_2", "mc_2"),
-    ]
-    with patch(
-        "corti.memory.search.recall.episode.get_table",
-        new_callable=AsyncMock,
-        return_value=_mock_table(rows),
-    ):
-        result = await recaller.fetch_all_for_owner("owner_id = 'alice'")
+    stub_pool([_make_row("ep_1", "mc_1"), _make_row("ep_2", "mc_2")])
+
+    result = await recaller.fetch_all_for_owner("owner_id = 'alice'")
 
     assert len(result) == 2
     ids = {c.id for c in result}
@@ -71,15 +98,12 @@ async def test_fetch_all_for_owner_returns_entry_id_keyed_candidates(
 
 async def test_fetch_all_for_owner_stores_episode_id_in_metadata(
     recaller: EpisodeRecaller,
+    stub_pool,
 ) -> None:
     """metadata['episode_id'] carries the real Postgres episode id for final shaping."""
-    rows = [_make_row("ep_abc", "mc_xyz")]
-    with patch(
-        "corti.memory.search.recall.episode.get_table",
-        new_callable=AsyncMock,
-        return_value=_mock_table(rows),
-    ):
-        result = await recaller.fetch_all_for_owner("owner_id = 'alice'")
+    stub_pool([_make_row("ep_abc", "mc_xyz")])
+
+    result = await recaller.fetch_all_for_owner("owner_id = 'alice'")
 
     assert result[0].metadata["episode_id"] == "ep_abc"
     assert result[0].metadata["parent_id"] == "mc_xyz"
@@ -87,55 +111,45 @@ async def test_fetch_all_for_owner_stores_episode_id_in_metadata(
 
 async def test_fetch_all_for_owner_skips_rows_without_entry_id(
     recaller: EpisodeRecaller,
+    stub_pool,
 ) -> None:
     """Rows without entry_id are silently skipped."""
-    rows = [
-        {
-            "id": "ep_bad",
-            "owner_id": "alice",
-            "owner_type": "user",
-            "session_id": "s",
-            "timestamp": 1,
-            "sender_ids": [],
-            "subject": "",
-            "summary": "",
-            "episode": "",
-            "parent_id": "mc_x",
-        },
-    ]
-    with patch(
-        "corti.memory.search.recall.episode.get_table",
-        new_callable=AsyncMock,
-        return_value=_mock_table(rows),
-    ):
-        result = await recaller.fetch_all_for_owner("owner_id = 'alice'")
+    stub_pool(
+        [
+            {
+                "id": "ep_bad",
+                "owner_id": "alice",
+                "owner_type": "user",
+                "session_id": "s",
+                "timestamp": 1,
+                "sender_ids": [],
+                "subject": "",
+                "summary": "",
+                "episode": "",
+                "parent_id": "mc_x",
+            },
+        ]
+    )
+
+    result = await recaller.fetch_all_for_owner("owner_id = 'alice'")
 
     assert result == []
 
 
 async def test_fetch_all_for_owner_merged_episode_uses_entry_id(
     recaller: EpisodeRecaller,
+    stub_pool,
 ) -> None:
-    """Merged episodes (parent_type=cluster) must use entry_id as Candidate.id.
+    """Merged episodes (parent_type=cluster) must use entry_id as Candidate.id."""
+    stub_pool(
+        [
+            _make_row(
+                "ep_merged", "cluster_abc", parent_type="cluster", entry_id="entry_xyz"
+            )
+        ]
+    )
 
-    This ensures acluster_retrieve membership matching works for
-    member_type=episode cluster members whose member_id is the episode's
-    entry_id, not the cluster_id stored in parent_id.
-    """
-    rows = [
-        _make_row(
-            "ep_merged",
-            "cluster_abc",
-            parent_type="cluster",
-            entry_id="entry_xyz",
-        ),
-    ]
-    with patch(
-        "corti.memory.search.recall.episode.get_table",
-        new_callable=AsyncMock,
-        return_value=_mock_table(rows),
-    ):
-        result = await recaller.fetch_all_for_owner("owner_id = 'alice'")
+    result = await recaller.fetch_all_for_owner("owner_id = 'alice'")
 
     assert len(result) == 1
     assert result[0].id == "entry_xyz", "merged episode id must be entry_id"
@@ -144,23 +158,19 @@ async def test_fetch_all_for_owner_merged_episode_uses_entry_id(
 
 async def test_fetch_all_for_owner_mixed_regular_and_merged(
     recaller: EpisodeRecaller,
+    stub_pool,
 ) -> None:
     """Mixed rows: both regular and merged episodes key by entry_id."""
-    rows = [
-        _make_row("ep_regular", "mc_1"),
-        _make_row(
-            "ep_merged",
-            "cluster_99",
-            parent_type="cluster",
-            entry_id="entry_42",
-        ),
-    ]
-    with patch(
-        "corti.memory.search.recall.episode.get_table",
-        new_callable=AsyncMock,
-        return_value=_mock_table(rows),
-    ):
-        result = await recaller.fetch_all_for_owner("owner_id = 'alice'")
+    stub_pool(
+        [
+            _make_row("ep_regular", "mc_1"),
+            _make_row(
+                "ep_merged", "cluster_99", parent_type="cluster", entry_id="entry_42"
+            ),
+        ]
+    )
+
+    result = await recaller.fetch_all_for_owner("owner_id = 'alice'")
 
     assert len(result) == 2
     ids = {c.id for c in result}
@@ -169,26 +179,18 @@ async def test_fetch_all_for_owner_mixed_regular_and_merged(
 
 async def test_fetch_by_entry_ids_returns_candidates(
     recaller: EpisodeRecaller,
+    stub_pool,
 ) -> None:
-    """fetch_by_entry_ids queries by entry_id and returns valid candidates."""
-    rows = [
-        _make_row(
-            "ep_merged",
-            "cluster_abc",
-            parent_type="cluster",
-            entry_id="entry_xyz",
-        ),
-    ]
-    mock_tbl = MagicMock()
-    mock_tbl.query.return_value.where.return_value.limit.return_value.to_list = (
-        AsyncMock(return_value=rows)
+    """fetch_by_entry_ids returns candidates keyed by the row id."""
+    stub_pool(
+        [
+            _make_row(
+                "ep_merged", "cluster_abc", parent_type="cluster", entry_id="entry_xyz"
+            )
+        ]
     )
-    with patch(
-        "corti.memory.search.recall.episode.get_table",
-        new_callable=AsyncMock,
-        return_value=mock_tbl,
-    ):
-        result = await recaller.fetch_by_entry_ids(["entry_xyz"], "owner_id = 'alice'")
+
+    result = await recaller.fetch_by_entry_ids(["entry_xyz"], "owner_id = 'alice'")
 
     assert len(result) == 1
     assert result[0].id == "ep_merged"
@@ -196,43 +198,23 @@ async def test_fetch_by_entry_ids_returns_candidates(
 
 async def test_fetch_by_entry_ids_empty_input_returns_empty(
     recaller: EpisodeRecaller,
+    stub_pool,
 ) -> None:
     """Empty entry_ids list short-circuits without querying."""
     result = await recaller.fetch_by_entry_ids([], "owner_id = 'alice'")
     assert result == []
 
 
-def _mock_bm25_table(rows: list[dict[str, Any]]) -> MagicMock:
-    tbl = MagicMock()
-    chain = tbl.query.return_value.nearest_to_text.return_value
-    chain.where.return_value.limit.return_value.to_list = AsyncMock(return_value=rows)
-    return tbl
-
-
-def _mock_ann_table(rows: list[dict[str, Any]]) -> MagicMock:
-    tbl = MagicMock()
-    q = tbl.query.return_value
-    col = q.nearest_to.return_value.column.return_value
-    chain = col.distance_type.return_value
-    chain.where.return_value.limit.return_value.to_list = AsyncMock(return_value=rows)
-    return tbl
-
-
 async def test_sparse_recall_as_child_injects_parent_id(
     recaller: EpisodeRecaller,
+    stub_pool,
 ) -> None:
     """sparse_recall_as_child adds parent_id=entry_id to each candidate's metadata."""
-    rows = [
-        {**_make_row("ep_1", "mc_1", entry_id="entry_1"), "_score": 1.0},
-    ]
-    with patch(
-        "corti.memory.search.recall.episode.get_table",
-        new_callable=AsyncMock,
-        return_value=_mock_bm25_table(rows),
-    ):
-        result = await recaller.sparse_recall_as_child(
-            "hello", "owner_id = 'alice'", limit=10
-        )
+    stub_pool([_make_row("ep_1", "mc_1", entry_id="entry_1", score=1.0)])
+
+    result = await recaller.sparse_recall_as_child(
+        "hello", "owner_id = 'alice'", limit=10
+    )
 
     assert len(result) == 1
     assert result[0].metadata["parent_id"] == "entry_1"
@@ -240,6 +222,7 @@ async def test_sparse_recall_as_child_injects_parent_id(
 
 async def test_sparse_recall_as_child_falls_back_to_id_when_no_entry_id(
     recaller: EpisodeRecaller,
+    stub_pool,
 ) -> None:
     """When entry_id is absent in metadata, parent_id falls back to candidate id."""
     row = {
@@ -255,14 +238,11 @@ async def test_sparse_recall_as_child_falls_back_to_id_when_no_entry_id(
         "parent_id": "mc_x",
         "_score": 0.5,
     }
-    with patch(
-        "corti.memory.search.recall.episode.get_table",
-        new_callable=AsyncMock,
-        return_value=_mock_bm25_table([row]),
-    ):
-        result = await recaller.sparse_recall_as_child(
-            "hello", "owner_id = 'alice'", limit=10
-        )
+    stub_pool([row])
+
+    result = await recaller.sparse_recall_as_child(
+        "hello", "owner_id = 'alice'", limit=10
+    )
 
     assert len(result) == 1
     cand = result[0]
@@ -271,28 +251,24 @@ async def test_sparse_recall_as_child_falls_back_to_id_when_no_entry_id(
 
 async def test_sparse_recall_as_child_empty_query_returns_empty(
     recaller: EpisodeRecaller,
+    stub_pool,
 ) -> None:
-    """Empty query token list short-circuits; no table call needed."""
-    recaller._deps.tokenizer.tokenize.return_value = []
+    """Empty query yields no rows (plainto_tsquery('') matches nothing)."""
+    stub_pool([])
     result = await recaller.sparse_recall_as_child("", "owner_id = 'alice'", limit=10)
     assert result == []
 
 
 async def test_dense_recall_as_child_injects_parent_id(
     recaller: EpisodeRecaller,
+    stub_pool,
 ) -> None:
     """dense_recall_as_child adds parent_id=entry_id to each candidate's metadata."""
-    rows = [
-        {**_make_row("ep_3", "mc_3", entry_id="entry_3"), "_distance": 0.1},
-    ]
-    with patch(
-        "corti.memory.search.recall.episode.get_table",
-        new_callable=AsyncMock,
-        return_value=_mock_ann_table(rows),
-    ):
-        result = await recaller.dense_recall_as_child(
-            [0.1] * 1024, "owner_id = 'alice'", limit=10
-        )
+    stub_pool([_make_row("ep_3", "mc_3", entry_id="entry_3", score=0.9)])
+
+    result = await recaller.dense_recall_as_child(
+        [0.1] * 1024, "owner_id = 'alice'", limit=10
+    )
 
     assert len(result) == 1
     assert result[0].metadata["parent_id"] == "entry_3"
@@ -300,39 +276,23 @@ async def test_dense_recall_as_child_injects_parent_id(
 
 async def test_dense_recall_as_child_empty_vector_returns_empty(
     recaller: EpisodeRecaller,
+    stub_pool,
 ) -> None:
     """Empty vector short-circuits without querying."""
     result = await recaller.dense_recall_as_child([], "owner_id = 'alice'", limit=10)
     assert result == []
 
 
-def _mock_subject_ann_table(rows: list[dict[str, Any]]) -> MagicMock:
-    """Mock for subject_vector ANN chain."""
-    tbl = MagicMock()
-    q = tbl.query.return_value
-    col = q.nearest_to.return_value.column.return_value
-    dist = col.distance_type.return_value
-    dist.where.return_value.limit.return_value.to_list = AsyncMock(
-        return_value=rows,
-    )
-    return tbl
-
-
 async def test_dense_recall_subject_returns_subject_vector_source(
     recaller: EpisodeRecaller,
+    stub_pool,
 ) -> None:
-    """dense_recall_subject returns source='vector'."""
-    rows = [
-        {**_make_row("ep_s1", "mc_s1", entry_id="entry_s1"), "_distance": 0.2},
-    ]
-    with patch(
-        "corti.memory.search.recall.episode.get_table",
-        new_callable=AsyncMock,
-        return_value=_mock_subject_ann_table(rows),
-    ):
-        result = await recaller.dense_recall_subject(
-            [0.1] * 1024, "owner_id = 'alice'", limit=10
-        )
+    """dense_recall_subject returns source='vector' with the SQL-computed score."""
+    stub_pool([_make_row("ep_s1", "mc_s1", entry_id="entry_s1", score=0.8)])
+
+    result = await recaller.dense_recall_subject(
+        [0.1] * 1024, "owner_id = 'alice'", limit=10
+    )
 
     assert len(result) == 1
     assert result[0].source == "vector"
@@ -341,6 +301,7 @@ async def test_dense_recall_subject_returns_subject_vector_source(
 
 async def test_dense_recall_subject_empty_vector_returns_empty(
     recaller: EpisodeRecaller,
+    stub_pool,
 ) -> None:
     """Empty vector short-circuits without querying."""
     result = await recaller.dense_recall_subject([], "owner_id = 'alice'", limit=10)
@@ -349,19 +310,14 @@ async def test_dense_recall_subject_empty_vector_returns_empty(
 
 async def test_dense_recall_subject_as_child_injects_parent_id(
     recaller: EpisodeRecaller,
+    stub_pool,
 ) -> None:
     """dense_recall_subject_as_child adds parent_id=entry_id to metadata."""
-    rows = [
-        {**_make_row("ep_s2", "mc_s2", entry_id="entry_s2"), "_distance": 0.15},
-    ]
-    with patch(
-        "corti.memory.search.recall.episode.get_table",
-        new_callable=AsyncMock,
-        return_value=_mock_subject_ann_table(rows),
-    ):
-        result = await recaller.dense_recall_subject_as_child(
-            [0.1] * 1024, "owner_id = 'alice'", limit=10
-        )
+    stub_pool([_make_row("ep_s2", "mc_s2", entry_id="entry_s2", score=0.85)])
+
+    result = await recaller.dense_recall_subject_as_child(
+        [0.1] * 1024, "owner_id = 'alice'", limit=10
+    )
 
     assert len(result) == 1
     assert result[0].metadata["parent_id"] == "entry_s2"
@@ -370,6 +326,7 @@ async def test_dense_recall_subject_as_child_injects_parent_id(
 
 async def test_dense_recall_subject_as_child_empty_vector_returns_empty(
     recaller: EpisodeRecaller,
+    stub_pool,
 ) -> None:
     """Empty vector short-circuits without querying."""
     result = await recaller.dense_recall_subject_as_child(

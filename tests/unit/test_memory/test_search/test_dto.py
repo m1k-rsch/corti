@@ -90,15 +90,15 @@ def test_min_score_in_range_accepted() -> None:
     assert req.min_score == 0.4
 
 
-def test_neither_user_id_nor_agent_id_rejected() -> None:
-    """The xor validator requires exactly one of user_id / agent_id."""
-    with pytest.raises(ValidationError, match="exactly one of"):
-        SearchRequest(query="hello")  # neither set
+def test_missing_user_id_rejected() -> None:
+    """The validator requires ``user_id`` (the only supported owner axis)."""
+    with pytest.raises(ValidationError, match="user_id must be provided"):
+        SearchRequest(query="hello")  # user_id not set
 
 
-def test_both_user_id_and_agent_id_rejected() -> None:
-    """The xor validator rejects ambiguous owner identity."""
-    with pytest.raises(ValidationError, match="exactly one of"):
+def test_agent_id_is_no_longer_an_accepted_field() -> None:
+    """``agent_id`` was removed from the model — passing it is rejected."""
+    with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
         SearchRequest(user_id="alice", agent_id="agent_x", query="hello")
 
 

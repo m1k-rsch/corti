@@ -29,6 +29,7 @@ from corti.component.embedding import EmbeddingProvider
 from corti.component.rerank import RerankResult
 from corti.component.tokenizer import build_tokenizer
 from corti.core.persistence import MemoryRoot
+from corti.infra.persistence.pg.repos.knowledge_topic import knowledge_topic_repo
 from corti.infra.persistence.sqlite import (
     DocumentUpsertPayload,
     dispose_engine,
@@ -143,7 +144,6 @@ def _make_memories(
 # ---------------------------------------------------------------------------
 
 
-
 @pytest.fixture(autouse=True)
 def _reset_knowledge_embedding_singleton() -> None:
     """Reset the lazy embedding and reranker singletons in service.knowledge."""
@@ -173,9 +173,36 @@ async def cascade_runtime(
         await conn.run_sync(SQLModel.metadata.create_all)
     (tmp_path / "ome.toml").write_text("# test\n")
 
+    # Isolate Postgres: SQLite + md live under the per-test tmp root, but
+    # the PG tables are process-global — a previous test's rows would
+    # otherwise leak into this test's assertions.
+    from corti.infra.persistence.pg import get_pool
+    from corti.infra.persistence.pg.pg_repo import PgRepoBase
+
+    # PgRepoBase._table_locks cache asyncio.Lock objects per table; an
+    # asyncio.Lock binds to the event loop that first acquires it, and
+    # pytest-asyncio runs each test on a fresh loop — reusing a lock
+    # from a previous test raises "Lock is bound to a different event
+    # loop". Drop the cache so this test's writes build fresh locks.
+    PgRepoBase._table_locks.clear()
+
+    pool = await get_pool()
+    async with pool.connection() as conn:
+        await conn.execute("TRUNCATE knowledge_topic RESTART IDENTITY CASCADE")
+        await conn.commit()
+
     yield MemoryRoot.default()
 
     await dispose_engine()
+
+    # psycopg_pool's internal locks bind to the event loop that created
+    # them; pytest-asyncio runs each test on a fresh loop, so a pool
+    # created by a previous test raises "Lock is bound to a different
+    # event loop" on reuse. Dispose the pool here — still in this test's
+    # loop — so the next test re-initialises it on its own loop.
+    from corti.infra.persistence.pg import dispose as pg_dispose
+
+    await pg_dispose()
 
 
 def _build_orchestrator(
@@ -209,20 +236,17 @@ async def _wait_drain(*, deadline: float = 20.0) -> None:
             await asyncio.sleep(0.05)
 
 
-async def _wait_lance_rows(
+async def _wait_pg_rows(
     doc_id: str,
     expected: int,
     *,
     deadline: float = 20.0,
 ) -> None:
     """Poll until Postgres has exactly *expected* rows for *doc_id*."""
-    table = await get_table(KnowledgeTopic.TABLE_NAME, KnowledgeTopic)
     async with asyncio.timeout(deadline):
         while True:
-            count = await table.count_rows(
-                filter=f"doc_id = '{doc_id}'",
-            )
-            if count == expected:
+            rows = await knowledge_topic_repo.find_where(f"doc_id = '{doc_id}'")
+            if len(rows) == expected:
                 return
             await asyncio.sleep(0.05)
 
@@ -274,7 +298,7 @@ async def test_create_document_end_to_end(
         assert result.topic_count == 2
 
         # Wait for cascade to process all files.
-        await _wait_lance_rows(doc_id, expected=2, deadline=20.0)
+        await _wait_pg_rows(doc_id, expected=2, deadline=20.0)
         await _wait_drain(deadline=20.0)
 
         # -- Assert md files --
@@ -303,20 +327,14 @@ async def test_create_document_end_to_end(
         assert "Venue" in topic_names
 
         # -- Assert Postgres: knowledge_topic --
-        table = await get_table(KnowledgeTopic.TABLE_NAME, KnowledgeTopic)
-        lance_count = await table.count_rows(
-            filter=f"doc_id = '{doc_id}'",
-        )
-        assert lance_count == 2
+        topic_rows = await knowledge_topic_repo.find_where(f"doc_id = '{doc_id}'")
+        assert len(topic_rows) == 2
 
         # Verify vector dimension and token fields.
-        lance_rows = (
-            await table.query().where(f"doc_id = '{doc_id}'").limit(10).to_list()
-        )
-        for row in lance_rows:
-            assert len(row["vector"]) == 1024
-            assert row["summary_tokens"]
-            assert row["content_tokens"]
+        for row in topic_rows:
+            assert len(row.vector) == 1024
+            assert row.summary_tokens
+            assert row.content_tokens
 
         assert embedder.calls >= 2
 
@@ -367,7 +385,7 @@ async def test_search_finds_ingested_topic(
     try:
         doc_id = "d_search001"
         await _create_test_document(memory_root, doc_id=doc_id)
-        await _wait_lance_rows(doc_id, expected=2, deadline=20.0)
+        await _wait_pg_rows(doc_id, expected=2, deadline=20.0)
         await _wait_drain(deadline=20.0)
 
         result = await search_knowledge(
@@ -405,7 +423,7 @@ async def test_search_include_content(
     try:
         doc_id = "d_content01"
         await _create_test_document(memory_root, doc_id=doc_id)
-        await _wait_lance_rows(doc_id, expected=2, deadline=20.0)
+        await _wait_pg_rows(doc_id, expected=2, deadline=20.0)
         await _wait_drain(deadline=20.0)
 
         # Without content.
@@ -452,7 +470,7 @@ async def test_search_score_threshold_filters(
     try:
         doc_id = "d_thresh01"
         await _create_test_document(memory_root, doc_id=doc_id)
-        await _wait_lance_rows(doc_id, expected=2, deadline=20.0)
+        await _wait_pg_rows(doc_id, expected=2, deadline=20.0)
         await _wait_drain(deadline=20.0)
 
         r_none = await search_knowledge(
@@ -542,8 +560,8 @@ async def test_search_app_project_isolation(
             category_id="Technology",
         )
 
-        await _wait_lance_rows(doc_a, expected=2, deadline=20.0)
-        await _wait_lance_rows(doc_b, expected=1, deadline=20.0)
+        await _wait_pg_rows(doc_a, expected=2, deadline=20.0)
+        await _wait_pg_rows(doc_b, expected=1, deadline=20.0)
         await _wait_drain(deadline=20.0)
 
         # Search in (app1, proj1) scope.
@@ -602,7 +620,7 @@ async def test_delete_document_end_to_end(
     try:
         doc_id = "d_del0000001"
         await _create_test_document(memory_root, doc_id=doc_id)
-        await _wait_lance_rows(doc_id, expected=2, deadline=20.0)
+        await _wait_pg_rows(doc_id, expected=2, deadline=20.0)
         await _wait_drain(deadline=20.0)
 
         # Confirm pre-delete state.
@@ -630,15 +648,13 @@ async def test_delete_document_end_to_end(
 
         # Wait for cascade scanner to detect + process deletions.
         # Postgres topic rows should be cleared first.
-        await _wait_lance_rows(doc_id, expected=0, deadline=20.0)
+        await _wait_pg_rows(doc_id, expected=0, deadline=20.0)
         await _wait_drain(deadline=20.0)
 
         # Postgres: no topic rows.
-        table = await get_table(KnowledgeTopic.TABLE_NAME, KnowledgeTopic)
-        lance_count = await table.count_rows(
-            filter=f"doc_id = '{doc_id}'",
-        )
-        assert lance_count == 0
+        table = await knowledge_topic_repo.find_where(f"doc_id = '{doc_id}'")
+        pg_count = len(table)
+        assert pg_count == 0
 
         # SQLite: topic rows gone.
         topic_count_after = await knowledge_topic_sqlite_repo.count_by_doc_id(
@@ -678,7 +694,7 @@ async def test_delete_idempotent(
     try:
         doc_id = "d_idemp00001"
         await _create_test_document(memory_root, doc_id=doc_id)
-        await _wait_lance_rows(doc_id, expected=2, deadline=20.0)
+        await _wait_pg_rows(doc_id, expected=2, deadline=20.0)
         await _wait_drain(deadline=20.0)
 
         # First delete (service) + manual rmtree + cascade cleanup.
@@ -691,7 +707,7 @@ async def test_delete_idempotent(
         doc_dir = knowledge_dir / "Sports" / f"Olympics_Plan_{doc_id}"
         if doc_dir.exists():
             shutil.rmtree(doc_dir)
-        await _wait_lance_rows(doc_id, expected=0, deadline=20.0)
+        await _wait_pg_rows(doc_id, expected=0, deadline=20.0)
         await _wait_drain(deadline=20.0)
 
         # Second delete: must not raise, reports 0.
@@ -731,7 +747,7 @@ async def test_replace_document_end_to_end(
 
         # V1: 2 topics.
         await _create_test_document(memory_root, doc_id=doc_id)
-        await _wait_lance_rows(doc_id, expected=2, deadline=20.0)
+        await _wait_pg_rows(doc_id, expected=2, deadline=20.0)
         await _wait_drain(deadline=20.0)
 
         # Delete V1 (service + manual rmtree + cascade cleanup).
@@ -743,7 +759,7 @@ async def test_replace_document_end_to_end(
         doc_dir_v1 = knowledge_dir / "Sports" / f"Olympics_Plan_{doc_id}"
         if doc_dir_v1.exists():
             shutil.rmtree(doc_dir_v1)
-        await _wait_lance_rows(doc_id, expected=0, deadline=20.0)
+        await _wait_pg_rows(doc_id, expected=0, deadline=20.0)
         await _wait_drain(deadline=20.0)
 
         # V2: 3 topics (same doc_id).
@@ -804,7 +820,7 @@ async def test_replace_document_end_to_end(
             doc_id=doc_id,
             category_id="Sports",
         )
-        await _wait_lance_rows(doc_id, expected=3, deadline=20.0)
+        await _wait_pg_rows(doc_id, expected=3, deadline=20.0)
         await _wait_drain(deadline=20.0)
 
         # SQLite: 1 document row, title changed.
@@ -819,11 +835,9 @@ async def test_replace_document_end_to_end(
         assert len(topic_rows) == 3
 
         # Postgres: 3 rows.
-        table = await get_table(KnowledgeTopic.TABLE_NAME, KnowledgeTopic)
-        lance_count = await table.count_rows(
-            filter=f"doc_id = '{doc_id}'",
-        )
-        assert lance_count == 3
+        table = await knowledge_topic_repo.find_where(f"doc_id = '{doc_id}'")
+        pg_count = len(table)
+        assert pg_count == 3
 
     finally:
         await orchestrator.stop()
@@ -847,7 +861,7 @@ async def test_patch_title_updates_metadata(
     try:
         doc_id = "d_patch00001"
         await _create_test_document(memory_root, doc_id=doc_id)
-        await _wait_lance_rows(doc_id, expected=2, deadline=20.0)
+        await _wait_pg_rows(doc_id, expected=2, deadline=20.0)
         await _wait_drain(deadline=20.0)
 
         # Patch title.
@@ -885,7 +899,7 @@ async def test_patch_category_updates_sqlite(
     try:
         doc_id = "d_patchcat01"
         await _create_test_document(memory_root, doc_id=doc_id)
-        await _wait_lance_rows(doc_id, expected=2, deadline=20.0)
+        await _wait_pg_rows(doc_id, expected=2, deadline=20.0)
         await _wait_drain(deadline=20.0)
 
         p_result = await patch_document(

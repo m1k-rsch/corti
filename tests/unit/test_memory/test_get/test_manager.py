@@ -7,8 +7,6 @@ and returns canned rows; the manager's job is to:
 * dispatch on ``memory_type`` to the matching repo,
 * compile filters once and pass the same ``where`` to the repo,
 * shape rows into the correct ``GetItem`` (lossless except score),
-* silently override ``sort_by`` to ``updated_at`` for ``agent_skill``
-  (the table has no ``timestamp`` column),
 * fetch the owner's single profile row (KV-by-owner) and shape it into
   ``GetProfileItem``, or return ``[]`` on a cold-start miss.
 """
@@ -21,6 +19,12 @@ from typing import Any
 
 import pytest
 
+from corti.infra.persistence.pg import (
+    AtomicFact,
+    Episode,
+    Foresight,
+    UserProfile,
+)
 from corti.memory.get import (
     GetManager,
     GetMemoryType,
@@ -108,42 +112,39 @@ def _episode_row(entry: str) -> Episode:
     )
 
 
-def _agent_case_row(entry: str) -> AgentCase:
-    return AgentCase(
-        id=f"a1_{entry}",
+def _atomic_fact_row(entry: str) -> AtomicFact:
+    return AtomicFact(
+        id=f"u1_{entry}",
         entry_id=entry,
-        owner_id="a1",
-        owner_type="agent",
-        session_id="sess_x",
+        owner_id="u1",
+        owner_type="user",
+        session_id="sess_a",
         timestamp=_ts(),
         parent_type="memcell",
-        parent_id="mc_99",
-        quality_score=0.8,
-        task_intent=f"intent {entry}",
-        task_intent_tokens=f"intent {entry}",
-        approach=f"approach {entry}",
-        approach_tokens=f"approach {entry}",
-        key_insight=None,
-        md_path=f"agents/a1/cases/{entry}.md",
+        parent_id="mc_1",
+        sender_ids=["u1"],
+        fact=f"fact {entry}",
+        fact_tokens=f"fact {entry}",
+        md_path=f"users/u1/.atomic_facts/{entry}.md",
         content_sha256="abc",
         vector=[0.0] * 1024,
     )
 
 
-def _agent_skill_row(name: str) -> AgentSkill:
-    return AgentSkill(
-        id=f"a1_{name}",
-        owner_id="a1",
-        owner_type="agent",
-        name=name,
-        description=f"desc {name}",
-        description_tokens=f"desc {name}",
-        content=f"content {name}",
-        content_tokens=f"content {name}",
-        confidence=0.9,
-        maturity_score=0.7,
-        source_case_ids=["a1_ac_1"],
-        md_path=f"agents/a1/skills/{name}/SKILL.md",
+def _foresight_row(entry: str) -> Foresight:
+    return Foresight(
+        id=f"u1_{entry}",
+        entry_id=entry,
+        owner_id="u1",
+        owner_type="user",
+        session_id="sess_a",
+        timestamp=_ts(),
+        parent_type="memcell",
+        parent_id="mc_1",
+        sender_ids=["u1"],
+        foresight=f"foresight {entry}",
+        foresight_tokens=f"foresight {entry}",
+        md_path=f"users/u1/.foresights/{entry}.md",
         content_sha256="abc",
         vector=[0.0] * 1024,
     )
@@ -175,15 +176,15 @@ def manager(
     profile_repo: _ProfileStubRepo,
 ) -> tuple[GetManager, _StubRepo, _StubRepo, _StubRepo]:
     ep = _StubRepo()
-    ac = _StubRepo()
-    sk = _StubRepo()
+    af = _StubRepo()
+    fr = _StubRepo()
     mgr = GetManager(
         episode_repo=ep,  # type: ignore[arg-type]
-        agent_case_repo=ac,  # type: ignore[arg-type]
-        agent_skill_repo=sk,  # type: ignore[arg-type]
+        atomic_fact_repo=af,  # type: ignore[arg-type]
+        foresight_repo=fr,  # type: ignore[arg-type]
         user_profile_repo=profile_repo,  # type: ignore[arg-type]
     )
-    return mgr, ep, ac, sk
+    return mgr, ep, af, fr
 
 
 # ── Episode dispatch ────────────────────────────────────────────────────
@@ -208,9 +209,9 @@ async def test_episodic_memory_populates_episodes_and_counts(
     assert resp.data.count == 2
     assert [item.id for item in resp.data.episodes] == ["u1_ep_1", "u1_ep_2"]
     assert resp.data.profiles == []
-    assert resp.data.agent_cases == []
-    assert resp.data.agent_skills == []
-    # The shaper maps the lance row's owner_id onto the item's user_id field.
+    assert resp.data.atomic_facts == []
+    assert resp.data.foresights == []
+    # The shaper maps the row's owner_id onto the item's user_id field.
     assert all(item.user_id == "u1" for item in resp.data.episodes)
 
 
@@ -238,6 +239,51 @@ async def test_episodic_memory_passes_where_and_sort_to_repo(
     assert ep.last.page_size == 10
 
 
+# ── Atomic-fact dispatch ────────────────────────────────────────────────
+
+
+async def test_atomic_fact_memory_populates_facts(
+    manager: tuple[GetManager, _StubRepo, _StubRepo, _StubRepo],
+) -> None:
+    mgr, _, af, _ = manager
+    af.rows = [_atomic_fact_row("af_1"), _atomic_fact_row("af_2")]
+    af.total = 2
+    req = GetRequest(
+        user_id="u1",
+        memory_type=GetMemoryType.ATOMIC_FACT,
+    )
+    resp = await mgr.get(req)
+
+    assert resp.data.total_count == 2
+    assert resp.data.count == 2
+    assert [item.id for item in resp.data.atomic_facts] == ["u1_af_1", "u1_af_2"]
+    assert resp.data.episodes == []
+    assert resp.data.foresights == []
+    assert all(item.user_id == "u1" for item in resp.data.atomic_facts)
+
+
+# ── Foresight dispatch ──────────────────────────────────────────────────
+
+
+async def test_foresight_memory_populates_foresights(
+    manager: tuple[GetManager, _StubRepo, _StubRepo, _StubRepo],
+) -> None:
+    mgr, _, _, fr = manager
+    fr.rows = [_foresight_row("fs_1")]
+    fr.total = 1
+    req = GetRequest(
+        user_id="u1",
+        memory_type=GetMemoryType.FORESIGHT,
+    )
+    resp = await mgr.get(req)
+
+    assert resp.data.total_count == 1
+    assert resp.data.count == 1
+    assert [item.id for item in resp.data.foresights] == ["u1_fs_1"]
+    assert resp.data.episodes == []
+    assert resp.data.atomic_facts == []
+
+
 # ── Profile dispatch ────────────────────────────────────────────────────
 
 
@@ -245,7 +291,7 @@ async def test_profile_miss_returns_empty(
     manager: tuple[GetManager, _StubRepo, _StubRepo, _StubRepo],
 ) -> None:
     """Cold start (no profile row yet) → empty list + total_count=0."""
-    mgr, ep, ac, sk = manager  # profile_repo.row defaults to None
+    mgr, ep, af, fr = manager  # profile_repo.row defaults to None
     req = GetRequest(
         user_id="u1",
         memory_type=GetMemoryType.PROFILE,
@@ -254,10 +300,10 @@ async def test_profile_miss_returns_empty(
     assert resp.data.profiles == []
     assert resp.data.total_count == 0
     assert resp.data.count == 0
-    # The profile path never touches the paginated (episode/case/skill) repos.
+    # The profile path never touches the paginated repos.
     assert ep.last.where == ""
-    assert ac.last.where == ""
-    assert sk.last.where == ""
+    assert af.last.where == ""
+    assert fr.last.where == ""
 
 
 async def test_profile_hit_shapes_row_into_item(
@@ -285,60 +331,3 @@ async def test_profile_hit_shapes_row_into_item(
     ]
     assert item.profile_data["implicit_traits"] == [{"trait": "Outdoorsy"}]
     assert item.profile_data["profile_timestamp_ms"] == 1780304400000
-
-
-# ── Agent case dispatch ─────────────────────────────────────────────────
-
-
-async def test_agent_case_populates_agent_cases(
-    manager: tuple[GetManager, _StubRepo, _StubRepo, _StubRepo],
-) -> None:
-    mgr, _, ac, _ = manager
-    ac.rows = [_agent_case_row("ac_1"), _agent_case_row("ac_2")]
-    ac.total = 2
-    req = GetRequest(
-        agent_id="a1",
-        memory_type=GetMemoryType.AGENT_CASE,
-    )
-    resp = await mgr.get(req)
-    assert resp.data.total_count == 2
-    assert resp.data.count == 2
-    assert [item.id for item in resp.data.agent_cases] == ["a1_ac_1", "a1_ac_2"]
-    assert resp.data.episodes == []
-    assert resp.data.agent_skills == []
-
-
-# ── Agent skill dispatch — sort_by silent override ──────────────────────
-
-
-async def test_agent_skill_sort_by_silently_overridden_to_updated_at(
-    manager: tuple[GetManager, _StubRepo, _StubRepo, _StubRepo],
-) -> None:
-    """``agent_skill`` always sorts by ``updated_at`` (no ``timestamp`` column)."""
-    mgr, _, _, sk = manager
-    sk.rows = [_agent_skill_row("planner")]
-    sk.total = 1
-    req = GetRequest(
-        agent_id="a1",
-        memory_type=GetMemoryType.AGENT_SKILL,
-        # User passes the default — should be silently downgraded.
-        sort_by="timestamp",
-    )
-    resp = await mgr.get(req)
-    assert sk.last.sort_by == "updated_at"
-    assert resp.data.total_count == 1
-    assert resp.data.agent_skills[0].name == "planner"
-
-
-async def test_agent_skill_explicit_updated_at_is_respected(
-    manager: tuple[GetManager, _StubRepo, _StubRepo, _StubRepo],
-) -> None:
-    """``updated_at`` passes through unchanged (no double-override surprise)."""
-    mgr, _, _, sk = manager
-    req = GetRequest(
-        agent_id="a1",
-        memory_type=GetMemoryType.AGENT_SKILL,
-        sort_by="updated_at",
-    )
-    await mgr.get(req)
-    assert sk.last.sort_by == "updated_at"

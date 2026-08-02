@@ -30,12 +30,16 @@ from corti.memory.cascade import KIND_REGISTRY, match_kind
             "foresight",
         ),
         (
-            "default_app/default_project/agents/a1/.cases/agent_case-2026-05-14.md",
-            "agent_case",
+            "default_app/default_project/users/u1/user.md",
+            "user_profile",
         ),
         (
-            "default_app/default_project/agents/a1/skills/skill_contract_risk_scan/SKILL.md",
-            "agent_skill",
+            "default_app/default_project/knowledge/finance/budget/index.md",
+            "knowledge_document",
+        ),
+        (
+            "default_app/default_project/knowledge/finance/budget/01_overview.md",
+            "knowledge_topic",
         ),
     ],
 )
@@ -54,6 +58,10 @@ def test_match_kind_recognises_registered_paths(path: str, expected_kind: str) -
         ".cache/foo.md",
         "users/u1/episodes/episode-2026-05-14.md.swp",  # swap file
         "agents/a1/skills/skill_x/references/notes.md",  # reference, not main
+        # Removed kinds: agent_case / agent_skill were dropped from the
+        # registry; their paths must not silently match any live kind.
+        "default_app/default_project/agents/a1/.cases/agent_case-2026-05-14.md",
+        "default_app/default_project/agents/a1/skills/skill_contract_risk_scan/SKILL.md",
         # Valid episode shape but MISSING the <app>/<project> prefix — must be
         # rejected so a prefix-less path can never silently match (the scanner
         # would otherwise find nothing while the watcher matched, a split brain).
@@ -64,15 +72,13 @@ def test_match_kind_rejects_unregistered_paths(path: str) -> None:
     assert match_kind(path) is None
 
 
-def test_registry_has_exactly_eight_kinds() -> None:
+def test_registry_has_exactly_six_kinds() -> None:
     """The registry pins the cascade surface — no silent registration."""
     names = [s.name for s in KIND_REGISTRY]
     assert names == [
         "episode",
         "atomic_fact",
         "foresight",
-        "agent_case",
-        "agent_skill",
         "user_profile",
         "knowledge_document",
         "knowledge_topic",

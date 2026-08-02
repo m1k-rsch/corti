@@ -33,8 +33,7 @@ def resolve_pipeline(
     if method in (SearchMethod.KEYWORD, SearchMethod.VECTOR):
         return None, None
 
-    if method == SearchMethod.HYBRID:
-        if kind in ("episode", "atomic_fact"):
-            return "hierarchy", None
+    if method == SearchMethod.HYBRID and kind in ("episode", "atomic_fact"):
+        return "hierarchy", None
 
     raise ValueError(f"unsupported method: {method!r}")

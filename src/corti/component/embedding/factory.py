@@ -40,15 +40,10 @@ def build_embedding_provider(
         raise ValueError(
             "Embedding base_url is not configured (set CORTI_EMBEDDING__BASE_URL)"
         )
-    api_key = (
-        settings.api_key.get_secret_value()
-        if settings.api_key
-        else ""
-    )
+    api_key = settings.api_key.get_secret_value() if settings.api_key else ""
     if not api_key:
         raise ValueError(
-            "Embedding api_key is not configured "
-            "(set CORTI_EMBEDDING__API_KEY)"
+            "Embedding api_key is not configured (set CORTI_EMBEDDING__API_KEY)"
         )
     return OpenAIEmbeddingProvider(
         model=settings.model,

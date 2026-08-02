@@ -79,9 +79,7 @@ async def test_extracts_per_sender(
         patch(
             "corti.memory.strategies.extract_foresight.ForesightExtractor"
         ) as mock_cls,
-        patch(
-            "corti.memory.strategies.extract_foresight.ForesightWriter"
-        ) as mock_wcls,
+        patch("corti.memory.strategies.extract_foresight.ForesightWriter") as mock_wcls,
         structlog.testing.capture_logs() as captured,
     ):
         # sender_ids in the strategy are sorted: alice first, bob second.
@@ -147,9 +145,7 @@ async def test_writes_md_for_each_foresight(
         patch(
             "corti.memory.strategies.extract_foresight.ForesightExtractor"
         ) as mock_cls,
-        patch(
-            "corti.memory.strategies.extract_foresight.ForesightWriter"
-        ) as mock_wcls,
+        patch("corti.memory.strategies.extract_foresight.ForesightWriter") as mock_wcls,
     ):
         mock_cls.return_value.aextract = AsyncMock(return_value=foresights)
         mock_wcls.return_value.append_entries = AsyncMock(return_value=[])
@@ -215,9 +211,7 @@ async def test_skips_when_memcell_has_no_messages(
         patch(
             "corti.memory.strategies.extract_foresight.ForesightExtractor"
         ) as mock_cls,
-        patch(
-            "corti.memory.strategies.extract_foresight.ForesightWriter"
-        ) as mock_wcls,
+        patch("corti.memory.strategies.extract_foresight.ForesightWriter") as mock_wcls,
         structlog.testing.capture_logs() as captured,
     ):
         mock_cls.return_value.aextract = AsyncMock(return_value=[])

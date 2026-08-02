@@ -21,7 +21,7 @@ import sys
 from pathlib import Path
 from types import ModuleType
 
-_PLUGIN_DIR = Path(__file__).resolve().parents[4] / "integrations" / "hermes"
+_PLUGIN_DIR = Path(__file__).resolve().parents[4] / "src" / "integrations" / "hermes"
 
 _SUBMODULES = (
     "_constants",

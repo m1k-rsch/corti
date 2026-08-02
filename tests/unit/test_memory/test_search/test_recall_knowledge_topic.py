@@ -1,26 +1,60 @@
-"""Unit tests for ``KnowledgeTopicRecaller``.
+"""Unit tests for :class:`KnowledgeTopicRecaller` with a mocked PG pool.
 
-Verifies dual-column BM25 + cosine ANN recall, using ``unittest.mock``
-to patch ``get_table`` so no real Postgres connection is needed.
-
-White-box surfaces touched:
-  - ``corti.memory.search.recall.knowledge_topic.get_table`` (patched)
-  - ``KnowledgeTopicRecaller.sparse_recall`` — queries both BM25 columns
-  - ``KnowledgeTopicRecaller.dense_recall`` — cosine ANN with distance→score
+The PG recaller runs a single dual-column SQL statement (``GREATEST``
+over the two tsvector BM25 scores) instead of two tantivy
+``nearest_to_text`` calls. These tests swap ``knowledge_topic_repo._pool``
+for a fake pool and assert the SQL contract (both columns queried,
+max-score merge, ORDER BY + LIMIT) plus the candidate-shaping behaviour
+(score pass-through, noise-column stripping) without a live database.
 """
 
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
+from types import SimpleNamespace
 from typing import Any
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock
 
 import pytest
 
 from corti.component.tokenizer import Tokenizer
+from corti.infra.persistence.pg.repos.knowledge_topic import knowledge_topic_repo
 from corti.memory.search.recall import KnowledgeTopicRecaller
 from corti.memory.search.recall.base import RecallerDeps
 
-_MODULE = "corti.memory.search.recall.knowledge_topic"
+
+class _FakePool:
+    """Minimal pool stand-in: one connection whose ``execute`` returns rows.
+
+    Records the last executed SQL on ``self.last_sql`` so tests can
+    assert the statement contract without parsing internals.
+    """
+
+    def __init__(self, rows: list[dict[str, Any]]) -> None:
+        self.rows = rows
+        self.last_sql: str | None = None
+
+    @asynccontextmanager
+    async def connection(self):
+        cur = SimpleNamespace(fetchall=AsyncMock(return_value=self.rows))
+
+        async def _execute(sql, params=None):
+            self.last_sql = sql
+            return cur
+
+        yield SimpleNamespace(execute=AsyncMock(side_effect=_execute))
+
+
+@pytest.fixture
+def stub_pool(monkeypatch: pytest.MonkeyPatch):
+    """Patch ``knowledge_topic_repo._pool``; returns a setter for the rows."""
+
+    def _set(rows: list[dict[str, Any]]) -> _FakePool:
+        fake = _FakePool(rows)
+        monkeypatch.setattr(knowledge_topic_repo, "_pool", AsyncMock(return_value=fake))
+        return fake
+
+    return _set
 
 
 class _WhitespaceTokenizer(Tokenizer):
@@ -31,10 +65,12 @@ class _WhitespaceTokenizer(Tokenizer):
 
 
 def _make_row(
-    rid: str, *, score: float = 1.0, distance: float | None = None
+    rid: str,
+    *,
+    score: float = 1.0,
 ) -> dict[str, Any]:
-    """Build a minimal Postgres row dict."""
-    row: dict[str, Any] = {
+    """Build a minimal knowledge_topic Postgres row dict."""
+    return {
         "id": rid,
         "app_id": "app",
         "project_id": "proj",
@@ -50,47 +86,8 @@ def _make_row(
         "content_labels": [],
         "md_path": f"knowledge/default/{rid}.md",
         "content_sha256": "a" * 64,
+        "_score": score,
     }
-    if distance is not None:
-        row["_distance"] = distance
-    else:
-        row["_score"] = score
-    return row
-
-
-def _mock_bm25_table(
-    summary_rows: list[dict[str, Any]],
-    content_rows: list[dict[str, Any]],
-) -> MagicMock:
-    """Build a table mock whose BM25 results differ per column.
-
-    The first ``nearest_to_text`` call (summary_tokens) returns
-    ``summary_rows``; the second (content_tokens) returns ``content_rows``.
-    ``asyncio.gather`` fires both concurrently, so we use ``side_effect``
-    on the chain rather than recording call order.
-    """
-    summary_chain = MagicMock()
-    summary_chain.where.return_value.limit.return_value.to_list = AsyncMock(
-        return_value=summary_rows
-    )
-
-    content_chain = MagicMock()
-    content_chain.where.return_value.limit.return_value.to_list = AsyncMock(
-        return_value=content_rows
-    )
-
-    tbl = MagicMock()
-    tbl.query.return_value.nearest_to_text.side_effect = [summary_chain, content_chain]
-    return tbl
-
-
-def _mock_ann_table(rows: list[dict[str, Any]]) -> MagicMock:
-    """Build a table mock for ANN (dense) queries."""
-    tbl = MagicMock()
-    ann = tbl.query.return_value.nearest_to.return_value
-    chain = ann.distance_type.return_value.where.return_value.limit.return_value
-    chain.to_list = AsyncMock(return_value=rows)
-    return tbl
 
 
 @pytest.fixture()
@@ -108,72 +105,58 @@ _WHERE = "app_id = 'app' AND project_id = 'proj'"
 
 async def test_sparse_recall_queries_both_columns(
     recaller: KnowledgeTopicRecaller,
+    stub_pool,
 ) -> None:
-    """``nearest_to_text`` must be called once per BM25 column."""
-    tbl = _mock_bm25_table(
-        summary_rows=[_make_row("t1", score=0.9)],
-        content_rows=[_make_row("t2", score=0.7)],
-    )
-    with patch(f"{_MODULE}.get_table", new_callable=AsyncMock, return_value=tbl):
-        result = await recaller.sparse_recall("topic query", _WHERE, limit=10)
+    """The SQL must reference both ``summary_tokens_tsv`` and ``content_tokens_tsv``."""
+    fake = stub_pool([_make_row("t1", score=0.9)])
 
-    # nearest_to_text called twice (once per column)
-    assert tbl.query.return_value.nearest_to_text.call_count == 2
+    result = await recaller.sparse_recall("topic query", _WHERE, limit=10)
+
+    assert fake.last_sql is not None
+    assert "summary_tokens_tsv" in fake.last_sql
+    assert "content_tokens_tsv" in fake.last_sql
+    assert "GREATEST" in fake.last_sql
+    assert [c.id for c in result] == ["t1"]
+
+
+async def test_sparse_recall_returns_rows_with_scores(
+    recaller: KnowledgeTopicRecaller,
+    stub_pool,
+) -> None:
+    """Canned rows surface as keyword candidates with their SQL score."""
+    stub_pool([_make_row("t1", score=0.9), _make_row("t2", score=0.7)])
+
+    result = await recaller.sparse_recall("topic query", _WHERE, limit=10)
+
     ids = {c.id for c in result}
     assert ids == {"t1", "t2"}
+    assert all(c.source == "keyword" for c in result)
+    scores = {c.id: c.score for c in result}
+    assert scores["t1"] == pytest.approx(0.9)
+    assert scores["t2"] == pytest.approx(0.7)
 
 
-async def test_sparse_recall_merges_by_max_score(
+async def test_sparse_recall_respects_order_and_limit(
     recaller: KnowledgeTopicRecaller,
+    stub_pool,
 ) -> None:
-    """When the same id appears in both columns, keep the higher score."""
-    shared_id = "topic_shared"
-    summary_rows = [_make_row(shared_id, score=0.5)]
-    content_rows = [_make_row(shared_id, score=0.9)]
+    """The SQL ORDER BY / LIMIT contract is honoured by the returned candidates."""
+    # Rows arrive pre-sorted by the (mocked) SQL engine.
+    stub_pool([_make_row("b", score=0.8), _make_row("c", score=0.6)])
 
-    tbl = _mock_bm25_table(summary_rows, content_rows)
-    with patch(f"{_MODULE}.get_table", new_callable=AsyncMock, return_value=tbl):
-        result = await recaller.sparse_recall("overlap", _WHERE, limit=10)
+    result = await recaller.sparse_recall("query", _WHERE, limit=2)
 
-    assert len(result) == 1
-    assert result[0].id == shared_id
-    assert result[0].score == pytest.approx(0.9)
-    assert result[0].source == "keyword"
-
-
-async def test_sparse_recall_returns_sorted_by_score(
-    recaller: KnowledgeTopicRecaller,
-) -> None:
-    """Merged results must be sorted descending by score, truncated to limit."""
-    summary_rows = [
-        _make_row("a", score=0.3),
-        _make_row("b", score=0.8),
-    ]
-    content_rows = [
-        _make_row("c", score=0.6),
-    ]
-    tbl = _mock_bm25_table(summary_rows, content_rows)
-    with patch(f"{_MODULE}.get_table", new_callable=AsyncMock, return_value=tbl):
-        result = await recaller.sparse_recall("query", _WHERE, limit=2)
-
-    assert len(result) == 2
-    assert result[0].id == "b"
-    assert result[1].id == "c"
+    assert [c.id for c in result] == ["b", "c"]
 
 
 async def test_sparse_recall_empty_query_returns_empty(
     recaller: KnowledgeTopicRecaller,
+    stub_pool,
 ) -> None:
-    """Empty tokenisation short-circuits — no Postgres query is issued."""
-    tok = MagicMock(spec=Tokenizer)
-    tok.tokenize.return_value = []
-    r = KnowledgeTopicRecaller(RecallerDeps(tokenizer=tok))
-
-    with patch(f"{_MODULE}.get_table", new_callable=AsyncMock) as mock_gt:
-        result = await r.sparse_recall("", _WHERE, limit=10)
-
+    """Empty query yields no rows (plainto_tsquery('') matches nothing)."""
+    stub_pool([])
+    result = await recaller.sparse_recall("", _WHERE, limit=10)
     assert result == []
-    mock_gt.assert_not_called()
 
 
 # ---------------------------------------------------------------------------
@@ -183,15 +166,12 @@ async def test_sparse_recall_empty_query_returns_empty(
 
 async def test_dense_recall_cosine_conversion(
     recaller: KnowledgeTopicRecaller,
+    stub_pool,
 ) -> None:
-    """``_distance`` is converted to similarity: score = 1.0 - distance."""
-    rows = [
-        _make_row("t1", distance=0.2),
-        _make_row("t2", distance=0.5),
-    ]
-    tbl = _mock_ann_table(rows)
-    with patch(f"{_MODULE}.get_table", new_callable=AsyncMock, return_value=tbl):
-        result = await recaller.dense_recall([0.1] * 1024, _WHERE, limit=10)
+    """The SQL-computed similarity (1 - distance) lands in candidate.score."""
+    stub_pool([_make_row("t1", score=0.8), _make_row("t2", score=0.5)])
+
+    result = await recaller.dense_recall([0.1] * 1024, _WHERE, limit=10)
 
     assert len(result) == 2
     scores = {c.id: c.score for c in result}
@@ -202,26 +182,26 @@ async def test_dense_recall_cosine_conversion(
 
 async def test_dense_recall_empty_vector_returns_empty(
     recaller: KnowledgeTopicRecaller,
+    stub_pool,
 ) -> None:
     """Empty vector short-circuits — no Postgres query is issued."""
-    with patch(f"{_MODULE}.get_table", new_callable=AsyncMock) as mock_gt:
-        result = await recaller.dense_recall([], _WHERE, limit=10)
-
+    result = await recaller.dense_recall([], _WHERE, limit=10)
     assert result == []
-    mock_gt.assert_not_called()
 
 
 async def test_dense_recall_metadata_excludes_noise_columns(
     recaller: KnowledgeTopicRecaller,
+    stub_pool,
 ) -> None:
-    """``vector`` and ``_distance`` must not appear in ``Candidate.metadata``."""
-    row = _make_row("t1", distance=0.3)
+    """``vector`` and ``_score`` must not appear in ``Candidate.metadata``."""
+    row = _make_row("t1", score=0.7)
     row["vector"] = [0.0] * 1024
+    row["summary_tokens_tsv"] = "stub tsvector"
+    stub_pool([row])
 
-    tbl = _mock_ann_table([row])
-    with patch(f"{_MODULE}.get_table", new_callable=AsyncMock, return_value=tbl):
-        result = await recaller.dense_recall([0.1] * 1024, _WHERE, limit=5)
+    result = await recaller.dense_recall([0.1] * 1024, _WHERE, limit=5)
 
     assert len(result) == 1
     assert "vector" not in result[0].metadata
-    assert "_distance" not in result[0].metadata
+    assert "_score" not in result[0].metadata
+    assert "summary_tokens_tsv" not in result[0].metadata

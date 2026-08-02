@@ -178,14 +178,14 @@ def build_or_query_multi_column(
 ) -> dict[str, FullTextQuery] | None:
     """Same as :func:`build_or_query` but emit one FTS query per column.
 
-    ``MatchQuery`` is bound to a single column, and PostgreSQL tsvector only
-    searches one column per ``nearest_to_text`` call. Dual-column
- kinds need one
-    OR-bundle per column and merge the results in the caller.
+       ``MatchQuery`` is bound to a single column, and PostgreSQL tsvector only
+       searches one column per ``nearest_to_text`` call. Dual-column
+    kinds need one
+       OR-bundle per column and merge the results in the caller.
 
-    Returns ``None`` on empty tokenisation; otherwise a dict
-    ``{column: FullTextQuery}`` ready to feed into separate
-    ``nearest_to_text`` calls.
+       Returns ``None`` on empty tokenisation; otherwise a dict
+       ``{column: FullTextQuery}`` ready to feed into separate
+       ``nearest_to_text`` calls.
     """
     tokens = [t for t in tokenizer.tokenize(query) if t]
     if not tokens:

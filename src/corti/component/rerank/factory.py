@@ -51,8 +51,7 @@ def build_rerank_provider(settings: RerankSettings) -> RerankProvider:
     if settings.provider == "deepinfra":
         if not api_key:
             raise ValueError(
-                "DeepInfra rerank api_key is not configured "
-                "(set CORTI_RERANK__API_KEY)"
+                "DeepInfra rerank api_key is not configured (set CORTI_RERANK__API_KEY)"
             )
         return DeepInfraRerankProvider(
             model=settings.model,
@@ -76,8 +75,7 @@ def build_rerank_provider(settings: RerankSettings) -> RerankProvider:
     if settings.provider == "dashscope":
         if not api_key:
             raise ValueError(
-                "DashScope rerank api_key is not configured "
-                "(set CORTI_RERANK__API_KEY)"
+                "DashScope rerank api_key is not configured (set CORTI_RERANK__API_KEY)"
             )
         return DashScopeRerankProvider(
             model=settings.model,

@@ -7,9 +7,9 @@ from collections import defaultdict
 from collections.abc import Mapping, Sequence
 from typing import Any, ClassVar
 
+from corti.infra.persistence.pg import atomic_fact_repo
 from everalgo.types import Candidate, FactCandidate
 
-from ....infra.persistence.pg.repos.atomic_fact import atomic_fact_repo
 from .base import RecallerDeps
 
 _NOISE_COLUMNS = frozenset(
@@ -70,7 +70,9 @@ class PgAtomicFactRecaller:
         cands = await self.sparse_recall(query, where, limit=limit)
         return [
             Candidate(
-                id=c.id, score=c.score, source=c.source,
+                id=c.id,
+                score=c.score,
+                source=c.source,
                 metadata={**c.metadata, "parent_id": c.metadata.get("entry_id", c.id)},
             )
             for c in cands
@@ -82,7 +84,9 @@ class PgAtomicFactRecaller:
         cands = await self.dense_recall(vector, where, limit=limit)
         return [
             Candidate(
-                id=c.id, score=c.score, source=c.source,
+                id=c.id,
+                score=c.score,
+                source=c.source,
                 metadata={**c.metadata, "parent_id": c.metadata.get("entry_id", c.id)},
             )
             for c in cands
@@ -129,13 +133,11 @@ class PgAtomicFactRecaller:
             if not isinstance(fact_parent_id, str) or not isinstance(fid, str):
                 continue
             metadata = {
-                k: v for k, v in d.items()
+                k: v
+                for k, v in d.items()
                 if k not in _NOISE_COLUMNS and k != "id" and not k.endswith("_tsv")
             }
-            if query_vector:
-                score = float(d.get("_score", 0.0))
-            else:
-                score = 0.0
+            score = float(d.get("_score", 0.0)) if query_vector else 0.0
             for ep_id in parent_to_eps.get(fact_parent_id, ()):
                 buckets[ep_id].append(
                     FactCandidate(
@@ -175,13 +177,10 @@ class PgAtomicFactRecaller:
                 f"WHERE {full_where} "
                 "ORDER BY vector <=> %s::vector LIMIT %s"
             )
-            params = [vec_str] + params + [vec_str, limit]
+            params = [vec_str, *params, vec_str, limit]
         else:
-            sql = (
-                "SELECT * FROM atomic_fact "
-                f"WHERE {full_where} LIMIT %s"
-            )
-            params = params + [limit]
+            sql = f"SELECT * FROM atomic_fact WHERE {full_where} LIMIT %s"
+            params = [*params, limit]
 
         async with pool.connection() as conn:
             cur = await conn.execute(sql, tuple(params))

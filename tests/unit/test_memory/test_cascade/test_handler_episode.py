@@ -19,6 +19,7 @@ from corti.component.embedding import EmbeddingProvider
 from corti.component.tokenizer import Tokenizer
 from corti.core.persistence import MemoryRoot
 from corti.infra.persistence.markdown import EpisodeWriter
+from corti.infra.persistence.pg import Episode
 from corti.memory.cascade.handlers import HandlerDeps
 from corti.memory.cascade.handlers.episode import EpisodeHandler
 

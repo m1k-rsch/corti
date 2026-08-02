@@ -1,4 +1,5 @@
-"""SQLite + Postgres lifespan providers — startup wires singletons, shutdown disposes."""
+"""SQLite + Postgres lifespan providers — startup wires singletons,
+shutdown disposes."""
 
 from __future__ import annotations
 
@@ -43,6 +44,3 @@ async def test_sqlite_provider_shutdown_disposes_singleton() -> None:
 
     await provider.shutdown(app)
     assert sqlite_manager._engine is None
-
-
-

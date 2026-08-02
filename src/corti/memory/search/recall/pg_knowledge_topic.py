@@ -11,9 +11,9 @@ import json
 from collections.abc import Sequence
 from typing import ClassVar
 
+from corti.infra.persistence.pg import knowledge_topic_repo
 from everalgo.types import Candidate
 
-from ....infra.persistence.pg.repos.knowledge_topic import knowledge_topic_repo
 from .base import RecallerDeps
 
 
@@ -34,8 +34,10 @@ class PgKnowledgeTopicRecaller:
         pool = await knowledge_topic_repo._pool()
         sql = (
             "SELECT *, GREATEST("
-            "  COALESCE(ts_rank_cd(summary_tokens_tsv, plainto_tsquery('simple', %s)), 0), "
-            "  COALESCE(ts_rank_cd(content_tokens_tsv, plainto_tsquery('simple', %s)), 0)"
+            "  COALESCE(ts_rank_cd("
+            "summary_tokens_tsv, plainto_tsquery('simple', %s)), 0), "
+            "  COALESCE(ts_rank_cd("
+            "content_tokens_tsv, plainto_tsquery('simple', %s)), 0)"
             ") AS _score "
             "FROM knowledge_topic "
             "WHERE (summary_tokens_tsv @@ plainto_tsquery('simple', %s)"

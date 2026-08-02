@@ -30,7 +30,7 @@ class PGLifespanProvider(LifespanProvider):
         super().__init__(name="pg", order=order)
 
     async def startup(self, app: FastAPI) -> Any:
-        from corti.infra.persistence.pg.pg_manager import init as pg_init
+        from corti.infra.persistence.pg import init as pg_init
 
         pool = await pg_init(run_migrations=True)
 
@@ -57,6 +57,6 @@ class PGLifespanProvider(LifespanProvider):
         return pool
 
     async def shutdown(self, app: FastAPI) -> None:
-        from corti.infra.persistence.pg.pg_manager import dispose as pg_dispose
+        from corti.infra.persistence.pg import dispose as pg_dispose
 
         await pg_dispose()

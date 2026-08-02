@@ -38,7 +38,9 @@ _pool: AsyncConnectionPool | None = None
 _lock = asyncio.Lock()
 
 
-async def init(*, conninfo: str | None = None, run_migrations: bool = True) -> AsyncConnectionPool:
+async def init(
+    *, conninfo: str | None = None, run_migrations: bool = True
+) -> AsyncConnectionPool:
     """Initialize the singleton pool and optionally run DDL.
 
     Args:

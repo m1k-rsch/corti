@@ -85,8 +85,7 @@ class SearchRequest(BaseModel):
     enable_llm_rerank: bool = Field(
         default=False,
         description=(
-            "Opt-in LLM rerank pass for HYBRID. "
-            "Ignored by keyword / vector / agentic."
+            "Opt-in LLM rerank pass for HYBRID. Ignored by keyword / vector / agentic."
         ),
     )
     filters: FilterNode | None = None

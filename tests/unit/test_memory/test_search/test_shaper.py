@@ -39,40 +39,6 @@ def _episode_candidate(*, id: str = "alice_ep_1", score: float = 0.9) -> Candida
     )
 
 
-    return Candidate(
-        id="agent_a_case_1",
-        score=0.8,
-        source="keyword",
-        metadata={
-            "owner_id": "agent_a",
-            "owner_type": "agent",
-            "session_id": "sess_a",
-            "timestamp": _ts(),
-            "task_intent": "Draft a follow-up email",
-            "approach": "1. summarise...",
-            "quality_score": 0.92,
-            "key_insight": "User prefers brief tone",
-        },
-    )
-
-
-    return Candidate(
-        id="agent_a_skill_1",
-        score=0.7,
-        source="keyword",
-        metadata={
-            "owner_id": "agent_a",
-            "owner_type": "agent",
-            "name": "contract_redline",
-            "description": "Spot risky clauses",
-            "content": "Step 1: ...",
-            "confidence": 0.9,
-            "maturity_score": 0.5,
-            "source_case_ids": ["agent_a_case_1"],
-        },
-    )
-
-
 # ── Episode shaping ─────────────────────────────────────────────────────
 
 
@@ -114,25 +80,6 @@ def test_shape_episode_attaches_facts() -> None:
     assert item is not None
     assert len(item.atomic_facts) == 1
     assert item.atomic_facts[0].content == "Alice prefers oat milk"
-
-
-# ── Agent case / skill shaping ──────────────────────────────────────────
-
-
-    assert item is not None
-    assert item.agent_id == "agent_a"
-    assert item.task_intent == "Draft a follow-up email"
-    assert item.quality_score == 0.92
-    assert item.key_insight == "User prefers brief tone"
-
-
-    cand.metadata["owner_type"] = "user"
-
-
-    assert item is not None
-    assert item.name == "contract_redline"
-    assert item.maturity_score == 0.5
-    assert item.source_case_ids == ["agent_a_case_1"]
 
 
 # ── Hybrid reshape ──────────────────────────────────────────────────────

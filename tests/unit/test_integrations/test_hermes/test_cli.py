@@ -206,7 +206,7 @@ def test_active_scope_defaults_when_keys_missing(cli):
 def test_load_config_defaults_when_no_file(cli, hermes_home: Path):
     cfg = cli._load_config()
     assert cfg["mode"] == "platform"
-    assert cfg["api_url"] == "http://127.0.0.1:8000"
+    assert cfg["api_url"] == "http://127.0.0.1:5473"
     assert cfg["user_id"] == "hermes-user"
     assert cfg["api_key"] == ""
     assert not (hermes_home / "corti.json").exists()

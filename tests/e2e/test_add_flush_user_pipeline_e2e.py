@@ -33,6 +33,11 @@ from corti.infra.persistence.markdown import (
     EpisodeDailyFrontmatter,
     ForesightDailyFrontmatter,
 )
+from corti.infra.persistence.pg import (
+    atomic_fact_repo,
+    episode_repo,
+    foresight_repo,
+)
 
 # Directory names live on the frontmatter schemas (single source of truth);
 # atomic_facts / foresights are dotfile-hidden so users only see episodes.
@@ -220,11 +225,8 @@ async def test_long_conversation_produces_all_memory_types(
     af_files = _list_md_files(memory_root, _ATOMIC_FACT_DIR)
     assert af_files, "no atomic_fact md files — extract_atomic_facts did not emit"
 
-
     pg_af_count = await atomic_fact_repo.count()
-    assert pg_af_count >= 1, (
-        f"Postgres atomic_fact rows = {pg_af_count}; expected ≥ 1"
-    )
+    assert pg_af_count >= 1, f"Postgres atomic_fact rows = {pg_af_count}; expected ≥ 1"
 
     # 5.4 foresight
     # Foresight extractor is correctly invoked (log: ``foresights_extracted``
@@ -233,8 +235,8 @@ async def test_long_conversation_produces_all_memory_types(
     # We assert the Postgres table exists (count returns 0 cleanly) — not
     # that any row was emitted.
 
-    lance_fs_count = await foresight_repo.count()
-    assert lance_fs_count >= 0, f"foresight table broken: count={lance_fs_count}"
+    pg_fs_count = await foresight_repo.count()
+    assert pg_fs_count >= 0, f"foresight table broken: count={pg_fs_count}"
 
     # 5.5 profile (md only — profile retrieval path is stub; we only assert
     # the writer wrote something). Profile lives as a single file
@@ -269,9 +271,9 @@ async def test_long_conversation_produces_all_memory_types(
     # guard the parity check would silently pass on zero files. Foresight
     # is NOT pinned because the LLM frequently yields 0 future-intent
     # statements on daily-life chat (see commentary above stage 5.4).
-    from tests._consistency_assertions import assert_md_lance_strict_consistent
+    from tests._consistency_assertions import assert_md_pg_strict_consistent
 
-    await assert_md_lance_strict_consistent(
+    await assert_md_pg_strict_consistent(
         memory_root,
         expect_at_least={
             "episode": 1,

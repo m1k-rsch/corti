@@ -39,7 +39,9 @@ def test_cron_tick_carries_strategy_name() -> None:
 
 
 def test_idle_tick_carries_bucket_and_seconds() -> None:
-    e = IdleTick(strategy_name="profile_extraction", bucket_key="user_42", idle_seconds=900)
+    e = IdleTick(
+        strategy_name="profile_extraction", bucket_key="user_42", idle_seconds=900
+    )
     assert e.bucket_key == "user_42"
     assert e.idle_seconds == 900
 

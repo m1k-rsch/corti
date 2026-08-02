@@ -23,6 +23,7 @@ from pathlib import Path
 import pytest
 
 from corti.component.tokenizer import Tokenizer
+from corti.infra.persistence.pg import AtomicFact, ParentType, atomic_fact_repo
 from corti.memory.search.recall import AtomicFactRecaller
 from corti.memory.search.recall.base import RecallerDeps
 
@@ -64,7 +65,12 @@ def _fact_row(
 
 
 @pytest.fixture(autouse=True)
-async def _reset(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+async def _reset(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    pg_runtime: None,
+    pg_clean_tables: None,
+):
     """Isolate Postgres to a tmp memory root per test."""
     monkeypatch.setenv("CORTI_ROOT", str(tmp_path))
     yield

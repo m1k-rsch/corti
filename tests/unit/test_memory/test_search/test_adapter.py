@@ -31,15 +31,16 @@ def test_hybrid_atomic_fact_picks_hierarchy() -> None:
     assert fm == "hierarchy"
 
 
-def test_hybrid_case_picks_vector_anchored() -> None:
-    fm, cfg = resolve_pipeline(SearchMethod.HYBRID, "agent_case")
-    assert fm == "vector_anchored"
-    assert cfg is None
+def test_hybrid_case_kind_raises() -> None:
+    """agent_case was dropped from the pipeline surface — unsupported now."""
+    with pytest.raises(ValueError, match="unsupported method"):
+        resolve_pipeline(SearchMethod.HYBRID, "agent_case")  # type: ignore[arg-type]
 
 
-def test_hybrid_skill_picks_skill_hybrid() -> None:
-    fm, _cfg = resolve_pipeline(SearchMethod.HYBRID, "agent_skill")
-    assert fm == "skill_hybrid"
+def test_hybrid_skill_kind_raises() -> None:
+    """agent_skill was dropped from the pipeline surface — unsupported now."""
+    with pytest.raises(ValueError, match="unsupported method"):
+        resolve_pipeline(SearchMethod.HYBRID, "agent_skill")  # type: ignore[arg-type]
 
 
 def test_agentic_method_raises_value_error() -> None:

@@ -27,11 +27,20 @@ from typer.testing import CliRunner
 from corti.entrypoints.cli.commands import integrations as integrations_mod
 
 _REPO_ROOT = Path(__file__).resolve().parents[2]
-_REAL_BUNDLE = _REPO_ROOT / "integrations" / "hermes"
+_REAL_BUNDLE = _REPO_ROOT / "src" / "integrations" / "hermes"
 
 
 @pytest.fixture
 def hermes_home(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Path:
+    # The install command deliberately ignores HERMES_HOME and always
+    # writes ~/.hermes/plugins/corti (the loader scans only there). If a
+    # real installation exists on this machine, running the test would
+    # replace/remove it — refuse to touch a live environment.
+    live_target = Path.home() / ".hermes" / "plugins" / "corti"
+    if live_target.exists():
+        pytest.skip(
+            "real ~/.hermes/plugins/corti exists — refusing to touch the live install"
+        )
     home = tmp_path / "hermes-home"
     home.mkdir()
     monkeypatch.setenv("HERMES_HOME", str(home))

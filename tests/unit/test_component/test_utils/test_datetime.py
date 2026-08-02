@@ -25,11 +25,17 @@ from corti.config import load_settings
 
 
 @pytest.fixture(autouse=True)
-def _isolate_tz(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Reset env + caches so each test gets a fresh default-tz resolution."""
+def _isolate_tz(monkeypatch: pytest.MonkeyPatch, tmp_path) -> None:
+    """Reset env + caches so each test gets a fresh default-tz resolution.
+
+    ``CORTI_ROOT`` is pinned to an empty tmp dir so ``load_settings``
+    cannot pick up a real ``~/.corti/corti.toml`` (e.g. a machine with
+    ``timezone = "Asia/Shanghai"``) — the suite asserts UTC defaults.
+    """
     for key in list(os.environ):
         if key.startswith("CORTI_"):
             monkeypatch.delenv(key, raising=False)
+    monkeypatch.setenv("CORTI_ROOT", str(tmp_path))
     load_settings.cache_clear()
     dt_module._display_tz.cache_clear()
 
@@ -1306,4 +1312,3 @@ def test_typedec_raw_sql_bypasses_typedecorator_documented_limit(
         await sm.dispose_engine()
 
     asyncio.run(_run())
-

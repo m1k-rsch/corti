@@ -13,6 +13,7 @@ from pathlib import Path
 
 import pytest
 
+from corti.infra.persistence.pg import UserProfile, user_profile_repo
 from corti.memory.search.recall import ProfileRecaller
 
 
@@ -38,7 +39,12 @@ def _profile_row(
 
 
 @pytest.fixture(autouse=True)
-async def _reset(tmp_path: Path, monkeypatch: pytest.MonkeyPatch):
+async def _reset(
+    tmp_path: Path,
+    monkeypatch: pytest.MonkeyPatch,
+    pg_runtime: None,
+    pg_clean_tables: None,
+):
     monkeypatch.setenv("CORTI_ROOT", str(tmp_path))
     yield
 

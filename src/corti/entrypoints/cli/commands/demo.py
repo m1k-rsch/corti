@@ -120,8 +120,7 @@ def _load_run_demo_tui():
 
 def _collect_playable_story() -> DemoStory:
     Console().print(
-        f"[bold {CORTI_YELLOW}]Corti demo[/] "
-        "Give it one memory, then ask for it back."
+        f"[bold {CORTI_YELLOW}]Corti demo[/] Give it one memory, then ask for it back."
     )
     memory = typer.prompt(
         "Give Corti one thing to remember",

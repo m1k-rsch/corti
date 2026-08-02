@@ -198,8 +198,8 @@ def _coerce_datetime(value: Any) -> _dt.datetime | None:
 
     The DB table schema declares timestamp columns with ``tz=UTC``,
     so PyArrow returns aware UTC datetimes. ``to_display_tz`` is a pure
-    ``astimezone(...)`` in that case. Aware non-UTC and naive inputs (test fixtures) flow
-    through ``to_display_tz`` safely as well — naive is treated as
+    ``astimezone(...)`` in that case. Aware non-UTC and naive inputs
+    (test fixtures) flow through ``to_display_tz`` safely as well — naive is treated as
     already display-tz local.
 
     Non-datetime input returns ``None`` so callers can treat it as

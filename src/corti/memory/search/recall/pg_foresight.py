@@ -6,9 +6,9 @@ import json
 from collections.abc import Sequence
 from typing import ClassVar
 
+from corti.infra.persistence.pg import foresight_repo
 from everalgo.types import Candidate
 
-from ....infra.persistence.pg.repos.foresight import foresight_repo
 from .base import RecallerDeps
 
 
@@ -34,8 +34,10 @@ class PgForesightRecaller:
         # Dual-column UNION ALL with max score merge
         sql = (
             "SELECT *, GREATEST("
-            "  COALESCE(ts_rank_cd(foresight_tokens_tsv, plainto_tsquery('simple', %s)), 0), "
-            "  COALESCE(ts_rank_cd(evidence_tokens_tsv, plainto_tsquery('simple', %s)), 0)"
+            "  COALESCE(ts_rank_cd("
+            "foresight_tokens_tsv, plainto_tsquery('simple', %s)), 0), "
+            "  COALESCE(ts_rank_cd("
+            "evidence_tokens_tsv, plainto_tsquery('simple', %s)), 0)"
             ") AS _score "
             "FROM foresight "
             "WHERE (foresight_tokens_tsv @@ plainto_tsquery('simple', %s)"
@@ -73,7 +75,9 @@ class PgForesightRecaller:
         cands = await self.sparse_recall(query, where, limit=limit)
         return [
             Candidate(
-                id=c.id, score=c.score, source=c.source,
+                id=c.id,
+                score=c.score,
+                source=c.source,
                 metadata={**c.metadata, "parent_id": c.metadata.get("entry_id", c.id)},
             )
             for c in cands
@@ -85,7 +89,9 @@ class PgForesightRecaller:
         cands = await self.dense_recall(vector, where, limit=limit)
         return [
             Candidate(
-                id=c.id, score=c.score, source=c.source,
+                id=c.id,
+                score=c.score,
+                source=c.source,
                 metadata={**c.metadata, "parent_id": c.metadata.get("entry_id", c.id)},
             )
             for c in cands

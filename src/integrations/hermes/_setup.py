@@ -205,10 +205,7 @@ def post_setup(
         return payload
 
     # mode == "oss"
-    if corti_root:
-        oss_root = Path(corti_root).expanduser()
-    else:
-        oss_root = Path.home() / ".corti"
+    oss_root = Path(corti_root).expanduser() if corti_root else Path.home() / ".corti"
     llm = inputs.get("llm") or {}
     embedding = inputs.get("embedding") or {}
     rerank = inputs.get("rerank")

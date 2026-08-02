@@ -22,6 +22,7 @@ import pytest
 from corti.component.embedding import EmbeddingProvider
 from corti.component.tokenizer import Tokenizer
 from corti.core.persistence import MemoryRoot
+from corti.infra.persistence.pg import KnowledgeTopic
 from corti.infra.persistence.sqlite import TopicUpsertPayload
 from corti.memory.cascade.handlers import HandlerDeps, KnowledgeTopicHandler
 
@@ -49,7 +50,7 @@ class _StubEmbedder(EmbeddingProvider):
 # ── Fake repos ─────────────────────────────────────────────────────────
 
 
-class _FakeLanceRepo:
+class _FakePgRepo:
     """In-memory stand-in for the Postgres knowledge_topic_repo."""
 
     def __init__(self) -> None:
@@ -103,10 +104,10 @@ def memory_root(tmp_path: Path) -> MemoryRoot:
 
 
 @pytest.fixture
-def fake_lance(monkeypatch: pytest.MonkeyPatch) -> _FakeLanceRepo:
+def fake_pg_repo(monkeypatch: pytest.MonkeyPatch) -> _FakePgRepo:
     from corti.memory.cascade.handlers import knowledge_topic as mod
 
-    repo = _FakeLanceRepo()
+    repo = _FakePgRepo()
     monkeypatch.setattr(mod, "knowledge_topic_repo", repo)
     return repo
 
@@ -187,7 +188,7 @@ def _handler(memory_root: MemoryRoot) -> KnowledgeTopicHandler:
 
 async def test_handle_added_or_modified_upserts_to_both_stores(
     memory_root: MemoryRoot,
-    fake_postgres: _FakeLanceRepo,
+    fake_pg_repo: _FakePgRepo,
     fake_sqlite: _FakeSqliteRepo,
 ) -> None:
     md_path = _write_topic_md(memory_root)
@@ -198,8 +199,8 @@ async def test_handle_added_or_modified_upserts_to_both_stores(
     assert outcome.skipped == 0
 
     # Postgres row assertions.
-    assert len(fake_lance.upserts) == 1
-    row = fake_lance.upserts[0][0]
+    assert len(fake_pg_repo.upserts) == 1
+    row = fake_pg_repo.upserts[0][0]
     assert row.id == "node_001"
     assert row.doc_id == "doc_budget"
     assert row.category_id == "finance"
@@ -231,7 +232,7 @@ async def test_handle_added_or_modified_upserts_to_both_stores(
 
 async def test_same_digest_skips(
     memory_root: MemoryRoot,
-    fake_postgres: _FakeLanceRepo,
+    fake_pg_repo: _FakePgRepo,
     fake_sqlite: _FakeSqliteRepo,
 ) -> None:
     """Second pass with identical content skips both stores."""
@@ -245,13 +246,13 @@ async def test_same_digest_skips(
     assert second.upserted == 0
     assert second.skipped == 1
     # Only one upsert batch total.
-    assert len(fake_lance.upserts) == 1
+    assert len(fake_pg_repo.upserts) == 1
     assert len(fake_sqlite.upserts) == 1
 
 
 async def test_wrong_type_skips(
     memory_root: MemoryRoot,
-    fake_postgres: _FakeLanceRepo,
+    fake_pg_repo: _FakePgRepo,
     fake_sqlite: _FakeSqliteRepo,
 ) -> None:
     """A file whose ``type`` is not ``knowledge_topic`` is skipped."""
@@ -261,13 +262,13 @@ async def test_wrong_type_skips(
 
     assert outcome.skipped == 1
     assert outcome.upserted == 0
-    assert len(fake_lance.upserts) == 0
+    assert len(fake_pg_repo.upserts) == 0
     assert len(fake_sqlite.upserts) == 0
 
 
 async def test_handle_deleted_removes_from_both_stores(
     memory_root: MemoryRoot,
-    fake_postgres: _FakeLanceRepo,
+    fake_pg_repo: _FakePgRepo,
     fake_sqlite: _FakeSqliteRepo,
 ) -> None:
     """``handle_deleted`` calls ``delete_by_md_path`` on both repos."""
@@ -280,13 +281,13 @@ async def test_handle_deleted_removes_from_both_stores(
 
     assert outcome.deleted == 1
     assert outcome.upserted == 0
-    assert md_path in fake_lance.deletes
+    assert md_path in fake_pg_repo.deletes
     assert md_path in fake_sqlite.deletes
 
 
 async def test_content_edit_triggers_upsert(
     memory_root: MemoryRoot,
-    fake_postgres: _FakeLanceRepo,
+    fake_pg_repo: _FakePgRepo,
     fake_sqlite: _FakeSqliteRepo,
 ) -> None:
     """Editing the body changes the digest and triggers a re-upsert."""
@@ -301,13 +302,13 @@ async def test_content_edit_triggers_upsert(
 
     outcome = await handler.handle_added_or_modified(md_path)
     assert outcome.upserted == 1
-    assert len(fake_lance.upserts) == 2
+    assert len(fake_pg_repo.upserts) == 2
     assert len(fake_sqlite.upserts) == 2
 
 
 async def test_handle_deleted_on_unknown_path_returns_zero(
     memory_root: MemoryRoot,
-    fake_postgres: _FakeLanceRepo,
+    fake_pg_repo: _FakePgRepo,
     fake_sqlite: _FakeSqliteRepo,
 ) -> None:
     """Deleting a path that was never indexed returns deleted=0."""

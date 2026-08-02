@@ -135,7 +135,9 @@ def format_system_prompt(
         if prof:
             sections.append(prof)
     if episodes:
-        sections.append(f"- **Recent activity** ({len(episodes)} most recent sessions):")
+        sections.append(
+            f"- **Recent activity** ({len(episodes)} most recent sessions):"
+        )
         for ep in episodes:
             subject = (ep.get("subject") or "").strip()
             ts = (ep.get("timestamp") or "")[:10]

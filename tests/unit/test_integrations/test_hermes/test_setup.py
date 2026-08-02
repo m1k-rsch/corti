@@ -70,7 +70,6 @@ def test_write_corti_toml_omits_rerank_when_none(tmp_path: Path) -> None:
     assert "rerank" not in data
 
 
-
 # ── build_corti_json ───────────────────────────────────────────────────────
 
 

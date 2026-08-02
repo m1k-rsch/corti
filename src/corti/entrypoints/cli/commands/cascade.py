@@ -34,8 +34,8 @@ from corti.component.tokenizer import build_tokenizer
 from corti.component.utils.datetime import to_display_tz
 from corti.config import load_settings
 from corti.core.persistence import MemoryRoot
-from corti.infra.persistence.pg.pg_manager import dispose as pg_dispose
-from corti.infra.persistence.pg.pg_manager import init as pg_init
+from corti.infra.persistence.pg import dispose as pg_dispose
+from corti.infra.persistence.pg import init as pg_init
 from corti.infra.persistence.sqlite import (
     dispose_engine,
     get_engine,

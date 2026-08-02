@@ -95,11 +95,13 @@ def build_conninfo(params: dict[str, str | int] | None = None) -> str:
     """
     if params is None:
         params = _load_env()
-    parts = [f"host={params['host']}",
-             f"port={params['port']}",
-             f"dbname={params['dbname']}",
-             f"user={params['user']}",
-             f"password={params['password']}"]
+    parts = [
+        f"host={params['host']}",
+        f"port={params['port']}",
+        f"dbname={params['dbname']}",
+        f"user={params['user']}",
+        f"password={params['password']}",
+    ]
     return " ".join(parts)
 
 
@@ -130,7 +132,9 @@ async def create_pool(
         },
     )
     await pool.open()
-    logger.info("pg_pool_opened", host=str(_DEFAULTS["host"]), port=str(_DEFAULTS["port"]))
+    logger.info(
+        "pg_pool_opened", host=str(_DEFAULTS["host"]), port=str(_DEFAULTS["port"])
+    )
     return pool
 
 

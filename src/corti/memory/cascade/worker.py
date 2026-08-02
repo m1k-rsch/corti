@@ -95,7 +95,7 @@ class CascadeWorker:
         batch = await md_change_state_repo.claim_pending_batch(self._batch_size)
         if not batch:
             return 0
-        results = await asyncio.gather(*(self._process_one(row) for row in batch))
+        await asyncio.gather(*(self._process_one(row) for row in batch))
         return len(batch)
 
     async def drain_until_empty(self, *, max_passes: int = 100) -> int:

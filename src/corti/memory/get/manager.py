@@ -43,7 +43,9 @@ if TYPE_CHECKING:
         Foresight,
         UserProfile,
     )
-    from corti.infra.persistence.pg.pg_repo import PgRepoBase as DbRepoBase
+    from corti.infra.persistence.pg import (
+        PgRepoBase as DbRepoBase,
+    )
 
 logger = get_logger(__name__)
 

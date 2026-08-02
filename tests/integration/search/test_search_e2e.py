@@ -175,7 +175,7 @@ async def test_partition_respects_owner_id(
     target_owner = next(iter(owners))
     _, fact = next((o, f) for o, f in seeds if o == target_owner)
 
-    body = await assert_recall(
+    await assert_recall(
         search_client,
         owner_id=target_owner,
         query=fact,

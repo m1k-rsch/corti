@@ -461,7 +461,7 @@ def test_on_memory_write_remove_is_noop(make_provider):
 def test_handle_tool_call_search_happy_path(make_provider):
     fake = FakeCortiClient(search_data=_search_data_with_episode())
     prov = make_provider(fake=fake)
-    out = prov.handle_tool_call("corti_search", {"query": "tea"})
+    out = prov.handle_tool_call("mem_search", {"query": "tea"})
     payload = json.loads(out)
     assert "results" in payload
     assert payload["count"] == 1
@@ -472,7 +472,7 @@ def test_handle_tool_call_search_happy_path(make_provider):
 def test_handle_tool_call_list_happy_path(make_provider):
     fake = FakeCortiClient()
     prov = make_provider(fake=fake)
-    out = prov.handle_tool_call("corti_list", {"memory_type": "episode"})
+    out = prov.handle_tool_call("mem_list", {"memory_type": "episode"})
     payload = json.loads(out)
     assert "results" in payload
     assert any(c[0] == "get" for c in fake.calls)
@@ -482,7 +482,7 @@ def test_handle_tool_call_list_happy_path(make_provider):
 def test_handle_tool_call_add_happy_path(make_provider):
     fake = FakeCortiClient()
     prov = make_provider(fake=fake)
-    out = prov.handle_tool_call("corti_add", {"content": "a fact"})
+    out = prov.handle_tool_call("mem_add", {"content": "a fact"})
     payload = json.loads(out)
     assert payload["result"] == "Fact stored."
     assert any(c[0] == "add_messages" for c in fake.calls)
@@ -493,7 +493,7 @@ def test_handle_tool_call_add_happy_path(make_provider):
 def test_handle_tool_call_flush_happy_path(make_provider):
     fake = FakeCortiClient(flush_response={"status": "extracted"})
     prov = make_provider(fake=fake)
-    out = prov.handle_tool_call("corti_flush", {})
+    out = prov.handle_tool_call("mem_flush", {})
     payload = json.loads(out)
     assert payload["status"] == "extracted"
     prov.shutdown()
@@ -502,7 +502,7 @@ def test_handle_tool_call_flush_happy_path(make_provider):
 def test_handle_tool_call_search_missing_query_returns_error(make_provider):
     fake = FakeCortiClient()
     prov = make_provider(fake=fake)
-    out = prov.handle_tool_call("corti_search", {})
+    out = prov.handle_tool_call("mem_search", {})
     assert "error" in json.loads(out)
     prov.shutdown()
 
@@ -510,7 +510,7 @@ def test_handle_tool_call_search_missing_query_returns_error(make_provider):
 def test_handle_tool_call_add_missing_content_returns_error(make_provider):
     fake = FakeCortiClient()
     prov = make_provider(fake=fake)
-    out = prov.handle_tool_call("corti_add", {})
+    out = prov.handle_tool_call("mem_add", {})
     assert "error" in json.loads(out)
     prov.shutdown()
 
@@ -527,14 +527,14 @@ def test_handle_tool_call_backend_down_returns_error(make_provider):
     prov = make_provider()
     prov._client = None
     prov._init_error = "init failed"
-    out = prov.handle_tool_call("corti_search", {"query": "x"})
+    out = prov.handle_tool_call("mem_search", {"query": "x"})
     assert "error" in json.loads(out)
 
 
 def test_handle_tool_call_list_transient_failure_trips_breaker(make_provider):
     fake = FakeCortiClient(raise_on={"get": "EXTERNAL_SERVICE_UNAVAILABLE"})
     prov = make_provider(fake=fake)
-    out = prov.handle_tool_call("corti_list", {"memory_type": "episode"})
+    out = prov.handle_tool_call("mem_list", {"memory_type": "episode"})
     payload = json.loads(out)
     assert "error" in payload
     assert prov._consecutive_failures == 1
@@ -544,7 +544,7 @@ def test_handle_tool_call_list_transient_failure_trips_breaker(make_provider):
 def test_handle_tool_call_flush_transient_failure_trips_breaker(make_provider):
     fake = FakeCortiClient(raise_on={"flush_session": "INTERNAL_ERROR"})
     prov = make_provider(fake=fake)
-    out = prov.handle_tool_call("corti_flush", {})
+    out = prov.handle_tool_call("mem_flush", {})
     payload = json.loads(out)
     assert "error" in payload
     assert prov._consecutive_failures == 1
@@ -559,7 +559,7 @@ def test_get_tool_schemas_openai_shape(make_provider):
     schemas = prov.get_tool_schemas()
     assert len(schemas) == 4
     names = {s["name"] for s in schemas}
-    assert names == {"corti_search", "corti_list", "corti_add", "corti_flush"}
+    assert names == {"mem_search", "mem_list", "mem_add", "mem_flush"}
     for schema in schemas:
         assert schema["parameters"]["type"] == "object"
         assert "properties" in schema["parameters"]
@@ -567,11 +567,11 @@ def test_get_tool_schemas_openai_shape(make_provider):
     prov.shutdown()
 
 
-def test_system_prompt_block_mentions_corti_search(make_provider):
+def test_system_prompt_block_mentions_mem_search(make_provider):
     prov = make_provider()
     block = prov.system_prompt_block()
     assert "corti" in block.lower()
-    assert "corti_search" in block
+    assert "mem_search" in block
     prov.shutdown()
 
 
@@ -674,16 +674,16 @@ def test_shutdown_joins_threads_and_closes_client(make_provider):
 # ── config schema / save_config / post_setup ───────────────────────────────
 
 
-def test_get_config_schema_has_seven_entries(make_provider):
+def test_get_config_schema_has_six_entries(make_provider):
     prov = make_provider()
     schema = prov.get_config_schema()
-    assert len(schema) == 7
+    assert len(schema) == 6
     for entry in schema:
         assert "key" in entry
         assert "description" in entry
     keys = {e["key"] for e in schema}
     assert "api_url" in keys
-    assert "agent_track_enabled" in keys  # kept for backward compat
+    assert "agent_id" in keys
     prov.shutdown()
 
 
