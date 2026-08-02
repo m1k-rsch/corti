@@ -51,6 +51,7 @@ _server = Server("corti-oss")
 
 # ── Corti REST helper ────────────────────────────────────────────────────────
 
+
 def _scope() -> dict:
     return {"app_id": APP_ID, "project_id": PROJECT_ID, "user_id": USER_ID}
 
@@ -151,6 +152,7 @@ _TOOLS = [
 
 # ── Handlers ──────────────────────────────────────────────────────────────────
 
+
 @_server.list_tools()
 async def list_tools() -> list[Tool]:
     return _TOOLS
@@ -164,11 +166,14 @@ async def call_tool(name: str, arguments: dict[str, Any] | None) -> list[TextCon
             query = args["query"]
             method = args.get("method", "hybrid")
             top_k = args.get("top_k", 5)
-            data = await _post("/api/v1/memory/search", {
-                "query": query,
-                "method": method,
-                "top_k": top_k,
-            })
+            data = await _post(
+                "/api/v1/memory/search",
+                {
+                    "query": query,
+                    "method": method,
+                    "top_k": top_k,
+                },
+            )
             episodes = data.get("episodes", [])
             if not episodes:
                 return [TextContent(type="text", text="No relevant memories found.")]
@@ -183,11 +188,14 @@ async def call_tool(name: str, arguments: dict[str, Any] | None) -> list[TextCon
 
         elif name == "mem_recall":
             count = args.get("count", 5)
-            data = await _post("/api/v1/memory/get", {
-                "memory_type": "episode",
-                "page": 1,
-                "page_size": 100,
-            })
+            data = await _post(
+                "/api/v1/memory/get",
+                {
+                    "memory_type": "episode",
+                    "page": 1,
+                    "page_size": 100,
+                },
+            )
             episodes = data.get("episodes", [])
             if not episodes:
                 return [TextContent(type="text", text="No memories yet.")]
@@ -204,28 +212,50 @@ async def call_tool(name: str, arguments: dict[str, Any] | None) -> list[TextCon
 
         elif name == "mem_add":
             content = args["content"]
-            await _post("/api/v1/memory/add", {
-                "session_id": MCP_SESSION,
-                "messages": [{
-                    "sender_id": AGENT_ID,
-                    "sender_name": "pc-claude-code",
-                    "role": "assistant",
-                    "timestamp": int(time.time() * 1000),
-                    "content": content,
-                }],
-            })
-            data = await _post("/api/v1/memory/flush", {
-                "session_id": MCP_SESSION,
-            })
-            status = data.get("status", "unknown")
-            return [TextContent(type="text", text=f"Stored and flushed (status: {status}).")]
+            await _post(
+                "/api/v1/memory/add",
+                {
+                    "session_id": MCP_SESSION,
+                    "messages": [
+                        {
+                            "sender_id": AGENT_ID,
+                            "sender_name": "pc-claude-code",
+                            "role": "assistant",
+                            "timestamp": int(time.time() * 1000),
+                            "content": content,
+                        }
+                    ],
+                },
+            )
+            # /flush is also async now: it queues a forced boundary pass
+            # behind the add. Both calls ack instantly; extraction runs
+            # on the server's per-session worker.
+            await _post(
+                "/api/v1/memory/flush",
+                {
+                    "session_id": MCP_SESSION,
+                },
+            )
+            return [
+                TextContent(
+                    type="text",
+                    text="Fact stored (extraction queued in background).",
+                )
+            ]
 
         elif name == "mem_flush":
-            data = await _post("/api/v1/memory/flush", {
-                "session_id": MCP_SESSION,
-            })
-            status = data.get("status", "unknown")
-            return [TextContent(type="text", text=f"Flush complete (status: {status}).")]
+            await _post(
+                "/api/v1/memory/flush",
+                {
+                    "session_id": MCP_SESSION,
+                },
+            )
+            return [
+                TextContent(
+                    type="text",
+                    text="Flush accepted (extraction runs in background).",
+                )
+            ]
 
         else:
             return [TextContent(type="text", text=f"Unknown tool: {name}")]
@@ -235,6 +265,7 @@ async def call_tool(name: str, arguments: dict[str, Any] | None) -> list[TextCon
 
 
 # ── Main ──────────────────────────────────────────────────────────────────────
+
 
 async def main():
     async with stdio_server() as (read_stream, write_stream):

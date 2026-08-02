@@ -35,6 +35,8 @@ from corti.core.persistence import MemoryRoot
 from corti.infra.ome.config import OMEConfig
 from corti.infra.ome.engine import OfflineEngine
 from corti.infra.persistence.markdown import EpisodeWriter
+from corti.infra.persistence.sqlite import unprocessed_buffer_repo
+from corti.memory import IngestResult
 from corti.memory.extract.ingest import process as ingest_process
 from corti.memory.extract.pipeline import (
     AgentMemoryPipeline,
@@ -48,7 +50,7 @@ from corti.memory.strategies import (
     reflect_episodes,
     trigger_profile_clustering,
 )
-from corti.service._boundary import prepare_cells
+from corti.service._boundary import _canonical_to_row, _filter_for_mode, prepare_cells
 from corti.service._session_lock import get_session_lock
 
 logger = get_logger(__name__)
@@ -142,6 +144,7 @@ async def memorize(
     payload: dict[str, Any],
     *,
     is_final: bool = False,
+    queue_driven: bool = False,
 ) -> MemorizeResult:
     """Execute one add cycle. Dispatched concurrently across pipelines.
 
@@ -149,6 +152,11 @@ async def memorize(
         payload: ``{"session_id", "messages": [...]}`` — entrypoints DTO
             dumped to dict.
         is_final: ``True`` only for flush (algo guarantees ``tail=[]``).
+        queue_driven: internal — the async memorize worker passes an
+            empty ``messages`` list and lets the boundary stage process
+            whatever is already persisted in the session buffer (the
+            route persisted the fresh rows before acking). Only the
+            worker sets this; entrypoints never do.
 
     Concurrency: serialised per ``session_id`` via
     :func:`corti.service._session_lock.get_session_lock`. The lock
@@ -166,23 +174,48 @@ async def memorize(
 
     async with asyncio.timeout(settings.memorize.session_lock_timeout_seconds):
         async with get_session_lock(session_id):
+            ingested = await ingest_process(payload)
             return await _memorize_locked(
-                payload,
+                ingested,
                 mode=mode,
                 boundary_cfg=boundary_cfg,
                 is_final=is_final,
+                queue_driven=queue_driven,
             )
 
 
+async def persist_fresh(
+    ingested: IngestResult, *, mode: Literal["chat", "agent"]
+) -> int:
+    """Durably append the freshly ingested messages to the buffer.
+
+    The fast-ack path of ``POST /add``: this runs *before* the response
+    is sent so a 200 means "the raw content is already on disk", exactly
+    once per deterministic ``message_id`` (``INSERT OR IGNORE``; a
+    retried payload with the same timestamps is a no-op).
+
+    Only the mode-filtered slice is persisted — tool rows (chat mode)
+    never enter the buffer, matching the pre-queue behaviour where the
+    boundary stage filtered before merging.
+    """
+    fresh = _filter_for_mode(ingested.messages, mode)
+    if not fresh:
+        return 0
+    rows = [_canonical_to_row(m, ingested.app_id, ingested.project_id) for m in fresh]
+    return await unprocessed_buffer_repo.append_many(
+        rows, app_id=ingested.app_id, project_id=ingested.project_id
+    )
+
+
 async def _memorize_locked(
-    payload: dict[str, Any],
+    ingested: IngestResult,
     *,
     mode: Literal["chat", "agent"],
     boundary_cfg: Any,
     is_final: bool,
+    queue_driven: bool,
 ) -> MemorizeResult:
     """Inner critical section — runs under the per-session lock."""
-    ingested = await ingest_process(payload)
     boundary = await prepare_cells(
         ingested,
         mode=mode,
@@ -191,12 +224,13 @@ async def _memorize_locked(
         prompt_loader=_get_prompt_loader(),
         hard_token_limit=boundary_cfg.hard_token_limit,
         hard_msg_limit=boundary_cfg.hard_msg_limit,
+        queue_driven=queue_driven,
     )
 
     if not boundary.cells:
         # Nothing went past the boundary stage — no pipelines to dispatch.
         return MemorizeResult(
-            message_count=len(payload.get("messages", [])),
+            message_count=len(ingested.messages),
             status=_merge_status(boundary.status, "skipped"),
         )
 
@@ -219,7 +253,7 @@ async def _memorize_locked(
         merged_status = _merge_status(user_outcome.status, "skipped")
 
     return MemorizeResult(
-        message_count=len(payload.get("messages", [])),
+        message_count=len(ingested.messages),
         status=merged_status,
     )
 

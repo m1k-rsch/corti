@@ -16,7 +16,13 @@ from typing import Literal, NotRequired, Required, TypedDict
 
 Role = Literal["user", "assistant", "tool"]
 ContentType = Literal["text", "image", "audio", "doc", "pdf", "html", "email"]
-AddStatus = Literal["accumulated", "extracted"]
+# v1 contract: /add and /flush are async-accept endpoints — the response
+# status is always "accepted" (raw content durably stored; boundary +
+# extraction run on the server's per-session queue afterwards). The old
+# synchronous outcomes ("accumulated" / "extracted") no longer appear in
+# HTTP responses; they survive only as the service layer's internal
+# outcome values.
+AddStatus = Literal["accepted"]
 
 
 class ContentItem(TypedDict):
@@ -80,7 +86,7 @@ class AddResponse(TypedDict):
 
 # ── /memory/flush shape ──────────────────────────────────────────────────────
 
-FlushStatus = Literal["extracted", "no_extraction"]
+FlushStatus = Literal["accepted"]
 
 
 class FlushRequest(TypedDict):
@@ -164,8 +170,6 @@ class SearchProfileItem(TypedDict):
     score: Required[float | None]
 
 
-
-
 class UnprocessedMessage(TypedDict):
     """Raw buffered message returned by search under narrow conditions."""
 
@@ -238,7 +242,6 @@ class GetProfileItem(TypedDict):
     app_id: Required[str]
     project_id: Required[str]
     profile_data: Required[dict[str, object]]
-
 
 
 class GetAtomicFactItem(TypedDict):

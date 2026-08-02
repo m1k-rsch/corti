@@ -136,6 +136,14 @@ async def core_pipeline_runtime(
     monkeypatch.setattr(client_mod, "_llm_client", None, raising=False)
     _reset_strategy_singletons(monkeypatch)
 
+    # Drop any per-session memorize worker state left by a previous test
+    # (queues / tasks / busy marks) so each test starts from a clean loop.
+    queue_mod = importlib.import_module("corti.service._memorize_queue")
+    queue_mod._reset_for_tests()
+    monkeypatch.setattr(queue_mod, "_queues", {}, raising=False)
+    monkeypatch.setattr(queue_mod, "_workers", {}, raising=False)
+    monkeypatch.setattr(queue_mod, "_busy", set(), raising=False)
+
     yield tmp_path
 
 
@@ -234,6 +242,28 @@ def pipeline_done_poll() -> Callable[..., Awaitable[None]]:
             return summary.pending == 0
 
         await _poll(_drained, deadline_seconds=deadline_seconds)
+
+    return _wait
+
+
+@pytest.fixture
+def memorize_idle_poll() -> Callable[..., Awaitable[None]]:
+    """Wait until the per-session memorize worker queue drains.
+
+    ``/add`` and ``/flush`` ack instantly and process on the async
+    worker; a test that wants to assert extraction artefacts (memcells,
+    buffers, md files) must first wait for the session's worker to
+    finish its queued items. Call BEFORE ``pipeline_done_poll`` so the
+    OME/cascade drains don't race the worker that emits them.
+    """
+
+    async def _wait(*, deadline_seconds: float = 180.0) -> None:
+        from corti.service._memorize_queue import is_idle
+
+        async def _idle() -> bool:
+            return is_idle()
+
+        await _poll(_idle, deadline_seconds=deadline_seconds, interval=0.25)
 
     return _wait
 

@@ -86,12 +86,12 @@ Behavioral settings live in `$HERMES_HOME/corti.json`. Secrets belong in
 
 After each completed Hermes turn, `sync_turn` builds two `MessageItem`s
 (user + assistant, Unix-ms timestamps) and `POST /api/v1/memory/add`s them
-on a daemon thread. Corti buffers them per `session_id`; its boundary
-detector decides when a segment is done, then the extractor (an LLM)
-writes an **Episode** to markdown synchronously —
-`~/.corti/.../users/<user_id>/episodes/episode-<date>.md`. At session end,
-`on_session_end` calls `POST /memory/flush` to force extraction of any
-pending buffer.
+on a daemon thread. Corti durably buffers them per `session_id` and acks
+immediately (`status: "accepted"`); its per-session worker then runs the
+boundary detector, and the extractor (an LLM) writes an **Episode** to
+markdown asynchronously — `~/.corti/.../users/<user_id>/episodes/episode-<date>.md`.
+At session end, `on_session_end` calls `POST /memory/flush` to force
+extraction of any pending buffer (also async-accept).
 
 Markdown is the source of truth; SQLite (state) and Postgres
 (vectors + BM25) are derived and rebuildable. See

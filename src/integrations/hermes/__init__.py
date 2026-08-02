@@ -82,6 +82,37 @@ _TRANSIENT_CODES: frozenset[str] = frozenset(
     }
 )
 
+# ── mem_add retry dedup ──────────────────────────────────────────────────────
+# Corti derives message ids deterministically (session + timestamp + index),
+# so a blind retry of a timed-out mem_add only produces a duplicate if it
+# carries a NEW timestamp. This cache reuses the timestamp for the same
+# (session, content) within a short window, making the retried tool call a
+# byte-identical payload — the server's INSERT OR IGNORE absorbs it silently.
+_ADD_TS_CACHE: dict[tuple[str, str], tuple[int, float]] = {}
+_ADD_TS_TTL_SECS = 300.0
+_ADD_TS_MAX_ENTRIES = 512
+
+
+def _stable_add_timestamp(session_id: str, content: str, now_ms: int) -> int:
+    """Return a stable timestamp for repeated (session, content) tool calls."""
+    now = time.monotonic()
+    key = (session_id, content)
+    cached = _ADD_TS_CACHE.get(key)
+    if cached is not None and now - cached[1] < _ADD_TS_TTL_SECS:
+        return cached[0]
+    if len(_ADD_TS_CACHE) >= _ADD_TS_MAX_ENTRIES:
+        expired = [
+            k for k, (_, exp) in _ADD_TS_CACHE.items() if now - exp >= _ADD_TS_TTL_SECS
+        ]
+        for k in expired:
+            del _ADD_TS_CACHE[k]
+        if len(_ADD_TS_CACHE) >= _ADD_TS_MAX_ENTRIES:
+            oldest_key = min(_ADD_TS_CACHE, key=lambda k: _ADD_TS_CACHE[k][1])
+            del _ADD_TS_CACHE[oldest_key]
+    _ADD_TS_CACHE[key] = (now_ms, now)
+    return now_ms
+
+
 # ── OpenAI function-calling tool schemas ────────────────────────────────────
 
 _SEARCH_SCHEMA: dict[str, Any] = {
@@ -563,10 +594,16 @@ class CortiMemoryProvider(MemoryProvider):
         content = args.get("content")
         if not isinstance(content, str) or not content:
             return tool_error("Missing required parameter: content")
-        msg = format_memory_write_message(
-            content, self._user_id, time.time_ns() // 1_000_000
-        )
+        # Stable timestamp for repeated calls with the same content: a
+        # retried mem_add (after a client-side timeout) then carries the
+        # same deterministic message_id, and the server dedupes it.
+        now_ms = time.time_ns() // 1_000_000
+        ts = _stable_add_timestamp(self._session_id, content, now_ms)
+        msg = format_memory_write_message(content, self._user_id, ts)
         try:
+            # Both calls are fast-ack now: /add durably persists the raw
+            # message and /flush queues the boundary pass behind it, so
+            # the tool returns before any LLM latency.
             client.add_messages(self._session_id, scope.app_id, scope.project_id, [msg])
             client.flush_session(self._session_id, scope.app_id, scope.project_id)
         except CortiClientError as exc:
@@ -613,15 +650,21 @@ class CortiMemoryProvider(MemoryProvider):
         try:
             # Fetch profile + recent episodes (2s grace each)
             profile_data = client.get(
-                self._user_id, None,
-                scope.app_id, scope.project_id,
+                self._user_id,
+                None,
+                scope.app_id,
+                scope.project_id,
                 "profile",
             )
             episode_data = client.get(
-                self._user_id, None,
-                scope.app_id, scope.project_id,
+                self._user_id,
+                None,
+                scope.app_id,
+                scope.project_id,
                 "episode",
-                sort_by="timestamp", sort_order="desc", page_size=20,
+                sort_by="timestamp",
+                sort_order="desc",
+                page_size=20,
             )
             profiles = list(profile_data.get("profiles") or [])
             episodes = list(episode_data.get("episodes") or [])

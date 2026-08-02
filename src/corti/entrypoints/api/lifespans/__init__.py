@@ -19,6 +19,9 @@ External usage::
 
 from .cascade import CascadeLifespanProvider as CascadeLifespanProvider
 from .llm import LLMLifespanProvider as LLMLifespanProvider
+from .memorize_queue import (
+    MemorizeQueueLifespanProvider as MemorizeQueueLifespanProvider,
+)
 from .ome import OmeLifespanProvider as OmeLifespanProvider
 from .pg import PGLifespanProvider as PGLifespanProvider
 from .sqlite import SqliteLifespanProvider as SqliteLifespanProvider
@@ -26,6 +29,7 @@ from .sqlite import SqliteLifespanProvider as SqliteLifespanProvider
 __all__ = [
     "CascadeLifespanProvider",
     "LLMLifespanProvider",
+    "MemorizeQueueLifespanProvider",
     "OmeLifespanProvider",
     "PGLifespanProvider",
     "SqliteLifespanProvider",

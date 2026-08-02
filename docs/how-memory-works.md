@@ -106,39 +106,44 @@ is detected, an LLM extracts a cell, writers persist markdown, and the
 index catches up asynchronously.
 
 ```
- POST /add  ──▶  unprocessed_buffer (SQLite)        ← messages accumulate per (session, app, project)
+ POST /add  ──▶  unprocessed_buffer (SQLite)        ← durable INSERT OR IGNORE; 200 "accepted" returns NOW
                       │
-                      ├─ boundary detector trips  ─┐
- POST /flush ─────────┤  (or you force it)          │  one LLM call
-                      │                             ▼
-                      │                       extract MemCell  ──▶  memcell row (SQLite)
-                      │                             │
-                      │              ┌──────────────┴───────────────┐
-                      │              ▼                              ▼
-                      │   UserMemoryPipeline (sync)      AgentMemoryPipeline (fire-and-forget)
-                      │   writes episode .md NOW          emits AgentPipelineStarted
-                      ▼              │                              │
-   (response returns once md is on disk)                           │
-                                     ▼                              ▼
-                          ┌───────────────────  Offline Memory Engine (OME)  ───────────────────┐
-                          │  async strategies write derived .md:                                 │
-                          │  atomic_facts · foresight · user profile · agent cases · agent skills │
-                          └───────────────────────────────┬──────────────────────────────────────┘
-                                                           ▼
-                                            cascade daemon watches the .md tree
-                                                           ▼
-                                       md_change_state queue (SQLite, durable)
-                                                           ▼
-                                            rebuild Postgres rows  ──▶  searchable
+                      │  per-session worker queue (FIFO)
+                      ▼
+ POST /flush ──▶  queue is_final item  ──▶  boundary detector  ──▶  one LLM call
+                                                    │
+                                                    ▼
+                                            extract MemCell  ──▶  memcell row (SQLite)
+                                                    │
+                                  ┌─────────────────┴──────────────────┐
+                                  ▼                                    ▼
+                      UserMemoryPipeline (async)            AgentMemoryPipeline (async)
+                      writes episode .md                    emits AgentPipelineStarted
+                                  │                                    │
+                                  ▼                                    ▼
+                        ┌───────────────────  Offline Memory Engine (OME)  ───────────────────┐
+                        │  async strategies write derived .md:                                 │
+                        │  atomic_facts · foresight · user profile · agent cases · agent skills │
+                        └───────────────────────────────┬──────────────────────────────────────┘
+                                                         ▼
+                                          cascade daemon watches the .md tree
+                                                         ▼
+                                     md_change_state queue (SQLite, durable)
+                                                         ▼
+                                          rebuild Postgres rows  ──▶  searchable
 ```
 
-- **`/add`** appends messages to a per-`(session_id, app_id, project_id)`
-  buffer and returns `accumulated` (or `extracted` if the boundary tripped
-  on this call). See [api.md](api.md).
-- **`/flush`** forces the boundary now (one extraction LLM call), used at
-  the end of a chat/agent run.
-- Episode markdown is written **synchronously** — when `/flush` returns
-  `extracted`, the episode file is already on disk.
+- **`/add`** durably appends messages to a per-`(session_id, app_id,
+  project_id)` buffer (`INSERT OR IGNORE`; deterministic message ids make
+  blind retries a no-op) and returns `status: "accepted"` immediately —
+  boundary detection and extraction run later on the per-session worker
+  queue. See [api.md](api.md).
+- **`/flush`** queues a forced-boundary item **behind** any pending adds
+  for the session (FIFO), so it processes exactly what the adds left
+  behind. Also returns `"accepted"`.
+- Episode markdown is written by the **worker pipeline asynchronously** —
+  typically a few seconds after `/add`/`/flush` returns. The durable
+  guarantee lives in the buffer rows, not in the response.
 - Everything else (atomic facts, foresight, profile, agent cases/skills)
   is produced **asynchronously** by the OME — see
   [the OME section](#the-offline-memory-engine-ome).
@@ -152,7 +157,7 @@ each picking one of three on-disk patterns:
 
 | Kind | Owner | Dir / file | Strategy | Produced by |
 |---|---|---|---|---|
-| **episode** | user | `episodes/episode-<date>.md` | daily-log | extraction (sync) |
+| **episode** | user | `episodes/episode-<date>.md` | daily-log | extraction (async worker) |
 | **atomic_fact** | user | `.atomic_facts/atomic_fact-<date>.md` (hidden) | daily-log | OME |
 | **foresight** | user | `.foresights/foresight-<date>.md` (hidden) | daily-log | OME |
 | **profile** | user | `user.md` | single-file rewrite | OME |

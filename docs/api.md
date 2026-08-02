@@ -81,16 +81,20 @@ bare FastAPI `detail`); see [Errors](#errors).
 
 ### Eventual consistency
 
-`/add` and `/flush` write the markdown file (the source of truth)
-**synchronously** — when the call returns with `status: "extracted"`,
-the new entry exists on disk. The Postgres vector / BM25 / scalar index
-is rebuilt by the in-process **cascade coroutine asynchronously**.
+`/add` and `/flush` are **async-accept** endpoints: they durably store
+the raw messages (SQLite `unprocessed_buffer` rows) and return
+immediately with `status: "accepted"`. The expensive work — boundary
+detection (an LLM call), memory-cell carving, the user / agent
+extraction pipelines, and the markdown writes — runs afterwards on the
+server's per-session worker queue, strictly FIFO per `session_id`.
 
 That means `/search` and `/get` may not see a record immediately after
-the `/flush` that produced it. Typical sync latency is sub-second, but
-under load it can reach ~10–15 seconds. If you need read-your-write
-semantics, retry with backoff. The markdown file is durable
-regardless; index lag never loses data.
+the `/add` or `/flush` that produced it. Typical extraction latency is
+a few seconds, but under load or slow LLM it can reach 30–60 seconds.
+If you need read-your-write semantics, retry with backoff. The
+`unprocessed_buffer` rows are durable from the moment the call returns;
+extraction failure or a server restart never loses data (a boot-time
+sweep re-queues any session that still has buffered rows).
 
 ### Conventions
 
@@ -479,13 +483,15 @@ require `agent_id`. The mismatching combinations are rejected with
 
 ### POST /api/v1/memory/add
 
-Append a batch of messages to a session buffer. The server
-accumulates messages until the boundary detector decides the session
-is complete (or you force it with `/flush`); on boundary the LLM
-extracts a memory cell and the writers persist markdown + index rows.
+Append a batch of messages to a session buffer. The server durably
+persists the raw messages and returns **immediately** — the LLM work
+(boundary detection, extraction, markdown writes) runs asynchronously
+on a per-session worker queue. See
+[Eventual consistency](#eventual-consistency).
 
-The response distinguishes "buffered" from "extracted this call" via
-the `status` field — see [Response body](#response-body) below.
+The response `status: "accepted"` means: raw content stored, extraction
+queued. It does **not** report whether the boundary detector tripped —
+that outcome is internal to the async pass.
 
 #### Request body
 
@@ -517,49 +523,48 @@ session lifetime cap — you can call `/add` many times for the same
 | Field | Type | Notes |
 |---|---|---|
 | `message_count` | `integer` | Number of messages accepted in this call |
-| `status` | `"accumulated" \| "extracted"` | What the server did with the batch |
+| `status` | `"accepted"` | Raw content durably stored; extraction queued |
 
 **`message_count`** — Always equal to `len(messages)` on a `200` —
 there is no partial accept. The field is present mainly for log
 correlation.
 
-**`status`** — Two-state outcome:
-- `"accumulated"` — Messages were added to the buffer; the boundary
-  detector did **not** trigger this call. The buffer remains open.
-- `"extracted"` — During this call the boundary detector tripped; the
-  LLM ran extraction and the writers persisted at least one memory
-  cell. The buffer is empty after the call returns.
+**`status`** — Always `"accepted"` (async-accept contract): the messages
+were written to the durable buffer and the boundary + extraction pass
+is queued behind any earlier work for the same `session_id`. The old
+synchronous outcomes (`"accumulated"` / `"extracted"`) no longer appear
+in HTTP responses.
 
-#### Failure semantics: accumulate-then-extract (at-least-once)
+#### Failure semantics: durable-accept + async extraction (at-least-once)
 
-`/add` is **not atomic** — it is a two-phase operation:
+`/add` is **not atomic**, and now it is not synchronous either:
 
-1. **Accumulate (faithful, durable)** — the incoming messages are
-   merged into the session buffer and persisted (SQLite buffer rows;
-   once the boundary detector trips, the memcell rows are inserted
-   too). This write completes before any derived work starts.
-2. **Extract (derived enhancement)** — the LLM-derived passes
-   (atomic facts, foresight, user profile) run against the persisted
-   cells, then the writers fan out to markdown + index rows.
+1. **Accept (faithful, durable)** — the incoming messages are appended
+   to the SQLite buffer (`INSERT OR IGNORE` keyed on the deterministic
+   `message_id`, derived from `session_id + timestamp + index`). This
+   write completes before the `200` is sent: a successful response
+   means the raw content is already on disk.
+2. **Extract (derived enhancement, async)** — boundary detection and
+   the LLM-derived passes (atomic facts, foresight, user profile) run
+   on the per-session worker queue, then the writers fan out to
+   markdown + index rows.
 
-If phase 2 fails — the request returns `500`
-(`INTERNAL_ERROR` or `EXTERNAL_SERVICE_UNAVAILABLE`) — the phase-1
-data is **already on disk**. The endpoint is therefore *at-least-once*:
-a failed extraction never loses messages, but the caller cannot tell
-from the error alone how much of phase 2 ran.
+If phase 2 fails, the phase-1 data is **already on disk** — the
+endpoint is *at-least-once*: a failed extraction never loses messages.
+Failures are logged server-side (`memorize_worker_run_failed`) and the
+rows stay in the buffer; the next `/add` / `/flush` for the session (or
+the boot-time recovery sweep) retries them.
 
-**Do not blindly retry.** `/add` has no idempotency key: every
-extraction mints a fresh random `memcell_id` (`mc_<12 hex>`), so
-re-POSTing the same payload re-runs boundary detection and can produce
-a duplicate memory cell. On a `500` from the extraction phase, verify
-the outcome with `/search` (or inspect the buffer via
-`filters.session_id`) instead of retrying.
+**Blind retries are now safe.** Because `message_id` is deterministic,
+re-POSTing the same payload (same timestamps) collides on the buffer PK
+and is silently ignored — no duplicate rows, and the worker can never
+carve the same message into two cells. Two caveats:
 
-> **Production impact (assessed 2026-08-01):** this endpoint is invoked
-> automatically by the LLM runtime, whose actual usage of `/add` is
-> very low. The non-atomicity is therefore documented here rather than
-> fixed — the duplicate-extraction risk on blind retry is acceptable
-> for the current deployment profile.
+- A retry that **regenerates timestamps** (e.g. an LLM runtime that
+  mints a new `timestamp` per attempt) produces new message ids and is
+  *not* deduplicated — keep timestamps stable when retrying.
+- `/add` still has no idempotency *key*; the dedup is derived from the
+  payload itself.
 
 #### cURL example
 
@@ -579,14 +584,15 @@ curl -X POST http://127.0.0.1:8000/api/v1/memory/add \
   }"
 ```
 
-Response (real capture):
+Response (real capture — returns in milliseconds; extraction runs in
+the background afterwards):
 
 ```json
 {
     "request_id": "ae78d3f689c941eea135893e702fd171",
     "data": {
         "message_count": 3,
-        "status": "accumulated"
+        "status": "accepted"
     }
 }
 ```
@@ -594,9 +600,11 @@ Response (real capture):
 ### POST /api/v1/memory/flush
 
 Force the boundary detector to decide **now** for the given session
-buffer. The LLM runs extraction (one call) regardless of whether the
-heuristic would have tripped on its own. Useful at the end of a chat
-or agent run to make sure pending context becomes durable memory.
+buffer. Like `/add`, this is async-accept: the flush work item is
+queued **behind** any pending `/add` items for the same session (FIFO),
+so it processes exactly what the adds left behind — typically a forced
+extraction of the buffered tail. Useful at the end of a chat or agent
+run to make sure pending context becomes durable memory.
 
 #### Request body
 
@@ -617,18 +625,12 @@ scope.
 
 | Field | Type | Notes |
 |---|---|---|
-| `status` | `"extracted" \| "no_extraction"` | What happened |
+| `status` | `"accepted"` | Flush queued behind pending adds for the session |
 
-**`status`**:
-- `"extracted"` — The buffer had at least one message; extraction ran
-  and produced at least one memory cell.
-- `"no_extraction"` — The buffer was empty (no prior `/add` calls for
-  this `(session_id, app_id, project_id)`, or it was already flushed).
-
-`/flush` is synchronous with respect to markdown persistence: by the
-time the response returns, the new entry is on disk. Postgres index
-sync is still asynchronous — see
-[Eventual consistency](#eventual-consistency).
+**`status`** — Always `"accepted"`: the flush is queued, not done. The
+old synchronous outcomes (`"extracted"` / `"no_extraction"`) no longer
+appear in HTTP responses; use `/search` to observe the extraction
+result once it lands.
 
 #### cURL example
 
@@ -638,14 +640,13 @@ curl -X POST http://127.0.0.1:8000/api/v1/memory/flush \
   -d '{"session_id":"demo-002","app_id":"default","project_id":"default"}'
 ```
 
-Response (real capture; this call took several seconds because of the
-extraction LLM call):
+Response (real capture — instant, no LLM call on this path):
 
 ```json
 {
     "request_id": "e65bcf4f56c042e39cdf50866810672c",
     "data": {
-        "status": "extracted"
+        "status": "accepted"
     }
 }
 ```

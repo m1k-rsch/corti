@@ -15,6 +15,7 @@ Exposes:
 from __future__ import annotations
 
 from sqlalchemy import delete, select
+from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker
 
 from corti.core.persistence.sqlite import RepoBase, session_scope
@@ -78,6 +79,46 @@ class _UnprocessedBufferRepo(RepoBase[UnprocessedBuffer]):
             if rows:
                 s.add_all(rows)
             await s.commit()
+
+    async def append_many(
+        self,
+        rows: list[UnprocessedBuffer],
+        *,
+        app_id: str = "default",
+        project_id: str = "default",
+    ) -> int:
+        """Append rows to the buffer without touching existing rows.
+
+        ``INSERT OR IGNORE`` on the composite PK ``(message_id, app_id,
+        project_id)`` — a row that is already buffered (deterministic
+        message ids make retried payloads collide) is silently skipped.
+        Returns the number of rows actually inserted.
+
+        This is the fast-ack write path of ``POST /add``: it must stay
+        a single bounded SQLite statement — no read-modify-write, so
+        concurrent adds on the same session cannot lose each other's
+        rows. Boundary processing later rewrites the whole slice via
+        :meth:`replace` under the per-session worker, which is the only
+        consumer allowed to delete.
+        """
+        if not rows:
+            return 0
+        table = UnprocessedBuffer.__table__
+        values = [
+            {column.name: getattr(row, column.name) for column in table.columns}
+            for row in rows
+        ]
+        stmt = (
+            sqlite_insert(table)
+            .values(values)
+            .on_conflict_do_nothing(
+                index_elements=["message_id", "app_id", "project_id"],
+            )
+        )
+        async with session_scope(self._factory) as s:
+            result = await s.execute(stmt)
+            await s.commit()
+        return int(result.rowcount or 0)
 
 
 unprocessed_buffer_repo = _UnprocessedBufferRepo()

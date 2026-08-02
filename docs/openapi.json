@@ -58,7 +58,7 @@
           "memory"
         ],
         "summary": "Add Memory",
-        "description": "Add messages into the user-memory + agent-memory pipelines.",
+        "description": "Add messages into the user-memory + agent-memory pipelines.\n\nFeedback loop: persist the raw content durably, enqueue the\nboundary + extraction work, and ack immediately. The caller must\nnever wait on LLM latency to learn that its memory was accepted.",
         "operationId": "add_memory_api_v1_memory_add_post",
         "requestBody": {
           "content": {
@@ -100,7 +100,7 @@
           "memory"
         ],
         "summary": "Flush Memory",
-        "description": "Force boundary detection over the current ``session_id`` buffer.\n\n[OSS-only] — cloud edition decides boundary timing server-side and\ndoes not expose this endpoint.",
+        "description": "Force boundary detection over the current ``session_id`` buffer.\n\nAlso async: enqueues an ``is_final=True`` work item behind any\npending adds for the session (FIFO), so the flush processes exactly\nwhat the adds left behind.\n\n[OSS-only] — cloud edition decides boundary timing server-side and\ndoes not expose this endpoint.",
         "operationId": "flush_memory_api_v1_memory_flush_post",
         "requestBody": {
           "content": {
@@ -823,10 +823,7 @@
           },
           "status": {
             "type": "string",
-            "enum": [
-              "accumulated",
-              "extracted"
-            ],
+            "const": "accepted",
             "title": "Status"
           }
         },
@@ -1414,10 +1411,7 @@
         "properties": {
           "status": {
             "type": "string",
-            "enum": [
-              "extracted",
-              "no_extraction"
-            ],
+            "const": "accepted",
             "title": "Status"
           }
         },

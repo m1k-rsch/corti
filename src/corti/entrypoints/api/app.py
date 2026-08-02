@@ -30,6 +30,7 @@ from .exception_handlers import register_handlers
 from .lifespans import (
     CascadeLifespanProvider,
     LLMLifespanProvider,
+    MemorizeQueueLifespanProvider,
     OmeLifespanProvider,
     PGLifespanProvider,
     SqliteLifespanProvider,
@@ -85,6 +86,7 @@ def create_app(
             PGLifespanProvider(),
             CascadeLifespanProvider(),
             OmeLifespanProvider(),
+            MemorizeQueueLifespanProvider(),
         ]
 
     from corti import __version__

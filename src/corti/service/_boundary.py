@@ -100,12 +100,19 @@ async def prepare_cells(
     prompt_loader: PromptLoader,
     hard_token_limit: int,
     hard_msg_limit: int,
+    queue_driven: bool = False,
 ) -> BoundaryOutcome:
-    """Run the boundary stage end-to-end and persist tail back to buffer."""
+    """Run the boundary stage end-to-end and persist tail back to buffer.
+
+    ``queue_driven``: the caller (the async memorize worker) has already
+    persisted the fresh messages into the buffer and passes ``messages=[]``;
+    the guard below is bypassed so the *whole buffered slice* of the session
+    is processed, exactly once, per queue item.
+    """
     app_id = ingested.app_id
     project_id = ingested.project_id
     fresh = _filter_for_mode(ingested.messages, mode)
-    if not fresh and not is_final:
+    if not fresh and not is_final and not queue_driven:
         return _empty_outcome(status="skipped", message_count=0)
 
     buffer_rows = await unprocessed_buffer_repo.list_for_track(

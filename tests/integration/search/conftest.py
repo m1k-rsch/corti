@@ -189,7 +189,23 @@ async def _ingest(memory_root: Path, long_conversation: dict) -> None:
         )
         resp.raise_for_status()
 
+        # /add and /flush are async-accept now: boundary + extraction run
+        # on the per-session worker. Wait for the worker to drain BEFORE
+        # the cascade poll — otherwise the md queue can be momentarily
+        # empty while the worker is still mid-pipeline.
+        await _poll_memorize_idle(deadline_seconds=600.0)
         await _poll_cascade_drained(deadline_seconds=600.0)
+
+
+async def _poll_memorize_idle(*, deadline_seconds: float) -> None:
+    """Block until the per-session memorize worker queue is empty."""
+    from corti.service._memorize_queue import is_idle
+
+    async with asyncio.timeout(deadline_seconds):
+        while True:
+            if is_idle():
+                return
+            await asyncio.sleep(0.25)
 
 
 async def _poll_cascade_drained(*, deadline_seconds: float) -> None:

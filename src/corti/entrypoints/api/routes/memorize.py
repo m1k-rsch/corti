@@ -1,8 +1,28 @@
 """POST /api/v1/memory/add and /api/v1/memory/flush.
 
 DTOs follow the v1 API brief (01_v1_api_brief.md §2 / §3). Routes are
-thin adapters: validate the DTO, dump to dict, hand to service. No
-business logic lives here.
+thin adapters: validate the DTO, durably persist the raw content,
+enqueue the async extraction, and ack — no business logic lives here.
+
+The feedback-loop contract (the reason ``/add`` never blocks on the
+LLM):
+
+    POST /add
+      → validate DTO
+      → ingest_process (normalise; multimodal parse)
+      → persist_fresh (INSERT OR IGNORE into unprocessed_buffer — the
+        durable "we received it" moment; deterministic message ids make
+        blind retries of the same payload a no-op)
+      → enqueue_memorize(is_final=False)   # boundary + pipelines, async
+      → 200 {message_count, status: "accepted"}
+
+    POST /flush
+      → enqueue_memorize(is_final=True)    # force boundary over the buffer
+      → 200 {status: "accepted"}
+
+The per-session worker (corti.service._memorize_queue) drains items
+strictly FIFO per session_id, so an add followed by a flush processes in
+that order and a message can never be carved into two cells.
 
 ``/flush`` is OSS-only (the cloud edition decides boundary timing
 server-side and does not expose this endpoint).
@@ -16,8 +36,11 @@ from typing import Annotated, Any, Literal
 from fastapi import APIRouter, Request
 from pydantic import AfterValidator, BaseModel, ConfigDict, Field
 
+from corti.config import load_settings
 from corti.entrypoints.api.utils import extract_request_id
-from corti.service import memorize
+from corti.memory.extract.ingest import process as ingest_process
+from corti.service._memorize_queue import MemorizeWorkItem, enqueue_memorize
+from corti.service.memorize import persist_fresh
 
 router = APIRouter(prefix="/api/v1/memory", tags=["memory"])
 
@@ -131,7 +154,7 @@ class MemorizeAddRequest(BaseModel):
 
 class AddResponseData(BaseModel):
     message_count: int
-    status: Literal["accumulated", "extracted"]
+    status: Literal["accepted"]
 
 
 class MemorizeFlushRequest(BaseModel):
@@ -151,7 +174,7 @@ class MemorizeFlushRequest(BaseModel):
 
 
 class FlushResponseData(BaseModel):
-    status: Literal["extracted", "no_extraction"]
+    status: Literal["accepted"]
 
 
 class SuccessEnvelope[T](BaseModel):
@@ -169,14 +192,43 @@ async def add_memory(
     req: Annotated[MemorizeAddRequest, ...],
     request: Request,
 ) -> SuccessEnvelope[AddResponseData]:
-    """Add messages into the user-memory + agent-memory pipelines."""
+    """Add messages into the user-memory + agent-memory pipelines.
+
+    Feedback loop: persist the raw content durably, enqueue the
+    boundary + extraction work, and ack immediately. The caller must
+    never wait on LLM latency to learn that its memory was accepted.
+    """
     request_id = extract_request_id(request)
-    result = await memorize(req.model_dump())
+    payload = req.model_dump()
+
+    # 1) Normalise (pure CPU except multimodal parse) — mirrors the
+    #    worker's own ingest so the persisted rows match what boundary
+    #    detection will see.
+    ingested = await ingest_process(payload)
+
+    # 2) Durable accept: INSERT OR IGNORE into unprocessed_buffer.
+    #    Deterministic message ids (session + ts + idx) make a blind
+    #    retry of the same payload a no-op — no duplicate rows, and the
+    #    worker can never carve the same message twice.
+    await persist_fresh(ingested, mode=load_settings().memorize.mode)
+
+    # 3) Async extraction: boundary detection + user/agent pipelines
+    #    run on the per-session worker, strictly FIFO.
+    enqueue_memorize(
+        MemorizeWorkItem(
+            session_id=ingested.session_id,
+            app_id=ingested.app_id,
+            project_id=ingested.project_id,
+            is_final=False,
+        )
+    )
+
+    # 4) Ack — the caller may continue immediately.
     return SuccessEnvelope(
         request_id=request_id,
         data=AddResponseData(
-            message_count=result.message_count,
-            status=result.status,
+            message_count=len(payload["messages"]),
+            status="accepted",
         ),
     )
 
@@ -188,25 +240,23 @@ async def flush_memory(
 ) -> SuccessEnvelope[FlushResponseData]:
     """Force boundary detection over the current ``session_id`` buffer.
 
+    Also async: enqueues an ``is_final=True`` work item behind any
+    pending adds for the session (FIFO), so the flush processes exactly
+    what the adds left behind.
+
     [OSS-only] — cloud edition decides boundary timing server-side and
     does not expose this endpoint.
     """
     request_id = extract_request_id(request)
-    result = await memorize(
-        {
-            "session_id": req.session_id,
-            "app_id": req.app_id,
-            "project_id": req.project_id,
-            "messages": [],
-        },
-        is_final=True,
-    )
-    # service's ``accumulated`` = nothing to flush (buffer was empty);
-    # ``extracted`` = at least one cell carved out.
-    status: Literal["extracted", "no_extraction"] = (
-        "extracted" if result.status == "extracted" else "no_extraction"
+    enqueue_memorize(
+        MemorizeWorkItem(
+            session_id=req.session_id,
+            app_id=req.app_id,
+            project_id=req.project_id,
+            is_final=True,
+        )
     )
     return SuccessEnvelope(
         request_id=request_id,
-        data=FlushResponseData(status=status),
+        data=FlushResponseData(status="accepted"),
     )

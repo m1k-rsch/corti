@@ -125,6 +125,7 @@ async def test_long_conversation_produces_all_memory_types(
     long_conversation: dict,
     async_client: httpx.AsyncClient,
     core_pipeline_runtime: Path,
+    memorize_idle_poll: Callable[..., Awaitable[None]],
     cascade_done_poll: Callable[..., Awaitable[None]],
     buffer_count: Callable[[str], Awaitable[int]],
     memcell_count: Callable[..., Awaitable[int]],
@@ -138,95 +139,62 @@ async def test_long_conversation_produces_all_memory_types(
     assert await buffer_count(session_id) == 0
     assert await memcell_count(session_id) == 0
 
-    # ── Stage 1: drip 19 batches into /add, asserting buffer delta ────────
-    last_status: str | None = None
-
+    # ── Stage 1: drip 19 batches into /add (async-accept) ─────────────────
+    # /add acks instantly with status "accepted" — the boundary pass runs
+    # on the per-session worker afterwards, so per-batch buffer deltas are
+    # not observable here. Conservation is asserted after the worker
+    # drains (post-flush).
+    total_messages = 0
     for idx, batch in enumerate(long_conversation["batches"]):
         msg_count = batch["message_count"]
-
-        buf_before = await buffer_count(session_id)
-        cells_before = await memcell_count(session_id)
+        total_messages += msg_count
 
         resp = await async_client.post(
             "/api/v1/memory/add",
             json={"session_id": session_id, "messages": _to_add_messages(batch)},
-            timeout=600.0,  # boundary detection may call LLM
+            timeout=30.0,  # async-accept: no LLM call on this path anymore
         )
         assert resp.status_code == 200, (
             f"batch {idx} ({batch['locomo_session']}): {resp.status_code} {resp.text}"
         )
         body = resp.json()
-        status: str = body["data"]["status"]
-        returned_count: int = body["data"]["message_count"]
-        assert status in {"accumulated", "extracted"}, body
-        assert returned_count == msg_count, body
-        last_status = status
-
-        buf_after = await buffer_count(session_id)
-        cells_after = await memcell_count(session_id)
-
-        # Buffer-delta invariants:
-        if status == "accumulated":
-            # No boundary cut → entire batch piled into the buffer.
-            assert buf_after == buf_before + msg_count, (
-                f"batch {idx} accumulated: expected buf {buf_before + msg_count}, "
-                f"got {buf_after}"
-            )
-            assert cells_after == cells_before, (
-                f"batch {idx} accumulated: memcell should not change "
-                f"({cells_before} → {cells_after})"
-            )
-        else:  # "extracted"
-            # Boundary fired: some messages turned into memcell(s), tail
-            # (if any) stays in the buffer. We can't predict the exact tail
-            # length but two invariants must hold.
-            assert cells_after > cells_before, (
-                f"batch {idx} extracted: memcell should grow "
-                f"({cells_before} → {cells_after})"
-            )
-            assert buf_after >= 0
-            # Conservation: nothing should silently vanish — the union of
-            # (buffer carry-over + this batch) must equal (new buffer +
-            # messages carved into cells). We approximate by asserting the
-            # new buffer is at most the carry-over + this batch size.
-            assert buf_after <= buf_before + msg_count, (
-                f"batch {idx} extracted: buffer overflow "
-                f"({buf_before} + {msg_count} → {buf_after})"
-            )
+        assert body["data"]["status"] == "accepted", body
+        assert body["data"]["message_count"] == msg_count, body
 
     # ── Stage 2: flush ────────────────────────────────────────────────────
-    cells_pre_flush = await memcell_count(session_id)
     resp = await async_client.post(
         "/api/v1/memory/flush",
         json={"session_id": session_id},
-        timeout=600.0,
+        timeout=30.0,
     )
     assert resp.status_code == 200, resp.text
-    flush_status = resp.json()["data"]["status"]
-    assert flush_status in {"extracted", "no_extraction"}, resp.json()
+    assert resp.json()["data"]["status"] == "accepted", resp.json()
+
+    # The worker now drains: flush is queued behind the 19 adds (FIFO),
+    # so the whole conversation is processed exactly once. Wait for it
+    # before asserting anything about the buffer / memcells.
+    await memorize_idle_poll(deadline_seconds=600.0)
 
     assert await buffer_count(session_id) == 0, "buffer must be drained after flush"
 
     cells_after_flush = await memcell_count(session_id)
-    # If the last /add was already 'extracted' and emptied the buffer,
-    # flush returns 'no_extraction'. Otherwise flush must produce ≥ 1
-    # cell to satisfy the boundary semantics.
-    if flush_status == "extracted":
-        assert cells_after_flush > cells_pre_flush
-
     # 419 LoCoMo messages produce ~19 memcells in practice (LLM boundary
     # decides semantic cuts; daily-life chat carves coarsely). Threshold
     # 15 leaves room for run-to-run variance from the boundary LLM.
     assert cells_after_flush >= 15, (
-        f"expected ≥ 15 memcells from 419 messages, got {cells_after_flush}; "
-        f"last add status was {last_status!r}, flush was {flush_status!r}"
+        f"expected ≥ 15 memcells from {total_messages} messages, "
+        f"got {cells_after_flush}"
     )
+    # (No cells_after_flush > cells_pre_flush assertion: if the worker's
+    # final add pass already carved every message, the flush finds an
+    # empty buffer and legitimately produces zero new cells.)
 
     # ── Stage 3 + 4: wait for cascade to drain ────────────────────────────
     # Cascade syncs md → Postgres. OME async strategies (atomic / foresight /
     # profile) also write md, which then cascade picks up. So one wait on
-    # cascade-drain effectively covers both pipelines, IF OME has already
-    # emitted its strategies (which memorize.py does inline via engine.emit).
+    # cascade-drain effectively covers both pipelines — the worker has
+    # already drained (memorize_idle_poll above), so all OME emissions
+    # happened before this poll started.
     await cascade_done_poll(deadline_seconds=600.0)
 
     # ── Stage 5: artifacts on disk + Postgres ──────────────────────────────
