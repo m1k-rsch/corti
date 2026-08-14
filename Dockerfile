@@ -76,6 +76,9 @@ COPY src/corti/config/default_ome.toml /opt/corti/config/default_ome.toml
 # Stage agent-integration plugin bundles for install.sh to extract.
 COPY src/integrations/hermes /opt/corti/integrations/hermes
 COPY src/integrations/claude-code /opt/corti/integrations/claude-code
+# dsh plugin: dist/ is prebuilt (tsc) and committed — the runtime image has
+# no TypeScript toolchain, and out-of-image installs need the built bundle.
+COPY src/integrations/deepseek-harness /opt/corti/integrations/deepseek-harness
 
 # Create data directory structure.
 RUN mkdir -p /home/app/.corti/.index/pg \
