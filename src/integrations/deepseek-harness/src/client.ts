@@ -37,6 +37,15 @@ const ADD_BATCH_SIZE = 20;
 
 export class CortiClient {
   private readonly cfg: CortiConfig;
+  /**
+   * High-water mark of timestamps sent by this client (any session).
+   * Corti derives message_id from (session_id, timestamp_ms, per-batch
+   * idx); overlapping async `add()` calls for the same session can land
+   * in the same millisecond and collide on the PK (silent INSERT OR
+   * IGNORE drops). A client-level monotonic clock guarantees uniqueness
+   * for every session this client writes.
+   */
+  private lastTs = 0;
 
   constructor(cfg: CortiConfig) {
     this.cfg = cfg;
@@ -105,12 +114,14 @@ export class CortiClient {
     sessionId: string,
     messages: ReadonlyArray<{ role: "user" | "assistant"; content: string; timestamp?: number }>,
   ): Promise<Envelope<unknown>> {
-    // Deterministic unique timestamps: Corti derives message_id from
-    // (session_id, timestamp_ms, per-batch idx). Batches reset idx, so two
-    // messages sharing a millisecond across batches would collide on the PK
-    // and the later one would be silently dropped (INSERT OR IGNORE).
-    // Guarantee uniqueness: strictly increasing timestamps via base + offset.
-    const base = Math.max(Date.now(), ...messages.map((m) => m.timestamp ?? 0));
+    // Monotonic unique timestamps across ALL add() calls of this client:
+    // Corti derives message_id from (session_id, timestamp_ms, per-batch
+    // idx); batches reset idx, and overlapping async calls (turn-end
+    // fire-and-forget + tool-triggered adds) can share a millisecond.
+    // Both collide on the PK and silently drop (INSERT OR IGNORE). The
+    // client-level high-water mark rules out every cross-call collision.
+    const provided = messages.map((m) => m.timestamp ?? 0);
+    const base = Math.max(Date.now(), this.lastTs + 1, ...provided);
     const formatted = messages.map((m, i) => ({
       sender_id: m.role === "assistant" ? this.cfg.agentId : this.cfg.userId,
       sender_name: m.role === "assistant" ? this.cfg.agentId : "user",
@@ -118,6 +129,10 @@ export class CortiClient {
       timestamp: m.timestamp ?? base + i,
       content: m.content,
     }));
+    // Advance the high-water mark past every timestamp actually sent
+    // (synchronous block: no await between read and write, so overlapping
+    // async calls cannot interleave here in the JS event loop).
+    this.lastTs = Math.max(this.lastTs, ...formatted.map((m) => m.timestamp));
     let last: Envelope<unknown> = { ok: true, status: 0 };
     for (let i = 0; i < formatted.length; i += ADD_BATCH_SIZE) {
       last = await this.post("/api/v1/memory/add", {
