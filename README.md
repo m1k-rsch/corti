@@ -47,7 +47,7 @@ Corti (corti): persistent, self-evolving memory layer for AI agents. Decouples r
 * **Sub-Second Cascade Watcher** — Direct edits (VS Code, Obsidian, Neovim) ➔ automatic SQLite metadata & Postgres vector synchronization.
 * **Self-Evolving Offline Memory Engine (OME)** — Background reflection loops compress raw conversation logs into atomic facts and dynamic profiles.
 * **Hybrid Postgres / PGLite Vector Search** — Merges `pgvector` semantic similarity, BM25 keyword matching, and scalar SQL filters in single-query execution.
-* **Seamless Agent Integrations** — Completely rewritten plugins for Hermes Agent, Claude Code, FastAPI HTTP endpoints, and CLI.
+* **Seamless Agent Integrations** — Plugins for Hermes Agent, Claude Code, DeepSeek Harness (`dsh`), FastAPI HTTP endpoints, and CLI.
 
 ---
 
@@ -122,7 +122,15 @@ Three-piece embedded engine. Markdown = Single Source of Truth. SQLite + Postgre
 curl -fsSL https://raw.githubusercontent.com/m1k-rsch/corti/main/install.sh | bash
 ```
 
-What this does: checks Docker → pulls the pre-built image from Docker Hub → seeds `~/.corti/` with default config → auto-installs agent plugins (Hermes, Claude Code) if detected.
+What this does: checks Docker → pulls the pre-built image from Docker Hub → seeds `~/.corti/` with default config → auto-installs agent plugins (**Hermes, Claude Code, DeepSeek Harness**) if detected.
+
+**Wire a single agent only** (Corti server already running elsewhere):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/m1k-rsch/corti/main/install.sh | bash -s -- --only-dsh      # DeepSeek Harness
+curl -fsSL https://raw.githubusercontent.com/m1k-rsch/corti/main/install.sh | bash -s -- --only-hermes   # Hermes Agent
+curl -fsSL https://raw.githubusercontent.com/m1k-rsch/corti/main/install.sh | bash -s -- --only-claude   # Claude Code
+```
 
 **Requirements**: Docker 24+.
 
@@ -179,8 +187,12 @@ The install script (`install.sh`) handles everything automatically:
 |---|---|---|
 | Hermes Agent | `~/.hermes/plugins/corti/` | `src/integrations/hermes/` |
 | Claude Code | `~/.claude/skills/corti/` | `src/integrations/claude-code/` |
+| DeepSeek Harness | every `~/.dsh/profiles/*` (via `dsh plugin add`) | `src/integrations/deepseek-harness/` |
 
-Plugins are **copied** (not symlinked), so they survive repo updates and work independently.
+Plugins are **copied** (not symlinked), so they survive repo updates and work
+independently. The dsh plugin instead installs through dsh's own pnpm-backed
+profile manager — from the GitHub repo directly, so it works even without the
+Docker image on the same host.
 
 ### 2. Manual Plugin Install
 
@@ -199,6 +211,11 @@ hermes plugins enable corti
 curl -fsSL https://github.com/m1k-rsch/corti/archive/refs/heads/main.tar.gz | \
   tar -xz --strip-components=3 -C ~/.claude/skills/ corti-main/src/integrations/claude-code
 mv ~/.claude/skills/claude-code ~/.claude/skills/corti
+
+# DeepSeek Harness (dsh) — installs into every existing dsh profile
+dsh plugin --profile web add https://github.com/m1k-rsch/corti#src/integrations/deepseek-harness
+# then point it at your Corti server (once):
+#   echo "CORTI_BASE_URL=http://<corti-host>:5473" >> ~/.dsh/.env
 ```
 
 Pin to a specific version by replacing `main` with a tag (e.g. `v0.2`).
