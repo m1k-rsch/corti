@@ -51,8 +51,10 @@ function newMessageId(): string {
 type TextBlock = { type: "text"; text: string };
 
 /**
- * Inlined equivalent of dsh-llm `createUserMessage`: one identified,
- * deep-frozen user-role message with a plugin source tag.
+ * Inlined equivalent of dsh-llm `createUserMessage`: one identified
+ * user-role message with a plugin source tag. The message object itself
+ * is frozen (shallow — nested content blocks are not); dsh freezes the
+ * same way at this boundary, so behavior matches the host contract.
  */
 function createUserMessage(input: { content: TextBlock[]; source: Record<string, unknown> }): {
   id: string;
@@ -136,7 +138,9 @@ const DEFAULTS = {
   autoCapture: true,
 } as const;
 
-const TRIVIAL_RE = /^(hi|hihi|hello|hey|ok|okay|test|你好|嗯|好)[.!?]?$/i;
+// Unicode escapes keep the source ASCII (repo check-cjk policy);
+// escapes: ni-hao (hello), en (mm), hao (ok).
+const TRIVIAL_RE = /^(hi|hihi|hello|hey|ok|okay|test|\u4f60\u597d|\u55ef|\u597d)[.!?]?$/i;
 
 function isTrivialPrompt(text: string): boolean {
   const t = text.trim();
@@ -180,16 +184,18 @@ const textOut = (value: any): TextBlock[] => [{ type: "text", text: String(value
 
 export function apply(ctx: any, config: Config) {
   const env = envConfig();
+  // Resolution order per key: environment variable → Schemastery config
+  // hook (profile cordis.patch.yml `config:` block) → DEFAULTS.
   const cfg = {
-    baseUrl: env.baseUrl ?? DEFAULTS.baseUrl,
-    appId: env.appId ?? DEFAULTS.appId,
-    projectId: env.projectId ?? DEFAULTS.projectId,
-    userId: env.userId ?? DEFAULTS.userId,
-    agentId: env.agentId ?? DEFAULTS.agentId,
-    recallTopK: config?.recallTopK?.(8) ?? DEFAULTS.recallTopK,
-    injectTopK: config?.injectTopK?.(5) ?? DEFAULTS.injectTopK,
-    maxInjectChars: config?.maxInjectChars?.(3500) ?? DEFAULTS.maxInjectChars,
-    autoCapture: config?.autoCapture?.(true) ?? DEFAULTS.autoCapture,
+    baseUrl: env.baseUrl ?? config?.baseUrl?.(DEFAULTS.baseUrl) ?? DEFAULTS.baseUrl,
+    appId: env.appId ?? config?.appId?.(DEFAULTS.appId) ?? DEFAULTS.appId,
+    projectId: env.projectId ?? config?.projectId?.(DEFAULTS.projectId) ?? DEFAULTS.projectId,
+    userId: env.userId ?? config?.userId?.(DEFAULTS.userId) ?? DEFAULTS.userId,
+    agentId: env.agentId ?? config?.agentId?.(DEFAULTS.agentId) ?? DEFAULTS.agentId,
+    recallTopK: config?.recallTopK?.(DEFAULTS.recallTopK) ?? DEFAULTS.recallTopK,
+    injectTopK: config?.injectTopK?.(DEFAULTS.injectTopK) ?? DEFAULTS.injectTopK,
+    maxInjectChars: config?.maxInjectChars?.(DEFAULTS.maxInjectChars) ?? DEFAULTS.maxInjectChars,
+    autoCapture: config?.autoCapture?.(DEFAULTS.autoCapture) ?? DEFAULTS.autoCapture,
   };
   const client = new CortiClient(cfg);
 

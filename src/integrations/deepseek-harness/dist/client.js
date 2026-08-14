@@ -71,11 +71,17 @@ export class CortiClient {
     }
     /** POST /api/v1/memory/add — messages chunked into batches */
     async add(sessionId, messages) {
-        const formatted = messages.map((m) => ({
+        // Deterministic unique timestamps: Corti derives message_id from
+        // (session_id, timestamp_ms, per-batch idx). Batches reset idx, so two
+        // messages sharing a millisecond across batches would collide on the PK
+        // and the later one would be silently dropped (INSERT OR IGNORE).
+        // Guarantee uniqueness: strictly increasing timestamps via base + offset.
+        const base = Math.max(Date.now(), ...messages.map((m) => m.timestamp ?? 0));
+        const formatted = messages.map((m, i) => ({
             sender_id: m.role === "assistant" ? this.cfg.agentId : this.cfg.userId,
             sender_name: m.role === "assistant" ? this.cfg.agentId : "user",
             role: m.role,
-            timestamp: m.timestamp ?? Date.now(),
+            timestamp: m.timestamp ?? base + i,
             content: m.content,
         }));
         let last = { ok: true, status: 0 };
