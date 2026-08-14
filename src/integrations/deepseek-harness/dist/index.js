@@ -100,6 +100,12 @@ const DEFAULTS = {
 // Unicode escapes keep the source ASCII (repo check-cjk policy);
 // escapes: ni-hao (hello), en (mm), hao (ok).
 const TRIVIAL_RE = /^(hi|hihi|hello|hey|ok|okay|test|\u4f60\u597d|\u55ef|\u597d)[.!?]?$/i;
+/** Clamp a configured top-K to a sane non-negative integer (bad config
+ *  values must not turn into slice(0, -1) or an invalid page_size). */
+function normalizeTopK(v) {
+    const n = Math.floor(Number(v));
+    return Number.isFinite(n) && n > 0 ? n : DEFAULTS.startupTopK;
+}
 function isTrivialPrompt(text) {
     const t = text.trim();
     return t.length < 4 || TRIVIAL_RE.test(t);
@@ -183,7 +189,7 @@ export async function apply(ctx, config) {
         agentId: env.agentId ?? config?.agentId?.(DEFAULTS.agentId) ?? DEFAULTS.agentId,
         recallTopK: config?.recallTopK?.(DEFAULTS.recallTopK) ?? DEFAULTS.recallTopK,
         injectTopK: config?.injectTopK?.(DEFAULTS.injectTopK) ?? DEFAULTS.injectTopK,
-        startupTopK: config?.startupTopK?.(DEFAULTS.startupTopK) ?? DEFAULTS.startupTopK,
+        startupTopK: normalizeTopK(config?.startupTopK?.(DEFAULTS.startupTopK) ?? DEFAULTS.startupTopK),
         maxInjectChars: config?.maxInjectChars?.(DEFAULTS.maxInjectChars) ?? DEFAULTS.maxInjectChars,
         autoCapture: config?.autoCapture?.(DEFAULTS.autoCapture) ?? DEFAULTS.autoCapture,
     };
