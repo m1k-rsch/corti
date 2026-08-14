@@ -8,7 +8,8 @@ export interface Config {
     agentId(v: string): string;
     recallTopK(v: number): number;
     injectTopK(v: number): number;
+    startupTopK(v: number): number;
     maxInjectChars(v: number): number;
     autoCapture(v: boolean): boolean;
 }
-export declare function apply(ctx: any, config: Config): void;
+export declare function apply(ctx: any, config: Config): Promise<void>;
