@@ -118,10 +118,24 @@ export class CortiClient {
     // Corti derives message_id from (session_id, timestamp_ms, per-batch
     // idx); batches reset idx, and overlapping async calls (turn-end
     // fire-and-forget + tool-triggered adds) can share a millisecond.
-    // Both collide on the PK and silently drop (INSERT OR IGNORE). The
-    // client-level high-water mark rules out every cross-call collision.
-    const provided = messages.map((m) => m.timestamp ?? 0);
-    const base = Math.max(Date.now(), this.lastTs + 1, ...provided);
+    // Both collide on the PK and silently drop (INSERT OR IGNORE).
+    //
+    // Guarantees here:
+    //  - generated timestamps are STRICTLY GREATER than every timestamp
+    //    provided in this call (base = maxProvided + 1 floor), so a
+    //    generated ts can never equal a provided one (same-batch idx
+    //    alignment would collide);
+    //  - the client-level high-water mark rules out cross-call collisions;
+    //  - loops instead of Math.max(...spread): no argument-limit risk on
+    //    large inputs.
+    // Caller-provided timestamps are passed through verbatim — replay
+    // determinism (same payload → same ids → retry dedup) depends on it.
+    let maxProvided = 0;
+    for (const m of messages) {
+      const ts = m.timestamp ?? 0;
+      if (ts > maxProvided) maxProvided = ts;
+    }
+    const base = Math.max(Date.now(), this.lastTs + 1, maxProvided + 1);
     const formatted = messages.map((m, i) => ({
       sender_id: m.role === "assistant" ? this.cfg.agentId : this.cfg.userId,
       sender_name: m.role === "assistant" ? this.cfg.agentId : "user",
@@ -132,7 +146,9 @@ export class CortiClient {
     // Advance the high-water mark past every timestamp actually sent
     // (synchronous block: no await between read and write, so overlapping
     // async calls cannot interleave here in the JS event loop).
-    this.lastTs = Math.max(this.lastTs, ...formatted.map((m) => m.timestamp));
+    for (const m of formatted) {
+      if (m.timestamp > this.lastTs) this.lastTs = m.timestamp;
+    }
     let last: Envelope<unknown> = { ok: true, status: 0 };
     for (let i = 0; i < formatted.length; i += ADD_BATCH_SIZE) {
       last = await this.post("/api/v1/memory/add", {
