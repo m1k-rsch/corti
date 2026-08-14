@@ -100,11 +100,14 @@ const DEFAULTS = {
 // Unicode escapes keep the source ASCII (repo check-cjk policy);
 // escapes: ni-hao (hello), en (mm), hao (ok).
 const TRIVIAL_RE = /^(hi|hihi|hello|hey|ok|okay|test|\u4f60\u597d|\u55ef|\u597d)[.!?]?$/i;
-/** Clamp a configured top-K to a positive integer; anything that isn't
- *  (0, negative, NaN, junk from a bad config block) falls back to the
- *  default. `unknown` in: Schemastery config hooks can surface values
- *  that were never numbers, and the Number() coercion handles them.
- *  Bad values must not turn into slice(0, -1) or an invalid page_size. */
+/**
+ * Clamp a configured top-K to a positive integer. Anything that is not a
+ * positive integer (zero, negatives, NaN, or junk from a bad config block)
+ * falls back to the default. The parameter is typed `unknown` because
+ * Schemastery config hooks can surface values that were never numbers;
+ * the Number() coercion handles them. Bad values must never reach the
+ * catalog slice() or the API page_size.
+ */
 function normalizeTopK(v) {
     const n = Math.floor(Number(v));
     return Number.isFinite(n) && n > 0 ? n : DEFAULTS.startupTopK;
