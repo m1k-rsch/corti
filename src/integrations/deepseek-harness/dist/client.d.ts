@@ -29,6 +29,15 @@ interface Envelope<T> {
 }
 export declare class CortiClient {
     private readonly cfg;
+    /**
+     * High-water mark of timestamps sent by this client (any session).
+     * Corti derives message_id from (session_id, timestamp_ms, per-batch
+     * idx); overlapping async `add()` calls for the same session can land
+     * in the same millisecond and collide on the PK (silent INSERT OR
+     * IGNORE drops). A client-level monotonic clock guarantees uniqueness
+     * for every session this client writes.
+     */
+    private lastTs;
     constructor(cfg: CortiConfig);
     private scope;
     private post;
