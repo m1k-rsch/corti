@@ -18,6 +18,9 @@
  * source.
  */
 import { CortiClient } from "./client.js";
+import { readFileSync } from "node:fs";
+import { homedir } from "node:os";
+import { join } from "node:path";
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export const name = "corti-memory";
 export const inject = ["tools", "systemPrompt"];
@@ -85,9 +88,48 @@ function envConfig() {
         out.agentId = p.CORTI_AGENT_ID;
     return out;
 }
+// Hermes-parity config file layer: ~/.dsh/corti.json (JSON keys match the
+// Hermes integration's $HERMES_HOME/corti.json where names overlap).
+// Missing/malformed file → empty object; never throws.
+// Empty-string values are ignored (Hermes parity: the JSON merge skips
+// null and "" so a stray blank key can never override DEFAULTS).
+function fileConfig() {
+    try {
+        const raw = readFileSync(join(homedir(), ".dsh", "corti.json"), "utf-8");
+        const parsed = JSON.parse(raw);
+        const pick = (...keys) => {
+            for (const k of keys) {
+                const v = parsed[k];
+                if (typeof v === "string" && v !== "")
+                    return v;
+            }
+            return undefined;
+        };
+        const out = {};
+        const baseUrl = pick("baseUrl", "api_url");
+        if (baseUrl !== undefined)
+            out.baseUrl = baseUrl;
+        const appId = pick("appId", "app_id");
+        if (appId !== undefined)
+            out.appId = appId;
+        const projectId = pick("projectId", "project_id");
+        if (projectId !== undefined)
+            out.projectId = projectId;
+        const userId = pick("userId", "user_id");
+        if (userId !== undefined)
+            out.userId = userId;
+        const agentId = pick("agentId", "agent_id");
+        if (agentId !== undefined)
+            out.agentId = agentId;
+        return out;
+    }
+    catch {
+        return {};
+    }
+}
 const DEFAULTS = {
     baseUrl: "http://127.0.0.1:5473",
-    appId: "dsh",
+    appId: "shared-agent-memory",
     projectId: "default",
     userId: "default",
     agentId: "pc-deepseek-default",
@@ -190,14 +232,16 @@ const textOut = (value) => [{ type: "text", text: String(value?.content ?? "") }
 /* ---------- plugin ---------- */
 export async function apply(ctx, config) {
     const env = envConfig();
-    // Resolution order per key: environment variable → Schemastery config
-    // hook (profile cordis.patch.yml `config:` block) → DEFAULTS.
+    const file = fileConfig();
+    // Resolution order per key (Hermes parity): environment variable →
+    // ~/.dsh/corti.json → Schemastery config hook (profile cordis.patch.yml
+    // `config:` block) → DEFAULTS.
     const cfg = {
-        baseUrl: env.baseUrl ?? config?.baseUrl?.(DEFAULTS.baseUrl) ?? DEFAULTS.baseUrl,
-        appId: env.appId ?? config?.appId?.(DEFAULTS.appId) ?? DEFAULTS.appId,
-        projectId: env.projectId ?? config?.projectId?.(DEFAULTS.projectId) ?? DEFAULTS.projectId,
-        userId: env.userId ?? config?.userId?.(DEFAULTS.userId) ?? DEFAULTS.userId,
-        agentId: env.agentId ?? config?.agentId?.(DEFAULTS.agentId) ?? DEFAULTS.agentId,
+        baseUrl: env.baseUrl ?? file.baseUrl ?? config?.baseUrl?.(DEFAULTS.baseUrl) ?? DEFAULTS.baseUrl,
+        appId: env.appId ?? file.appId ?? config?.appId?.(DEFAULTS.appId) ?? DEFAULTS.appId,
+        projectId: env.projectId ?? file.projectId ?? config?.projectId?.(DEFAULTS.projectId) ?? DEFAULTS.projectId,
+        userId: env.userId ?? file.userId ?? config?.userId?.(DEFAULTS.userId) ?? DEFAULTS.userId,
+        agentId: env.agentId ?? file.agentId ?? config?.agentId?.(DEFAULTS.agentId) ?? DEFAULTS.agentId,
         recallTopK: config?.recallTopK?.(DEFAULTS.recallTopK) ?? DEFAULTS.recallTopK,
         injectTopK: config?.injectTopK?.(DEFAULTS.injectTopK) ?? DEFAULTS.injectTopK,
         startupTopK: normalizeTopK(config?.startupTopK?.(DEFAULTS.startupTopK) ?? DEFAULTS.startupTopK),
