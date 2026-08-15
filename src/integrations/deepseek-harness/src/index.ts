@@ -133,21 +133,30 @@ interface EnvOverrides {
 // Hermes-parity config file layer: ~/.dsh/corti.json (JSON keys match the
 // Hermes integration's $HERMES_HOME/corti.json where names overlap).
 // Missing/malformed file → empty object; never throws.
+// Empty-string values are ignored (Hermes parity: the JSON merge skips
+// null and "" so a stray blank key can never override DEFAULTS).
 function fileConfig(): Partial<EnvOverrides> {
   try {
     const raw = readFileSync(join(homedir(), ".dsh", "corti.json"), "utf-8");
     const parsed = JSON.parse(raw) as Record<string, unknown>;
+    const pick = (...keys: string[]): string | undefined => {
+      for (const k of keys) {
+        const v = parsed[k];
+        if (typeof v === "string" && v !== "") return v;
+      }
+      return undefined;
+    };
     const out: Partial<EnvOverrides> = {};
-    if (typeof parsed.baseUrl === "string") out.baseUrl = parsed.baseUrl;
-    else if (typeof parsed.api_url === "string") out.baseUrl = parsed.api_url;
-    if (typeof parsed.appId === "string") out.appId = parsed.appId;
-    else if (typeof parsed.app_id === "string") out.appId = parsed.app_id;
-    if (typeof parsed.projectId === "string") out.projectId = parsed.projectId;
-    else if (typeof parsed.project_id === "string") out.projectId = parsed.project_id;
-    if (typeof parsed.userId === "string") out.userId = parsed.userId;
-    else if (typeof parsed.user_id === "string") out.userId = parsed.user_id;
-    if (typeof parsed.agentId === "string") out.agentId = parsed.agentId;
-    else if (typeof parsed.agent_id === "string") out.agentId = parsed.agent_id;
+    const baseUrl = pick("baseUrl", "api_url");
+    if (baseUrl !== undefined) out.baseUrl = baseUrl;
+    const appId = pick("appId", "app_id");
+    if (appId !== undefined) out.appId = appId;
+    const projectId = pick("projectId", "project_id");
+    if (projectId !== undefined) out.projectId = projectId;
+    const userId = pick("userId", "user_id");
+    if (userId !== undefined) out.userId = userId;
+    const agentId = pick("agentId", "agent_id");
+    if (agentId !== undefined) out.agentId = agentId;
     return out;
   } catch {
     return {};
