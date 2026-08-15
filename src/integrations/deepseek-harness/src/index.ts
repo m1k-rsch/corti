@@ -145,12 +145,17 @@ const DEFAULTS = {
 const TRIVIAL_RE = /^(hi|hihi|hello|hey|ok|okay|test|\u4f60\u597d|\u55ef|\u597d)[.!?]?$/i;
 
 /**
- * Coerce a configured top-K to a positive integer: values that coerce to a
- * finite number > 0 are floored (1.9 → 1); everything else (zero, negatives,
- * NaN, junk from a bad config block) falls back to the default. The
- * parameter is typed `unknown` because Schemastery config hooks can surface
- * values that were never numbers; the Number() coercion handles them. Bad
- * values must never reach the catalog slice() or the API page_size.
+ * Coerce a config top-K to a usable positive integer. Exact rule (stated as
+ * the code itself, so prose cannot drift from behavior):
+ *
+ *   n = Math.floor(Number(v))
+ *   return Number.isFinite(n) && n > 0 ? n : DEFAULTS.startupTopK
+ *
+ * Kept: values whose floored numeric coercion is a finite integer >= 1
+ * (e.g. 1.9 -> 1). Rejected -> default: 0.9 (floors to 0), zero, negatives,
+ * NaN, +/-Infinity, and junk from a bad config block (`unknown` input:
+ * Schemastery hooks can surface values that were never numbers). Sanitized
+ * values must never turn into slice(0, -1) or an invalid API page_size.
  */
 function normalizeTopK(v: unknown): number {
   const n = Math.floor(Number(v));
