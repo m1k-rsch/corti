@@ -78,9 +78,9 @@ multimodal = ["cairosvg>=2.7.0"]  # SVG parsing support for multimodal content
 
 [project.urls]
 Homepage = "https://cortistrate.dev"
-Repository = "https://github.com/m1k-rsch/corti"
-Changelog = "https://github.com/m1k-rsch/corti/blob/main/CHANGELOG.md"
-"Bug Tracker" = "https://github.com/m1k-rsch/corti/issues"
+Repository = "https://github.com/fgm-builds/corti"
+Changelog = "https://github.com/fgm-builds/corti/blob/main/CHANGELOG.md"
+"Bug Tracker" = "https://github.com/fgm-builds/corti/issues"
 
 [build-system]
 requires = ["hatchling"]

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # corti — one-command Docker install (pull pre-built image)
-# Usage: curl -fsSL https://raw.githubusercontent.com/m1k-rsch/corti/main/install.sh | bash
+# Usage: curl -fsSL https://raw.githubusercontent.com/fgm-builds/corti/main/install.sh | bash
 #   ... | bash -s -- --only-dsh   → install only the DeepSeek Harness plugin
 #   ... | bash -s -- --only-hermes / --only-claude → single-integration mode
 # (single-integration modes skip Docker/server setup; they expect a Corti
@@ -167,7 +167,7 @@ install_dsh() {
     fi
 
     # b) plugin install into every existing dsh profile that bundles dsh-base
-    SRC="${CORTI_DSH_SOURCE:-https://github.com/m1k-rsch/corti#src/integrations/deepseek-harness}"
+    SRC="${CORTI_DSH_SOURCE:-https://github.com/fgm-builds/corti#src/integrations/deepseek-harness}"
     local installed=0
     for profile_dir in "$DSH_HOME_DIR"/profiles/*/; do
         [ -f "$profile_dir/package.json" ] || continue
@@ -240,7 +240,7 @@ if command -v hermes &>/dev/null; then
     fi
 else
     info "Hermes not detected — skipping plugin install"
-    echo "  Install Hermes: https://github.com/m1k-rsch/hermes"
+    echo "  Install Hermes: https://github.com/fgm-builds/hermes"
 fi
 }
 
