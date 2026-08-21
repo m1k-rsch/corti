@@ -5,7 +5,7 @@ Thanks for your interest in contributing! This guide covers the basics.
 ## Development Setup
 
 ```bash
-git clone https://github.com/fgm-builds/corti.git
+git clone https://github.com/pgmi-builds/corti.git
 cd Corti
 uv sync          # install deps + create .venv
 make ci          # lint + test + integration

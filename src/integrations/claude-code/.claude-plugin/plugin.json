@@ -3,10 +3,10 @@
   "description": "Persistent cross-session memory for Claude Code — automatic capture, semantic recall, and context injection powered by a local Corti server.",
   "version": "0.1.0",
   "author": {
-    "name": "fgm-builds"
+    "name": "pgmi-builds"
   },
-  "homepage": "https://github.com/fgm-builds/corti",
-  "repository": "https://github.com/fgm-builds/corti",
+  "homepage": "https://github.com/pgmi-builds/corti",
+  "repository": "https://github.com/pgmi-builds/corti",
   "license": "Apache-2.0",
   "keywords": ["memory", "agent-memory", "persistent-context", "corti", "long-term-memory"]
 }

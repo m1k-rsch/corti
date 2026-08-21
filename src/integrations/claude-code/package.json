@@ -17,7 +17,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/fgm-builds/corti"
+    "url": "https://github.com/pgmi-builds/corti"
   },
   "license": "Apache-2.0",
   "keywords": ["memory", "agent", "corti", "persistent", "context"]

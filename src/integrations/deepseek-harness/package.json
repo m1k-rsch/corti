@@ -7,7 +7,7 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "https://github.com/fgm-builds/corti"
+    "url": "https://github.com/pgmi-builds/corti"
   },
   "keywords": ["memory", "agent-memory", "persistent-context", "corti", "dsh", "dsh-plugin", "deepseek-harness"],
   "dsh": { "bundle": { "patch": "./cordis.patch.yml" } },

@@ -119,7 +119,7 @@ Three-piece embedded engine. Markdown = Single Source of Truth. SQLite + Postgre
 ### 1. One-Command Install
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/fgm-builds/corti/main/install.sh | bash
+curl -fsSL https://raw.githubusercontent.com/pgmi-builds/corti/main/install.sh | bash
 ```
 
 What this does: checks Docker → pulls the pre-built image from Docker Hub → seeds `~/.corti/` with default config → auto-installs agent plugins (**Hermes, Claude Code, DeepSeek Harness**) if detected.
@@ -127,9 +127,9 @@ What this does: checks Docker → pulls the pre-built image from Docker Hub → 
 **Wire a single agent only** (Corti server already running elsewhere):
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/fgm-builds/corti/main/install.sh | bash -s -- --only-dsh      # DeepSeek Harness
-curl -fsSL https://raw.githubusercontent.com/fgm-builds/corti/main/install.sh | bash -s -- --only-hermes   # Hermes Agent
-curl -fsSL https://raw.githubusercontent.com/fgm-builds/corti/main/install.sh | bash -s -- --only-claude   # Claude Code
+curl -fsSL https://raw.githubusercontent.com/pgmi-builds/corti/main/install.sh | bash -s -- --only-dsh      # DeepSeek Harness
+curl -fsSL https://raw.githubusercontent.com/pgmi-builds/corti/main/install.sh | bash -s -- --only-hermes   # Hermes Agent
+curl -fsSL https://raw.githubusercontent.com/pgmi-builds/corti/main/install.sh | bash -s -- --only-claude   # Claude Code
 ```
 
 **Requirements**: Docker 24+.
@@ -137,7 +137,7 @@ curl -fsSL https://raw.githubusercontent.com/fgm-builds/corti/main/install.sh | 
 > **Slim variant** — if you already have PostgreSQL 18+ with pgvector:
 > ```bash
 > export DB_HOST=... DB_PORT=5432 DB_NAME=corti DB_USER=corti DB_PASSWORD=...
-> curl -fsSL https://raw.githubusercontent.com/fgm-builds/corti/main/install.sh | bash -s slim
+> curl -fsSL https://raw.githubusercontent.com/pgmi-builds/corti/main/install.sh | bash -s slim
 > ```
 > Slim image: ~400 MB vs 1.2 GB all-in-one. Pinned version: `bash -s v0.2-slim`.
 
@@ -201,19 +201,19 @@ after Corti — pull the plugins directly from the GitHub repo (no Docker requir
 
 ```bash
 # Hermes Agent
-curl -fsSL https://github.com/fgm-builds/corti/archive/refs/heads/main.tar.gz | \
+curl -fsSL https://github.com/pgmi-builds/corti/archive/refs/heads/main.tar.gz | \
   tar -xz --strip-components=3 -C ~/.hermes/plugins/ corti-main/src/integrations/hermes
 mv ~/.hermes/plugins/hermes ~/.hermes/plugins/corti
 hermes plugins enable corti
 
 # Claude Code — dropped into ~/.claude/skills/ for auto-discovery
 # (hooks/hooks.json + MCP auto-loaded on next session, zero CLI)
-curl -fsSL https://github.com/fgm-builds/corti/archive/refs/heads/main.tar.gz | \
+curl -fsSL https://github.com/pgmi-builds/corti/archive/refs/heads/main.tar.gz | \
   tar -xz --strip-components=3 -C ~/.claude/skills/ corti-main/src/integrations/claude-code
 mv ~/.claude/skills/claude-code ~/.claude/skills/corti
 
 # DeepSeek Harness (dsh) — installs into every existing dsh profile
-dsh plugin --profile web add https://github.com/fgm-builds/corti#src/integrations/deepseek-harness
+dsh plugin --profile web add https://github.com/pgmi-builds/corti#src/integrations/deepseek-harness
 # then point it at your Corti server (once):
 #   echo "CORTI_BASE_URL=http://<corti-host>:5473" >> ~/.dsh/.env
 ```
